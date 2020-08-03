@@ -97,7 +97,7 @@ class BfieldPhaseErrorTest(unittest.TestCase):
 
             # Execute the function under test for perfect reference magnets
             obs_ref_phase_error, obs_ref_trajectories = calculate_bfield_phase_error(info, ref_bfield,
-                debug_path=os.path.join(f'/mnt/c/Projects/RFI/Testing/phase_error_{rng_seed}', 'bug_ref.npz'))
+                debug_path=os.path.join(f'/mnt/c/Projects/RFI/Testing/phase_error_{rng_seed}', 'fix_ref.npz'))
 
             # Save the observed values for the reference magnets (for failure inspection)
             np.save(obs_ref_phase_error_path,  obs_ref_phase_error)
@@ -119,7 +119,7 @@ class BfieldPhaseErrorTest(unittest.TestCase):
             #magnet_lists.shuffle_all()
             bfield       = generate_bfield(info, magnet_lists, magnet_sets, lookup)
             obs_phase_error, obs_trajectories = calculate_bfield_phase_error(info, bfield,
-                debug_path=os.path.join(f'/mnt/c/Projects/RFI/Testing/phase_error_{rng_seed}', 'bug_real.npz'))
+                debug_path=os.path.join(f'/mnt/c/Projects/RFI/Testing/phase_error_{rng_seed}', 'fix_real.npz'))
 
             # Save the observed values for the reference magnets (for failure inspection)
             np.save(obs_phase_error_path,  obs_phase_error)

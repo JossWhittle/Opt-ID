@@ -179,7 +179,7 @@ def calculate_bfield_phase_error(info, bfield, debug_path=None):
 
     # Trapezium rule applied to bfield measurements in X and Z helps compute the second integral of motion
     # TODO roll is on X axis (0) between neighbouring eval points, is this correct? Should be S axis (2)?
-    trap_bfield = np.roll(bfield[...,:2], shift=1, axis=0)
+    trap_bfield = np.roll(bfield[...,:2], shift=1, axis=2)
     trap_bfield[...,0,:] = 0 # Set first samples on S axis to 0
     trap_bfield = (trap_bfield + bfield[...,:2]) * (s_step_size / 2)
 
@@ -189,7 +189,7 @@ def calculate_bfield_phase_error(info, bfield, debug_path=None):
     # Trapezium rule applied to second integral of motion helps compute the first integral of motion
     # TODO why shift by 4 indices? One period? (no guarantees on how many world space units 4 indices corresponds to) Should this be 1?
     # TODO roll is on X axis (0) between neighbouring eval points, is this correct? Should be S axis (2)?
-    trap_traj_2nd_integral = np.roll(traj_2nd_integral, shift=4, axis=0)
+    trap_traj_2nd_integral = np.roll(traj_2nd_integral, shift=1, axis=2)
     trap_traj_2nd_integral[:,:,0,:] = 0 # Set first samples on S axis to 0
     trap_traj_2nd_integral = (trap_traj_2nd_integral + traj_2nd_integral) * (s_step_size / 2)
 
