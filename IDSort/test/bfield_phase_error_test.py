@@ -22,6 +22,8 @@ class BfieldPhaseErrorTest(unittest.TestCase):
 
         rng_seed = 6456
         random.seed(rng_seed)
+        test_dir = f'/mnt/c/Projects/RFI/Testing/phase_error_{rng_seed}'
+        os.makedirs(test_dir, exist_ok=True)
 
         # inp == Inputs
         # exp == Expected Outputs
@@ -92,7 +94,7 @@ class BfieldPhaseErrorTest(unittest.TestCase):
             logger.info('Constructing perfect reference magnets to shadow real magnets and ideal bfield')
             ref_magnet_sets  = generate_reference_magnets(magnet_sets)
             ref_magnet_lists = MagLists(ref_magnet_sets)
-            #ref_magnet_lists.shuffle_all()
+            ref_magnet_lists.shuffle_all()
             ref_bfield       = generate_bfield(info, ref_magnet_lists, ref_magnet_sets, lookup)
 
             # Execute the function under test for perfect reference magnets
@@ -116,7 +118,7 @@ class BfieldPhaseErrorTest(unittest.TestCase):
 
             # Execute the function under test for real magnets (with no optimization applied, expect values to be poor)
             magnet_lists = MagLists(magnet_sets)
-            #magnet_lists.shuffle_all()
+            magnet_lists.shuffle_all()
             bfield       = generate_bfield(info, magnet_lists, magnet_sets, lookup)
             obs_phase_error, obs_trajectories = calculate_bfield_phase_error(info, bfield,
                 debug_path=os.path.join(f'/mnt/c/Projects/RFI/Testing/phase_error_{rng_seed}', 'bug_real.npz'))
