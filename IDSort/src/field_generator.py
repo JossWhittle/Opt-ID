@@ -18,6 +18,7 @@ Created on 5 Dec 2013
 @author: ssg37927
 '''
 
+import os
 import threading
 import numpy as np
 import h5py
@@ -157,7 +158,7 @@ def calculate_trajectory_loss_from_array(info, bfield, ref_trajectories):
     return calculate_trajectory_loss(trajectories, ref_trajectories)
 
 
-def calculate_bfield_phase_error(info, bfield):
+def calculate_bfield_phase_error(info, bfield, debug_path=None):
     # TODO move ring energy into device JSON file as devices are tied to specific facilities
     energy             = 3.0                           # Diamond synchrotron 3 GeV storage ring
     const              = (0.03 / energy) * 1e-2        # Unknown constant... evaluates to 1e-4 for 3 GeV storage ring
@@ -230,6 +231,12 @@ def calculate_bfield_phase_error(info, bfield):
     # Compute final scaled phase error
     phase_error = np.sqrt((np.sum(phase_error_sq) * np.square((2 * np.pi) / (m * s_steps_per_period))) /
                           (((4 * nperiods) + 1) - (2 * nskip))) * degrees_per_radian
+
+    if debug_path is not None:
+        np.savez(debug_path,
+                 trajectories=trajectories, w=w, w_1st_integral=w_1st_integral,
+                 x=x, y=y,
+                 m=m, b=b, phase_error_arr=(y - ((m * x) + b)), phase_error_sq=phase_error_sq, phase_error=phase_error)
 
     return phase_error, trajectories
 
