@@ -18,7 +18,6 @@ Created on 5 Dec 2013
 @author: ssg37927
 '''
 
-import os
 import threading
 import numpy as np
 import h5py
@@ -179,17 +178,18 @@ def calculate_bfield_phase_error(info, bfield, debug_path=None):
 
     # Trapezium rule applied to bfield measurements in X and Z helps compute the second integral of motion
     # TODO roll is on X axis (0) between neighbouring eval points, is this correct? Should be S axis (2)?
-    trap_bfield = np.roll(bfield[...,:2], shift=1, axis=2)
+    trap_bfield = np.roll(bfield[...,:2], shift=1, axis=2) # shift=1, axis=2
     trap_bfield[...,0,:] = 0 # Set first samples on S axis to 0
     trap_bfield = (trap_bfield + bfield[...,:2]) * (s_step_size / 2)
 
     # Accumulate the second integral of motion w.r.t the X and Z axes, along the orbital S axis
-    traj_2nd_integral = np.cumsum((trap_bfield * const), axis=2)
+    # X and Z components swapped to account for electrons polarizing horizontally under influence of vertical field
+    traj_2nd_integral = np.cumsum((trap_bfield[...,::-1] * np.array([-const, const])), axis=2)
 
     # Trapezium rule applied to second integral of motion helps compute the first integral of motion
     # TODO why shift by 4 indices? One period? (no guarantees on how many world space units 4 indices corresponds to) Should this be 1?
     # TODO roll is on X axis (0) between neighbouring eval points, is this correct? Should be S axis (2)?
-    trap_traj_2nd_integral = np.roll(traj_2nd_integral, shift=1, axis=2)
+    trap_traj_2nd_integral = np.roll(traj_2nd_integral, shift=1, axis=2) # shift=1, axis=2
     trap_traj_2nd_integral[:,:,0,:] = 0 # Set first samples on S axis to 0
     trap_traj_2nd_integral = (trap_traj_2nd_integral + traj_2nd_integral) * (s_step_size / 2)
 
@@ -197,11 +197,7 @@ def calculate_bfield_phase_error(info, bfield, debug_path=None):
     traj_1st_integral = np.cumsum(trap_traj_2nd_integral, axis=2)
 
     # Trajectory first and second integrals of motion have been computed, now we compute the phase error of those trajectories
-    # TODO why do we swap X,Z for Z,X order for the field measurements?
-    #      Consistent Z,X ordering across all expected files for tests but no actual reason other than that they were all computed with this.
-    #      Removal of swap forces careful conversion of expected data files.
-    #      Same goes for removing Z integral negation.
-    trajectories = np.concatenate([traj_1st_integral[...,::-1], traj_2nd_integral[...,::-1]], axis=-1) * np.array([-1, 1, -1, 1])
+    trajectories = np.concatenate([traj_1st_integral, traj_2nd_integral], axis=-1)
 
     # Extract the second integral of motion for the central trajectory going down the centre of the eval point grid
     i = ((bfield.shape[0] + 1) // 2) - 1
@@ -209,7 +205,7 @@ def calculate_bfield_phase_error(info, bfield, debug_path=None):
     w = np.square(traj_2nd_integral[i,j])
 
     # Trapezium rule applied to second integral of motion for central trajectory helps computes first integral of motion
-    trap_w = np.roll(w, shift=1, axis=0) # TODO Axis 0 is S axis in this np.roll! This makes sense, previous two do not!
+    trap_w = np.roll(w, shift=1, axis=0)
     trap_w[0,:] = 0.0 # Set first samples on S axis to 0
     trap_w = (trap_w + w) * 1e-3 * (s_step_size / 2)
     w_1st_integral = np.cumsum(np.sum(trap_w, axis=-1), axis=0) # Cumulative sum along S axis (0)
