@@ -230,9 +230,13 @@ def calculate_bfield_phase_error(info, bfield, debug_path=None):
                           (((4 * nperiods) + 1) - (2 * nskip))) * degrees_per_radian
 
     if debug_path is not None:
+        bfield_eval_points = np.mgrid[info['xmin']:info['xmax'] - (info['xstep'] / 100.0):info['xstep'],
+                                      info['zmin']:info['zmax'] - (info['zstep'] / 100.0):info['zstep'],
+                                      info['smin']:info['smax'] - (info['sstep'] / 100.0):info['sstep']]
+
         np.savez(debug_path,
                  trajectories=trajectories, w=w, w_1st_integral=w_1st_integral,
-                 x=x, y=y,
+                 x=x, y=y, bfield_eval_points=bfield_eval_points,
                  m=m, b=b, phase_error_arr=(y - ((m * x) + b)), phase_error_sq=phase_error_sq, phase_error=phase_error)
 
     return phase_error, trajectories
