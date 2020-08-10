@@ -79,14 +79,14 @@ if __name__ == "__main__":
 
         # Execute the function under test for perfect reference magnets
         obs_ref_phase_error, obs_ref_trajectories = calculate_bfield_phase_error(info, ref_bfield,
-            debug_path=os.path.join(test_dir, 'fix_ref.npz'))
+            debug_path=os.path.join(test_dir, 'bug_ref.npz'))
 
         # Execute the function under test for real magnets (with no optimization applied, expect values to be poor)
         magnet_lists = MagLists(magnet_sets)
         magnet_lists.shuffle_all()
         bfield       = generate_bfield(info, magnet_lists, magnet_sets, lookup)
         obs_phase_error, obs_trajectories = calculate_bfield_phase_error(info, bfield,
-            debug_path=os.path.join(test_dir, 'fix_real.npz'))
+            debug_path=os.path.join(test_dir, 'bug_real.npz'))
 
     # Use (except + else) instead of (finally) so that output files can be inspected if the test fails
     except Exception as ex: raise ex
