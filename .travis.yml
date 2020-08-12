@@ -11,7 +11,7 @@ install:
   - pip install -e .
 
 script:
-  - python -m pytest --cov=src/optid tests
+  - python -m pytest --cov=src/optid tests/*
 
 after_script:
   - coveralls
