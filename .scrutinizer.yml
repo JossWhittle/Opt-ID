@@ -18,7 +18,7 @@ build:
       - sudo apt-get update
   environment:
     python:
-      version: "3.8"
+      version: "3.8.0"
 filter:
   excluded_paths:
     - '*/test/*'
