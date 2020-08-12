@@ -16,11 +16,9 @@ build:
   dependencies:
     before:
       - sudo apt-get update
-      - sudo apt-get -y install libopenmpi-dev
-      - sudo apt-get -y install openmpi-bin
   environment:
     python:
-      version: "3.7"
+      version: "3.8"
 filter:
   excluded_paths:
     - '*/test/*'
