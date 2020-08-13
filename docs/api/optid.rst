@@ -2,4 +2,4 @@
 ``optid``
 ==============
 
-.. automodule:: src.optid
+.. automodule:: optid
