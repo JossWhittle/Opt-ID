@@ -5,5 +5,5 @@
 .. automodule:: optid
     :members:
 
-.. autodata:: optid.VERSION
+.. autodata:: optid::VERSION
     :annotation:
