@@ -24,3 +24,10 @@ View the auto-generated API documentation:
     :glob:
 
     api/*
+
+Indices and tables
+==================
+
+* :ref:`genindex`
+* :ref:`modindex`
+* :ref:`search`
