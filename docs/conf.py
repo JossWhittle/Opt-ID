@@ -26,4 +26,29 @@ extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.viewcode',
     'sphinx.ext.coverage',
+    'sphinx.ext.intersphinx',
 ]
+
+intersphinx_mapping = {
+    'http://docs.python.org/' : None
+}
+language = 'en'
+
+templates_path = ['_templates']
+
+source_suffix = '.rst'
+master_doc    = 'index'
+
+project   = u'Opt-ID'
+copyright = u'2017, Diamond Light Source'
+
+pygments_style = 'sphinx'
+
+import sphinx_rtd_theme
+
+html_static_path   = ['_static']
+html_theme         = 'sphinx_rtd_theme'
+html_theme_path    = [sphinx_rtd_theme.get_html_theme_path()]
+html_theme_options = {
+    'collapse_navigation': False,
+}
