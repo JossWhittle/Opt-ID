@@ -13,7 +13,20 @@
 # language governing permissions and limitations under the License.
 
 
-VERSION = 'v3.0a'
-"""
-str : Opt-ID version string.
-"""
+# Utility imports
+import unittest
+
+# Test imports
+import optid
+
+
+class ImportModuleTest(unittest.TestCase):
+    """
+    Tests the Opt-ID module can be imported and accessed correctly.
+    """
+
+    def test_optid_version_string(self):
+        """
+        Tests that the version string can be correctly accessed from the root of the Opt-ID project.
+        """
+        self.assertEqual(type(optid.VERSION), str)
