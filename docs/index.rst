@@ -7,7 +7,7 @@ Documentation for Opt-ID, a framework for the Optimisation of Synchrotron Insert
 Getting started
 ---------------
 
-Many core ideas & API calls are explained in the tutorial/getting-started document:
+Many core ideas & API calls are explained in the getting-started document:
 
 .. toctree::
     :maxdepth: 2
@@ -20,7 +20,7 @@ API
 View the auto-generated API documentation:
 
 .. toctree::
-    :maxdepth: 1
+    :maxdepth: 2
     :glob:
 
     api/*
@@ -30,4 +30,3 @@ Indices and tables
 
 * :ref:`genindex`
 * :ref:`modindex`
-* :ref:`search`
