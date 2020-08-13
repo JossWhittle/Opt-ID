@@ -18,6 +18,7 @@ import sys
 
 
 # Build docs form the root project directory
+sys.path.insert(0, os.path.abspath('../src'))
 sys.path.insert(0, os.path.abspath('..'))
 
 # Enable Sphinx extensions
