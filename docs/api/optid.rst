@@ -1,5 +1,5 @@
 ==============
-``Opt-ID``
+``optid``
 ==============
 
 .. automodule:: optid
