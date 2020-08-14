@@ -14,6 +14,7 @@
 
 
 import typing
+import logging
 import numpy as np
 
 
@@ -32,18 +33,18 @@ class MagnetSet:
 
         Parameters
         ----------
-        str : magnet_type
+        magnet_type : str
             A non-empty string name for this magnet type that should be unique in the context of the full insertion
             device. Names such as 'HH', 'VV', 'HE', 'VE', 'HT' are common.
 
-        np.ndarray : magnet_size
+        magnet_size : np.ndarray
             A single 3-dim float vector representing the constant size for all magnets in this set.
 
-        list(str) : magnet_names
+        magnet_names : list(str)
             A list of unique non-empty strings representing the named identifier for each physical magnet as
             specified by the manufacturer or build team.
 
-        np.ndarray : magnet_field_vectors
+        magnet_field_vectors : np.ndarray
             A tensor of N 3-dim float vectors of shape (N, 3) representing the average magnetic field strength
             measurements for each magnet in this set.
         """
@@ -75,3 +76,59 @@ class MagnetSet:
         self.count = len(magnet_names)
         assert (self.count == self.magnet_field_vectors.shape[0]), \
                'must have the same number of names as magnet field vectors'
+
+    @staticmethod
+    def from_sim_file(magnet_type : str,
+                      magnet_size : np.ndarray,
+                      sim_file_path : str) -> 'MagnetSet':
+        """
+        Constructs a MagnetSet instance using per magnet names and field vectors from a .sim file provided by
+        the magnet manufacturer.
+
+        Parameters
+        ----------
+        magnet_type : str
+            A non-empty string name for this magnet type that should be unique in the context of the full insertion
+            device. Names such as 'HH', 'VV', 'HE', 'VE', 'HT' are common.
+
+        magnet_size : np.ndarray
+            A single 3-dim float vector representing the constant size for all magnets in this set.
+
+        sim_file_path : str
+            A path to a .sim file containing per magnet names and field vectors as provided by the magnet
+            manufacturer.
+
+        Returns
+        -------
+        A MagnetSet instance with the desired values loaded from the .sim file.
+        """
+
+        logging.info('Loading magnet set [%s] from sim file [%s]', magnet_type, sim_file_path)
+
+        with open(sim_file_path, 'r') as sim_file:
+            # Load the data into python lists
+            magnet_names = []
+            magnet_field_vectors = []
+
+            for line_index, line in enumerate(sim_file):
+                # Skip this line if it is blank
+                line = line.strip()
+                if len(line) == 0:
+                    continue
+
+                logging.debug('Line [%d] : [%s]', line_index, line)
+
+                # Unpack and parse values for the current magnet
+                name, field_x, field_z, field_s = line.split()
+                magnet_names += [name]
+                magnet_field_vectors += [(float(field_x), float(field_z), float(field_s))]
+
+            # Convert python list of field vector tuples into numpy array with shape (N, 3)
+            magnet_field_vectors = np.array(magnet_field_vectors, dtype=np.float32)
+
+        logging.info('Loaded magnet set [%s] with [%d] magnets', magnet_type, len(magnet_names))
+
+        return MagnetSet(magnet_type=magnet_type,
+                         magnet_size=magnet_size,
+                         magnet_names=magnet_names,
+                         magnet_field_vectors=magnet_field_vectors)
