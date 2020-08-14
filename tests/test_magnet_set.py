@@ -67,8 +67,7 @@ class MagnetSetTest(unittest.TestCase):
         # Assert constructor throws error from empty magnet type string
         self.assertRaises(Exception, MagnetSet,
                           magnet_type='',
-                          magnet_size=magnet_size,
-                          magnet_names=magnet_names,
+                          magnet_size=magnet_size, magnet_names=magnet_names,
                           magnet_field_vectors=magnet_field_vectors)
 
         # Assert constructor throws error from incorrectly shaped magnet size
@@ -80,36 +79,30 @@ class MagnetSetTest(unittest.TestCase):
 
         # Assert constructor throws error from empty list of name strings for magnet names
         self.assertRaises(Exception, MagnetSet,
-                          magnet_type=magnet_type,
-                          magnet_size=magnet_size,
+                          magnet_type=magnet_type, magnet_size=magnet_size,
                           magnet_names=[],
                           magnet_field_vectors=magnet_field_vectors)
 
         # Assert constructor throws error from empty name string in magnet names
         self.assertRaises(Exception, MagnetSet,
-                          magnet_type=magnet_type,
-                          magnet_size=magnet_size,
+                          magnet_type=magnet_type, magnet_size=magnet_size,
                           magnet_names=['' if (index == 1) else f'{index:03d}' for index in range(count)],
                           magnet_field_vectors=magnet_field_vectors)
 
         # Assert constructor throws error from non unique name strings in magnet names
         self.assertRaises(Exception, MagnetSet,
-                          magnet_type=magnet_type,
-                          magnet_size=magnet_size,
+                          magnet_type=magnet_type, magnet_size=magnet_size,
                           magnet_names=['TEST' if (index % 2 == 0) else f'{index:03d}' for index in range(count)],
                           magnet_field_vectors=magnet_field_vectors)
 
         # Assert constructor throws error from incorrectly shaped magnet field vectors
         self.assertRaises(Exception, MagnetSet,
-                          magnet_type=magnet_type,
-                          magnet_size=magnet_size,
-                          magnet_names=magnet_names,
+                          magnet_type=magnet_type, magnet_size=magnet_size, magnet_names=magnet_names,
                           magnet_field_vectors=np.random.uniform(size=(count, 4)))
 
         # Assert constructor throws error from magnet names and magnet field vectors being different lengths
         self.assertRaises(Exception, MagnetSet,
-                          magnet_type=magnet_type,
-                          magnet_size=magnet_size,
+                          magnet_type=magnet_type, magnet_size=magnet_size,
                           magnet_names=magnet_names[:-1],
                           magnet_field_vectors=magnet_field_vectors)
 
@@ -141,8 +134,7 @@ class MagnetSetTest(unittest.TestCase):
         ], dtype=np.float32)
 
         # Construct MagnetSet instance
-        magnet_set = MagnetSet.from_sim_file(magnet_type=magnet_type,
-                                             magnet_size=magnet_size,
+        magnet_set = MagnetSet.from_sim_file(magnet_type=magnet_type, magnet_size=magnet_size,
                                              sim_file_path=os.path.join(inputs_path, 'example.sim'))
 
         # Assert object members have been correctly assigned
@@ -171,24 +163,20 @@ class MagnetSetTest(unittest.TestCase):
 
         # Assert from_sim_file throws error when sim file has a missing magnet name
         self.assertRaises(Exception, MagnetSet.from_sim_file,
-                          magnet_type=magnet_type,
-                          magnet_size=magnet_size,
+                          magnet_type=magnet_type, magnet_size=magnet_size,
                           sim_file_path=os.path.join(inputs_path, 'example_missing_name.sim'))
 
         # Assert from_sim_file throws error when sim file has a missing magnet field vector
         self.assertRaises(Exception, MagnetSet.from_sim_file,
-                          magnet_type=magnet_type,
-                          magnet_size=magnet_size,
+                          magnet_type=magnet_type, magnet_size=magnet_size,
                           sim_file_path=os.path.join(inputs_path, 'example_missing_field_vector.sim'))
 
         # Assert from_sim_file throws error when sim file has an invalid magnet field vector
         self.assertRaises(Exception, MagnetSet.from_sim_file,
-                          magnet_type=magnet_type,
-                          magnet_size=magnet_size,
+                          magnet_type=magnet_type, magnet_size=magnet_size,
                           sim_file_path=os.path.join(inputs_path, 'example_invalid_field_vector.sim'))
 
         # Assert from_sim_file throws error when sim file has a duplicate magnet name
         self.assertRaises(Exception, MagnetSet.from_sim_file,
-                          magnet_type=magnet_type,
-                          magnet_size=magnet_size,
+                          magnet_type=magnet_type, magnet_size=magnet_size,
                           sim_file_path=os.path.join(inputs_path, 'example_duplicate_name.sim'))
