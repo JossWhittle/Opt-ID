@@ -80,7 +80,7 @@ class MagnetSet:
     @staticmethod
     def from_sim_file(magnet_type : str,
                       magnet_size : np.ndarray,
-                      sim_file_path : str) -> 'MagnetSet':
+                      file : typing.Union[str, typing.TextIO]) -> 'MagnetSet':
         """
         Constructs a MagnetSet instance using per magnet names and field vectors from a .sim file provided by
         the magnet manufacturer.
@@ -94,23 +94,44 @@ class MagnetSet:
         magnet_size : np.ndarray
             A single 3-dim float vector representing the constant size for all magnets in this set.
 
-        sim_file_path : str
-            A path to a .sim file containing per magnet names and field vectors as provided by the magnet
-            manufacturer.
+        file : str or open file handle
+            A path to a .sim file or an open file handle to a .sim file containing per magnet names and field
+            vectors as provided by the magnet manufacturer.
 
         Returns
         -------
         A MagnetSet instance with the desired values loaded from the .sim file.
         """
 
-        logging.info('Loading magnet set [%s] from sim file [%s]', magnet_type, sim_file_path)
+        def read_file(magnet_type : str,
+                      magnet_size : np.ndarray,
+                      file_handle : typing.TextIO) -> 'MagnetSet':
+            """
+            Private helper function for reading data from a .sim file given an already open file handle.
 
-        with open(sim_file_path, 'r') as sim_file:
+            Parameters
+            ----------
+            magnet_type : str
+                A non-empty string name for this magnet type that should be unique in the context of the full insertion
+                device. Names such as 'HH', 'VV', 'HE', 'VE', 'HT' are common.
+
+            magnet_size : np.ndarray
+                A single 3-dim float vector representing the constant size for all magnets in this set.
+
+            file_handle : open file handle
+                An open file handle to a .sim file containing per magnet names and field
+                vectors as provided by the magnet manufacturer.
+
+            Returns
+            -------
+            A MagnetSet instance with the desired values loaded from the .sim file.
+            """
+
             # Load the data into python lists
             magnet_names = []
             magnet_field_vectors = []
 
-            for line_index, line in enumerate(sim_file):
+            for line_index, line in enumerate(file_handle):
                 # Skip this line if it is blank
                 line = line.strip()
                 if len(line) == 0:
@@ -126,9 +147,24 @@ class MagnetSet:
             # Convert python list of field vector tuples into numpy array with shape (N, 3)
             magnet_field_vectors = np.array(magnet_field_vectors, dtype=np.float32)
 
-        logging.info('Loaded magnet set [%s] with [%d] magnets', magnet_type, len(magnet_names))
+            # Offload object construction and validation to the MagnetSet constructor
+            magnet_set = MagnetSet(magnet_type=magnet_type, magnet_size=magnet_size,
+                                   magnet_names=magnet_names, magnet_field_vectors=magnet_field_vectors)
 
-        return MagnetSet(magnet_type=magnet_type,
-                         magnet_size=magnet_size,
-                         magnet_names=magnet_names,
-                         magnet_field_vectors=magnet_field_vectors)
+            logging.info('Loaded magnet set [%s] with [%d] magnets', magnet_type, len(magnet_names))
+            return magnet_set
+
+        # Assert that the file object provided is an open file handle or can be used to open one
+        assert isinstance(file, (str, io.TextIOWrapper)), \
+               'file must be a string file path or a file handle to an already open file'
+
+        if isinstance(file, io.TextIOWrapper):
+            # Load directly from the already open file handle
+            logging.info('Loading magnet set [%s] from open .sim file handle', magnet_type)
+            return read_file(magnet_type=magnet_type, magnet_size=magnet_size, file_handle=file)
+
+        else:
+            # Open the .sim file in a closure to ensure it gets closed on error
+            with open(file, 'r') as file_handle:
+                logging.info('Loading magnet set [%s] from .sim file [%s]', magnet_type, file)
+                return read_file(magnet_type=magnet_type, magnet_size=magnet_size, file_handle=file_handle)
