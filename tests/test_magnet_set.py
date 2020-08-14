@@ -63,10 +63,8 @@ class MagnetSetTest(unittest.TestCase):
         count, magnet_type, magnet_size, magnet_names, magnet_field_vectors = self.dummy_magnet_set_values()
 
         # Construct MagnetSet instance
-        magnet_set = MagnetSet(magnet_type=magnet_type,
-                               magnet_size=magnet_size,
-                               magnet_names=magnet_names,
-                               magnet_field_vectors=magnet_field_vectors)
+        magnet_set = MagnetSet(magnet_type=magnet_type, magnet_size=magnet_size,
+                               magnet_names=magnet_names, magnet_field_vectors=magnet_field_vectors)
 
         # Assert object members have been correctly assigned
         self.assertEqual(magnet_set.count, count)
@@ -143,7 +141,7 @@ class MagnetSetTest(unittest.TestCase):
                                    magnet_names=magnet_names, magnet_field_vectors=magnet_field_vectors)
 
             # Save the MagnetSet to the temporary directory
-            magnet_set.save(tmp_file_path)
+            magnet_set.save(file=tmp_file_path)
 
             # Throw away the local object and reload it from the temporary file
             magnet_set = MagnetSet.from_file(file=tmp_file_path)
@@ -177,7 +175,7 @@ class MagnetSetTest(unittest.TestCase):
 
             with open(tmp_file_path, 'wb') as tmp_file_handle:
                 # Save the MagnetSet to the temporary directory
-                magnet_set.save(tmp_file_handle)
+                magnet_set.save(file=tmp_file_handle)
 
             # Throw away the local object and reload it from the temporary file
             magnet_set = MagnetSet.from_file(file=tmp_file_path)
@@ -191,6 +189,22 @@ class MagnetSetTest(unittest.TestCase):
         self.assertTrue(np.allclose(magnet_set.magnet_size, magnet_size))
         self.assertEqual(magnet_set.magnet_names, magnet_names)
         self.assertTrue(np.allclose(magnet_set.magnet_field_vectors, magnet_field_vectors))
+
+    def test_save_raises_on_bad_parameters(self):
+        """
+        Tests the MagnetSet class save member function raises an error when the file parameter is neither
+        as string file path or an open file handle.
+        """
+
+        # Make dummy parameters
+        count, magnet_type, magnet_size, magnet_names, magnet_field_vectors = self.dummy_magnet_set_values()
+
+        # Construct MagnetSet instance
+        magnet_set = MagnetSet(magnet_type=magnet_type, magnet_size=magnet_size,
+                               magnet_names=magnet_names, magnet_field_vectors=magnet_field_vectors)
+
+        # Attempt to save to a bad file parameter
+        self.assertRaises(Exception, magnet_set.save, file=None)
 
     def test_static_from_file(self):
         """
@@ -245,6 +259,15 @@ class MagnetSetTest(unittest.TestCase):
         self.assertTrue(np.allclose(magnet_set.magnet_size, magnet_size))
         self.assertEqual(magnet_set.magnet_names, magnet_names)
         self.assertTrue(np.allclose(magnet_set.magnet_field_vectors, magnet_field_vectors))
+
+    def test_static_from_file_raises_on_bad_parameters(self):
+        """
+        Tests the MagnetSet class raises an error when the file parameter is neither
+        as string file path or an open file handle.
+        """
+
+        # Attempt to load from to a bad file parameter
+        self.assertRaises(Exception, MagnetSet.from_file, file=None)
 
     def test_static_from_sim_file(self):
         """
@@ -302,9 +325,23 @@ class MagnetSetTest(unittest.TestCase):
         self.assertEqual(magnet_set.magnet_names, magnet_names)
         self.assertTrue(np.allclose(magnet_set.magnet_field_vectors, magnet_field_vectors))
 
+    def test_static_from_sim_file_raises_on_bad_parameters(self):
+        """
+        Tests the MagnetSet class raises an error when the file parameter is neither
+        as string file path or an open file handle.
+        """
+
+        # Make dummy parameters
+        _, magnet_type, magnet_size, _, _ = self.dummy_magnet_set_values()
+
+        # Assert from_sim_file throws error when file is not a string file path or an open file handle
+        self.assertRaises(Exception, MagnetSet.from_sim_file,
+                          magnet_type=magnet_type, magnet_size=magnet_size,
+                          file=None)
+
     def test_static_from_sim_file_raises_on_bad_sim_file(self):
         """
-        Tests the MagnetSet class throws exceptions when constructed with incorrect data from a .sim file.
+        Tests the MagnetSet class raises an error when constructed with incorrect data from a .sim file.
         """
 
         # Construct absolute path to the data for this test function
@@ -317,11 +354,6 @@ class MagnetSetTest(unittest.TestCase):
 
         # Make dummy parameters
         _, magnet_type, magnet_size, _, _ = self.dummy_magnet_set_values()
-
-        # Assert from_sim_file throws error when file is not a string file path or an open file handle
-        self.assertRaises(Exception, MagnetSet.from_sim_file,
-                          magnet_type=magnet_type, magnet_size=magnet_size,
-                          file=None)
 
         # Assert from_sim_file throws error when sim file has a missing magnet name
         self.assertRaises(Exception, MagnetSet.from_sim_file,
