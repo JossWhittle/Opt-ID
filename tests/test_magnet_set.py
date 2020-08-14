@@ -16,6 +16,9 @@
 # Utility imports
 import os
 import unittest
+import tempfile
+import shutil
+import inspect
 import numpy as np
 
 # Test imports
@@ -27,17 +30,37 @@ class MagnetSetTest(unittest.TestCase):
     Tests the MagnetSet class can be imported and used correctly.
     """
 
+    @staticmethod
+    def dummy_magnet_set_values():
+        """
+        Creates a set of constant test values used for constructing and comparing MagnetSet
+        instances across test cases.
+
+        Returns
+        -------
+        A tuple of the necessary fields.
+        """
+
+        count = 4
+        magnet_type = 'HH'
+        magnet_size = np.array([0.54348747, 0.05696444, 0.03594551], dtype=np.float32)
+        magnet_names = [f'{index + 1:03d}' for index in range(count)]
+        magnet_field_vectors = np.array([
+            [0.003770334, -0.000352049, 1.339567917],
+            [-0.007018214, -0.002714164, 1.344710227],
+            [-0.004826321, -0.001714764, 1.342079598],
+            [0.008846784, -0.003088993, 1.344698631],
+        ], dtype=np.float32)
+
+        return count, magnet_type, magnet_size, magnet_names, magnet_field_vectors
+
     def test_constructor(self):
         """
         Tests the MagnetSet class can be constructed with correct parameters.
         """
 
         # Make dummy parameters
-        count = 16
-        magnet_type  = 'HH'
-        magnet_size  = np.random.uniform(size=(3,))
-        magnet_names = [f'{index+1:03d}' for index in range(count)]
-        magnet_field_vectors = np.random.uniform(size=(count, 3))
+        count, magnet_type, magnet_size, magnet_names, magnet_field_vectors = self.dummy_magnet_set_values()
 
         # Construct MagnetSet instance
         magnet_set = MagnetSet(magnet_type=magnet_type,
@@ -58,11 +81,7 @@ class MagnetSetTest(unittest.TestCase):
         """
 
         # Make dummy parameters
-        count = 16
-        magnet_type  = 'HH'
-        magnet_size  = np.random.uniform(size=(3,))
-        magnet_names = [f'{index+1:03d}' for index in range(count)]
-        magnet_field_vectors = np.random.uniform(size=(count, 3))
+        count, magnet_type, magnet_size, magnet_names, magnet_field_vectors = self.dummy_magnet_set_values()
 
         # Assert constructor throws error from empty magnet type string
         self.assertRaises(Exception, MagnetSet,
@@ -106,6 +125,93 @@ class MagnetSetTest(unittest.TestCase):
                           magnet_names=magnet_names[:-1],
                           magnet_field_vectors=magnet_field_vectors)
 
+    def test_save(self):
+        """
+        Tests the MagnetSet class can be saved to a .magset file using the member function
+        and reloaded using the static factory function while retaining the data.
+        """
+
+        # Make dummy parameters
+        count, magnet_type, magnet_size, magnet_names, magnet_field_vectors = self.dummy_magnet_set_values()
+
+        # Run the round trip file save + load in a temporary directory
+        with tempfile.TemporaryDirectory() as tmp_path:
+            tmp_file_path = os.path.join(tmp_path, 'example.magset')
+
+            # Construct MagnetSet instance
+            magnet_set = MagnetSet(magnet_type=magnet_type, magnet_size=magnet_size,
+                                   magnet_names=magnet_names, magnet_field_vectors=magnet_field_vectors)
+
+            # Save the MagnetSet to the temporary directory
+            magnet_set.save(tmp_file_path)
+
+            # Throw away the local object and reload it from the temporary file
+            magnet_set = MagnetSet.from_file(file=tmp_file_path)
+
+            # Clean up the temporary directory
+            shutil.rmtree(tmp_path, ignore_errors=True)
+
+        # Assert object members have been correctly assigned
+        self.assertEqual(magnet_set.count, count)
+        self.assertEqual(magnet_set.magnet_type, magnet_type)
+        self.assertTrue(np.allclose(magnet_set.magnet_size, magnet_size))
+        self.assertEqual(magnet_set.magnet_names, magnet_names)
+        self.assertTrue(np.allclose(magnet_set.magnet_field_vectors, magnet_field_vectors))
+
+    def test_static_from_file(self):
+        """
+        Tests the MagnetSet class can be constructed from a .magset file using the static factory function.
+        """
+
+        # Construct absolute path to the data for this test function
+        data_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data',
+                                 os.path.splitext(os.path.basename(__file__))[0],
+                                 inspect.stack()[0][3])
+
+        # Inputs sub directory to load this tests input data from
+        inputs_path = os.path.join(data_path, 'inputs')
+
+        # Make dummy parameters
+        count, magnet_type, magnet_size, magnet_names, magnet_field_vectors = self.dummy_magnet_set_values()
+
+        # Construct MagnetSet instance
+        magnet_set = MagnetSet.from_file(file=os.path.join(inputs_path, 'example.magset'))
+
+        # Assert object members have been correctly assigned
+        self.assertEqual(magnet_set.count, count)
+        self.assertEqual(magnet_set.magnet_type, magnet_type)
+        self.assertTrue(np.allclose(magnet_set.magnet_size, magnet_size))
+        self.assertEqual(magnet_set.magnet_names, magnet_names)
+        self.assertTrue(np.allclose(magnet_set.magnet_field_vectors, magnet_field_vectors))
+
+    def test_static_from_file_open_file_handle(self):
+        """
+        Tests the MagnetSet class can be constructed from an open handle to a .magset file using the
+        static factory function.
+        """
+
+        # Construct absolute path to the data for this test function
+        data_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data',
+                                 os.path.splitext(os.path.basename(__file__))[0],
+                                 inspect.stack()[0][3])
+
+        # Inputs sub directory to load this tests input data from
+        inputs_path = os.path.join(data_path, 'inputs')
+
+        # Make dummy parameters
+        count, magnet_type, magnet_size, magnet_names, magnet_field_vectors = self.dummy_magnet_set_values()
+
+        with open(os.path.join(inputs_path, 'example.magset'), 'rb') as file_handle:
+            # Construct MagnetSet instance
+            magnet_set = MagnetSet.from_file(file=file_handle)
+
+        # Assert object members have been correctly assigned
+        self.assertEqual(magnet_set.count, count)
+        self.assertEqual(magnet_set.magnet_type, magnet_type)
+        self.assertTrue(np.allclose(magnet_set.magnet_size, magnet_size))
+        self.assertEqual(magnet_set.magnet_names, magnet_names)
+        self.assertTrue(np.allclose(magnet_set.magnet_field_vectors, magnet_field_vectors))
+
     def test_static_from_sim_file(self):
         """
         Tests the MagnetSet class can be constructed from a .sim file using the static factory function.
@@ -114,24 +220,13 @@ class MagnetSetTest(unittest.TestCase):
         # Construct absolute path to the data for this test function
         data_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data',
                                  os.path.splitext(os.path.basename(__file__))[0],
-                                 'test_static_from_sim_file')
+                                 inspect.stack()[0][3])
 
         # Inputs sub directory to load this tests input data from
         inputs_path = os.path.join(data_path, 'inputs')
 
         # Make dummy parameters
-        magnet_type = 'HH'
-        magnet_size = np.random.uniform(size=(3,))
-
-        # Expect to see four magnets with the following values in the example.sim file
-        count = 4
-        magnet_names = [f'{index+1:03d}' for index in range(count)]
-        magnet_field_vectors = np.array([
-            [ 0.003770334, -0.000352049, 1.339567917],
-            [-0.007018214, -0.002714164, 1.344710227],
-            [-0.004826321, -0.001714764, 1.342079598],
-            [ 0.008846784, -0.003088993, 1.344698631],
-        ], dtype=np.float32)
+        count, magnet_type, magnet_size, magnet_names, magnet_field_vectors = self.dummy_magnet_set_values()
 
         # Construct MagnetSet instance
         magnet_set = MagnetSet.from_sim_file(magnet_type=magnet_type, magnet_size=magnet_size,
@@ -146,30 +241,20 @@ class MagnetSetTest(unittest.TestCase):
 
     def test_static_from_sim_file_open_file_handle(self):
         """
-        Tests the MagnetSet class can be constructed from a .sim file using the static factory function.
+        Tests the MagnetSet class can be constructed from an open handle to a .sim file using the static
+        factory function.
         """
 
         # Construct absolute path to the data for this test function
         data_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data',
                                  os.path.splitext(os.path.basename(__file__))[0],
-                                 'test_static_from_sim_file')
+                                 inspect.stack()[0][3])
 
         # Inputs sub directory to load this tests input data from
         inputs_path = os.path.join(data_path, 'inputs')
 
         # Make dummy parameters
-        magnet_type = 'HH'
-        magnet_size = np.random.uniform(size=(3,))
-
-        # Expect to see four magnets with the following values in the example.sim file
-        count = 4
-        magnet_names = [f'{index+1:03d}' for index in range(count)]
-        magnet_field_vectors = np.array([
-            [ 0.003770334, -0.000352049, 1.339567917],
-            [-0.007018214, -0.002714164, 1.344710227],
-            [-0.004826321, -0.001714764, 1.342079598],
-            [ 0.008846784, -0.003088993, 1.344698631],
-        ], dtype=np.float32)
+        count, magnet_type, magnet_size, magnet_names, magnet_field_vectors = self.dummy_magnet_set_values()
 
         with open(os.path.join(inputs_path, 'example.sim'), 'r') as file_handle:
             # Construct MagnetSet instance
@@ -191,14 +276,13 @@ class MagnetSetTest(unittest.TestCase):
         # Construct absolute path to the data for this test function
         data_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data',
                                  os.path.splitext(os.path.basename(__file__))[0],
-                                 'test_static_from_sim_file_raises_on_bad_sim_file')
+                                 inspect.stack()[0][3])
 
         # Inputs sub directory to load this tests input data from
         inputs_path = os.path.join(data_path, 'inputs')
 
         # Make dummy parameters
-        magnet_type = 'HH'
-        magnet_size = np.random.uniform(size=(3,))
+        _, magnet_type, magnet_size, _, _ = self.dummy_magnet_set_values()
 
         # Assert from_sim_file throws error when file is not a string file path or an open file handle
         self.assertRaises(Exception, MagnetSet.from_sim_file,

@@ -13,8 +13,10 @@
 # language governing permissions and limitations under the License.
 
 
+import io
 import typing
 import logging
+import pickle
 import numpy as np
 
 
@@ -76,6 +78,104 @@ class MagnetSet:
         self.count = len(magnet_names)
         assert (self.count == self.magnet_field_vectors.shape[0]), \
                'must have the same number of names as magnet field vectors'
+
+    def save(self, file : typing.Union[str, typing.BinaryIO]):
+        """
+        Saves a MagnetSet instance to a .magset file.
+
+        Parameters
+        ----------
+        file : str or open writable file handle
+            A path to where a .magset file should be created or overwritten, or an open writable file handle to
+            a .magset file.
+        """
+
+        def write_file(file_handle : typing.BinaryIO):
+            """
+            Private helper function for writing data to a .magset file given an already open file handle.
+
+            Parameters
+            ----------
+            file_handle : open writable file handle
+                An open writable file handle to a .magset file.
+            """
+
+            # Pack members into .magset file as a single tuple
+            pickle.dump((self.magnet_type,
+                         self.magnet_size,
+                         self.magnet_names,
+                         self.magnet_field_vectors), file_handle)
+
+            logging.info('Saved magnet set to .magset file handle')
+
+        # Assert that the file object provided is an open file handle or can be used to open one
+        assert isinstance(file, (str, io.BytesIO)), \
+            'file must be a string file path or a file handle to an already open file'
+
+        if isinstance(file, io.BytesIO):
+            # Load directly from the already open file handle
+            logging.info('Saving magnet set to .magset file handle')
+            write_file(file_handle=file)
+
+        else:
+            # Open the .sim file in a closure to ensure it gets closed on error
+            with open(file, 'wb') as file_handle:
+                logging.info('Saving magnet set to .magset file [%s]', file)
+                write_file(file_handle=file_handle)
+
+    @staticmethod
+    def from_file(file : typing.Union[str, typing.BinaryIO]) -> 'MagnetSet':
+        """
+        Constructs a MagnetSet instance from a .magset file.
+
+        Parameters
+        ----------
+        file : str or open file handle
+            A path to a .magset file or an open file handle to a .magset file.
+
+        Returns
+        -------
+        A MagnetSet instance with the desired values loaded from the .magset file.
+        """
+
+        def read_file(file_handle : typing.BinaryIO) -> 'MagnetSet':
+            """
+            Private helper function for reading data from a .magset file given an already open file handle.
+
+            Parameters
+            ----------
+            file_handle : open file handle
+                An open file handle to a .magset file.
+
+            Returns
+            -------
+            A MagnetSet instance with the desired values loaded from the .magset file.
+            """
+
+            # Unpack members from .magset file as a single tuple
+            (magnet_type, magnet_size, magnet_names, magnet_field_vectors) = pickle.load(file_handle)
+
+            # Offload object construction and validation to the MagnetSet constructor
+            magnet_set = MagnetSet(magnet_type=magnet_type, magnet_size=magnet_size,
+                                   magnet_names=magnet_names, magnet_field_vectors=magnet_field_vectors)
+
+            logging.info('Loaded magnet set [%s] with [%d] magnets', magnet_type, len(magnet_names))
+            return magnet_set
+
+        # Assert that the file object provided is an open file handle or can be used to open one
+        assert isinstance(file, (str, io.RawIOBase, io.BufferedIOBase)), \
+               'file must be a string file path or a file handle to an already open file'
+
+        if isinstance(file, (io.RawIOBase, io.BufferedIOBase, typing.BinaryIO)):
+            # Load directly from the already open file handle
+            logging.info('Loading magnet set from .magset file handle')
+            return read_file(file_handle=file)
+
+        else:
+            # Open the .sim file in a closure to ensure it gets closed on error
+            with open(file, 'rb') as file_handle:
+                logging.info('Loading magnet set from .magset file [%s]', file)
+                return read_file(file_handle=file_handle)
 
     @staticmethod
     def from_sim_file(magnet_type : str,
