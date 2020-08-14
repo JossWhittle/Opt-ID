@@ -59,10 +59,12 @@ class MagnetSet:
                'dtype must be a float'
 
         self.magnet_names = magnet_names
-        assert (len(self.magnet_names) > 0) and \
-               all((len(name) > 0) for name in magnet_names) and \
-               (len(set(self.magnet_names)) == len(self.magnet_names)), \
-               'must all be unique non-empty strings'
+        assert (len(self.magnet_names) > 0), \
+               'must have at least one magnet name'
+        assert all((len(name) > 0) for name in magnet_names), \
+               'all magnet names must be non-empty strings'
+        assert (len(set(self.magnet_names)) == len(self.magnet_names)), \
+               'all magnet names must be unique strings'
 
         self.magnet_field_vectors = magnet_field_vectors
         assert (self.magnet_field_vectors.shape[0] > 0) and (self.magnet_field_vectors.shape[1:] == (3,)) and \
