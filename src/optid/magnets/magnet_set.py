@@ -109,10 +109,10 @@ class MagnetSet:
             logging.info('Saved magnet set to .magset file handle')
 
         # Assert that the file object provided is an open file handle or can be used to open one
-        assert isinstance(file, (str, io.BytesIO)), \
+        assert isinstance(file, (str, io.RawIOBase, io.BufferedIOBase, typing.BinaryIO)), \
             'file must be a string file path or a file handle to an already open file'
 
-        if isinstance(file, io.BytesIO):
+        if isinstance(file, (io.RawIOBase, io.BufferedIOBase, typing.BinaryIO)):
             # Load directly from the already open file handle
             logging.info('Saving magnet set to .magset file handle')
             write_file(file_handle=file)
@@ -163,7 +163,7 @@ class MagnetSet:
             return magnet_set
 
         # Assert that the file object provided is an open file handle or can be used to open one
-        assert isinstance(file, (str, io.RawIOBase, io.BufferedIOBase)), \
+        assert isinstance(file, (str, io.RawIOBase, io.BufferedIOBase, typing.BinaryIO)), \
                'file must be a string file path or a file handle to an already open file'
 
         if isinstance(file, (io.RawIOBase, io.BufferedIOBase, typing.BinaryIO)):

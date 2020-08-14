@@ -158,6 +158,40 @@ class MagnetSetTest(unittest.TestCase):
         self.assertEqual(magnet_set.magnet_names, magnet_names)
         self.assertTrue(np.allclose(magnet_set.magnet_field_vectors, magnet_field_vectors))
 
+    def test_save_open_file_handle(self):
+        """
+        Tests the MagnetSet class can be saved to a .magset file using the member function
+        and reloaded using the static factory function while retaining the data.
+        """
+
+        # Make dummy parameters
+        count, magnet_type, magnet_size, magnet_names, magnet_field_vectors = self.dummy_magnet_set_values()
+
+        # Run the round trip file save + load in a temporary directory
+        with tempfile.TemporaryDirectory() as tmp_path:
+            tmp_file_path = os.path.join(tmp_path, 'example.magset')
+
+            # Construct MagnetSet instance
+            magnet_set = MagnetSet(magnet_type=magnet_type, magnet_size=magnet_size,
+                                   magnet_names=magnet_names, magnet_field_vectors=magnet_field_vectors)
+
+            with open(tmp_file_path, 'wb') as tmp_file_handle:
+                # Save the MagnetSet to the temporary directory
+                magnet_set.save(tmp_file_handle)
+
+            # Throw away the local object and reload it from the temporary file
+            magnet_set = MagnetSet.from_file(file=tmp_file_path)
+
+            # Clean up the temporary directory
+            shutil.rmtree(tmp_path, ignore_errors=True)
+
+        # Assert object members have been correctly assigned
+        self.assertEqual(magnet_set.count, count)
+        self.assertEqual(magnet_set.magnet_type, magnet_type)
+        self.assertTrue(np.allclose(magnet_set.magnet_size, magnet_size))
+        self.assertEqual(magnet_set.magnet_names, magnet_names)
+        self.assertTrue(np.allclose(magnet_set.magnet_field_vectors, magnet_field_vectors))
+
     def test_static_from_file(self):
         """
         Tests the MagnetSet class can be constructed from a .magset file using the static factory function.
