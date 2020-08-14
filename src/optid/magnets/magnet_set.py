@@ -109,20 +109,20 @@ class MagnetSet:
 
             logging.info('Saved magnet set to .magset file handle')
 
-        # Assert that the file object provided is an open file handle or can be used to open one
-        assert isinstance(file, (str, io.RawIOBase, io.BufferedIOBase, typing.BinaryIO)), \
-            'file must be a string file path or a file handle to an already open file'
-
         if isinstance(file, (io.RawIOBase, io.BufferedIOBase, typing.BinaryIO)):
             # Load directly from the already open file handle
             logging.info('Saving magnet set to .magset file handle')
             write_file(file_handle=file)
 
-        else:
+        elif isinstance(file, str):
             # Open the .sim file in a closure to ensure it gets closed on error
             with open(file, 'wb') as file_handle:
                 logging.info('Saving magnet set to .magset file [%s]', file)
                 write_file(file_handle=file_handle)
+
+        else:
+            # Assert that the file object provided is an open file handle or can be used to open one
+            raise AttributeError('file must be a string file path or a file handle to an already open file')
 
     @staticmethod
     def from_file(file : typing.Union[str, typing.BinaryIO]) -> 'MagnetSet':
