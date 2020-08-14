@@ -15,6 +15,7 @@
 
 import io
 import typing
+import nptyping as npt
 import logging
 import pickle
 import numpy as np
@@ -27,9 +28,9 @@ class MagnetSet:
 
     def __init__(self,
                  magnet_type : str,
-                 magnet_size : np.ndarray,
+                 magnet_size : npt.NDArray[(3,), npt.Float],
                  magnet_names : typing.List[str],
-                 magnet_field_vectors : np.ndarray):
+                 magnet_field_vectors : npt.NDArray[(typing.Any, 3), npt.Float]):
         """
         Constructs a MagnetSet instance and validates the values are the correct types and consistent sizes.
 
@@ -162,24 +163,24 @@ class MagnetSet:
             logging.info('Loaded magnet set [%s] with [%d] magnets', magnet_type, len(magnet_names))
             return magnet_set
 
-        # Assert that the file object provided is an open file handle or can be used to open one
-        assert isinstance(file, (str, io.RawIOBase, io.BufferedIOBase, typing.BinaryIO)), \
-               'file must be a string file path or a file handle to an already open file'
-
         if isinstance(file, (io.RawIOBase, io.BufferedIOBase, typing.BinaryIO)):
             # Load directly from the already open file handle
             logging.info('Loading magnet set from .magset file handle')
             return read_file(file_handle=file)
 
-        else:
+        elif isinstance(file, str):
             # Open the .sim file in a closure to ensure it gets closed on error
             with open(file, 'rb') as file_handle:
                 logging.info('Loading magnet set from .magset file [%s]', file)
                 return read_file(file_handle=file_handle)
 
+        else:
+            # Assert that the file object provided is an open file handle or can be used to open one
+            raise AttributeError('file must be a string file path or a file handle to an already open file')
+
     @staticmethod
     def from_sim_file(magnet_type : str,
-                      magnet_size : np.ndarray,
+                      magnet_size : npt.NDArray[(3,), npt.Float],
                       file : typing.Union[str, typing.TextIO]) -> 'MagnetSet':
         """
         Constructs a MagnetSet instance using per magnet names and field vectors from a .sim file provided by
@@ -204,7 +205,7 @@ class MagnetSet:
         """
 
         def read_file(magnet_type : str,
-                      magnet_size : np.ndarray,
+                      magnet_size : npt.NDArray[(3,), npt.Float],
                       file_handle : typing.TextIO) -> 'MagnetSet':
             """
             Private helper function for reading data from a .sim file given an already open file handle.
@@ -254,17 +255,17 @@ class MagnetSet:
             logging.info('Loaded magnet set [%s] with [%d] magnets', magnet_type, len(magnet_names))
             return magnet_set
 
-        # Assert that the file object provided is an open file handle or can be used to open one
-        assert isinstance(file, (str, io.TextIOWrapper)), \
-               'file must be a string file path or a file handle to an already open file'
-
         if isinstance(file, io.TextIOWrapper):
             # Load directly from the already open file handle
             logging.info('Loading magnet set [%s] from open .sim file handle', magnet_type)
             return read_file(magnet_type=magnet_type, magnet_size=magnet_size, file_handle=file)
 
-        else:
+        elif isinstance(file, str):
             # Open the .sim file in a closure to ensure it gets closed on error
             with open(file, 'r') as file_handle:
                 logging.info('Loading magnet set [%s] from .sim file [%s]', magnet_type, file)
                 return read_file(magnet_type=magnet_type, magnet_size=magnet_size, file_handle=file_handle)
+
+        else:
+            # Assert that the file object provided is an open file handle or can be used to open one
+            raise AttributeError('file must be a string file path or a file handle to an already open file')
