@@ -65,7 +65,7 @@ class MagnetSet:
         self.magnet_names = magnet_names
         assert (len(self.magnet_names) > 0), \
                'must have at least one magnet name'
-        assert all((len(name) > 0) for name in magnet_names), \
+        assert all((len(name) > 0) for name in self.magnet_names), \
                'all magnet names must be non-empty strings'
         assert (len(set(self.magnet_names)) == len(self.magnet_names)), \
                'all magnet names must be unique strings'
@@ -76,7 +76,7 @@ class MagnetSet:
         assert np.issubdtype(self.magnet_field_vectors.dtype, np.floating), \
                'dtype must be a float'
 
-        self.count = len(magnet_names)
+        self.count = len(self.magnet_names)
         assert (self.count == self.magnet_field_vectors.shape[0]), \
                'must have the same number of names as magnet field vectors'
 
