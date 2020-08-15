@@ -14,3 +14,4 @@
 
 
 from optid.magnets.magnet_set import MagnetSet
+from optid.magnets.magnet_slots import MagnetSlots
