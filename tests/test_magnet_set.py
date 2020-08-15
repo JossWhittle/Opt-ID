@@ -103,13 +103,15 @@ class MagnetSetTest(unittest.TestCase):
         # Assert constructor throws error from empty name string in magnet names
         self.assertRaises(Exception, MagnetSet,
                           magnet_type=magnet_type, magnet_size=magnet_size,
-                          magnet_names=['' if (index == 1) else f'{index:03d}' for index in range(count)],
+                          magnet_names=['' if (index == 1) else name
+                                        for index, name in enumerate(magnet_names)],
                           magnet_field_vectors=magnet_field_vectors)
 
         # Assert constructor throws error from non unique name strings in magnet names
         self.assertRaises(Exception, MagnetSet,
                           magnet_type=magnet_type, magnet_size=magnet_size,
-                          magnet_names=['TEST' if (index % 2 == 0) else f'{index:03d}' for index in range(count)],
+                          magnet_names=['TEST' if (index % 2 == 0) else name
+                                        for index, name in enumerate(magnet_names)],
                           magnet_field_vectors=magnet_field_vectors)
 
         # Assert constructor throws error from incorrectly shaped magnet field vectors
