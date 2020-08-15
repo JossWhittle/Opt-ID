@@ -102,10 +102,8 @@ class MagnetSet:
             """
 
             # Pack members into .magset file as a single tuple
-            pickle.dump((self.magnet_type,
-                         self.magnet_size,
-                         self.magnet_names,
-                         self.magnet_field_vectors), file_handle)
+            pickle.dump((self.magnet_type, self.magnet_size,
+                         self.magnet_names, self.magnet_field_vectors), file_handle)
 
             logging.info('Saved magnet set to .magset file handle')
 
@@ -115,7 +113,7 @@ class MagnetSet:
             write_file(file_handle=file)
 
         elif isinstance(file, str):
-            # Open the .sim file in a closure to ensure it gets closed on error
+            # Open the .magset file in a closure to ensure it gets closed on error
             with open(file, 'wb') as file_handle:
                 logging.info('Saving magnet set to .magset file [%s]', file)
                 write_file(file_handle=file_handle)
@@ -169,7 +167,7 @@ class MagnetSet:
             return read_file(file_handle=file)
 
         elif isinstance(file, str):
-            # Open the .sim file in a closure to ensure it gets closed on error
+            # Open the .magset file in a closure to ensure it gets closed on error
             with open(file, 'rb') as file_handle:
                 logging.info('Loading magnet set from .magset file [%s]', file)
                 return read_file(file_handle=file_handle)
