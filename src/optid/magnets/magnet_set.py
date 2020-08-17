@@ -20,6 +20,9 @@ import logging
 import pickle
 import numpy as np
 
+from optid.utils import validate_tensor, validate_string, validate_string_list
+from optid.errors import FileHandleError
+
 
 class MagnetSet:
     """
@@ -52,33 +55,54 @@ class MagnetSet:
             measurements for each magnet in this set.
         """
 
-        self.magnet_type = magnet_type
-        assert (len(magnet_type) > 0), \
-               'must be non-empty string'
+        try:
+            self._magnet_type = validate_string(magnet_type, assert_non_empty=True)
+        except Exception as ex:
+            logging.exception('magnet_type must be a non-empty string', exc_info=ex)
+            raise ex
 
-        self.magnet_size = magnet_size
-        assert (self.magnet_size.shape == (3,)), \
-               'must be a single 3-dim vector'
-        assert np.issubdtype(self.magnet_size.dtype, np.floating), \
-               'dtype must be a float'
+        try:
+            self._magnet_size = validate_tensor(magnet_size, shape=(3,))
+        except Exception as ex:
+            logging.exception('magnet_size must be a single 3-dim float vector', exc_info=ex)
+            raise ex
 
-        self.magnet_names = magnet_names
-        assert (len(self.magnet_names) > 0), \
-               'must have at least one magnet name'
-        assert all((len(name) > 0) for name in self.magnet_names), \
-               'all magnet names must be non-empty strings'
-        assert (len(set(self.magnet_names)) == len(self.magnet_names)), \
-               'all magnet names must be unique strings'
+        try:
+            self._magnet_names = validate_string_list(magnet_names, assert_non_empty_list=True,
+                                                                    assert_non_empty_strings=True,
+                                                                    assert_unique_strings=True)
+        except Exception as ex:
+            logging.exception('magnet_names must be a non-empty list of non-empty and unique strings', exc_info=ex)
+            raise ex
 
-        self.magnet_field_vectors = magnet_field_vectors
-        assert (self.magnet_field_vectors.shape[0] > 0) and (self.magnet_field_vectors.shape[1:] == (3,)) and \
-               'must be a tensor of N 3-dim vectors of shape (N, 3)'
-        assert np.issubdtype(self.magnet_field_vectors.dtype, np.floating), \
-               'dtype must be a float'
+        # Number of magnets derived from number of names provided. All other inputs must be consistent.
+        self._count = len(self.magnet_names)
 
-        self.count = len(self.magnet_names)
-        assert (self.count == self.magnet_field_vectors.shape[0]), \
-               'must have the same number of names as magnet field vectors'
+        try:
+            self._magnet_field_vectors = validate_tensor(magnet_field_vectors, shape=(self.count, 3))
+        except Exception as ex:
+            logging.exception('magnet_field_vectors must be a float tensor of shape (N, 3)', exc_info=ex)
+            raise ex
+
+    @property
+    def magnet_type(self):
+        return self._magnet_type
+
+    @property
+    def magnet_size(self):
+        return self._magnet_size
+
+    @property
+    def magnet_names(self):
+        return self._magnet_names
+
+    @property
+    def magnet_field_vectors(self):
+        return self._magnet_field_vectors
+
+    @property
+    def count(self):
+        return self._count
 
     def save(self, file : typing.Union[str, typing.BinaryIO]):
         """
@@ -120,7 +144,7 @@ class MagnetSet:
 
         else:
             # Assert that the file object provided is an open file handle or can be used to open one
-            raise AttributeError('file must be a string file path or a file handle to an already open file')
+            raise FileHandleError()
 
     @staticmethod
     def from_file(file : typing.Union[str, typing.BinaryIO]) -> 'MagnetSet':
@@ -174,7 +198,7 @@ class MagnetSet:
 
         else:
             # Assert that the file object provided is an open file handle or can be used to open one
-            raise AttributeError('file must be a string file path or a file handle to an already open file')
+            raise FileHandleError()
 
     @staticmethod
     def from_sim_file(magnet_type : str,
@@ -266,4 +290,4 @@ class MagnetSet:
 
         else:
             # Assert that the file object provided is an open file handle or can be used to open one
-            raise AttributeError('file must be a string file path or a file handle to an already open file')
+            raise FileHandleError()

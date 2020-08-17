@@ -13,7 +13,6 @@
 # language governing permissions and limitations under the License.
 
 
-from optid.magnets.magnet_set import MagnetSet
-from optid.magnets.magnet_slots import MagnetSlots
-from optid.magnets.magnet_slots_lookup import MagnetSlotsLookup
-
+from optid.utils.validate_tensor import validate_tensor
+from optid.utils.validate_string import validate_string
+from optid.utils.validate_string_list import validate_string_list

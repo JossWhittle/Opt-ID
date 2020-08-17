@@ -18,7 +18,9 @@ import typing
 import nptyping as npt
 import logging
 import pickle
-import numpy as np
+
+from optid.utils import validate_tensor, validate_string, validate_string_list
+from optid.errors import FileHandleError
 
 
 class MagnetSlots:
@@ -68,48 +70,73 @@ class MagnetSlots:
             direction matrix.
         """
 
-        self.magnet_type = magnet_type
-        assert (len(magnet_type) > 0), \
-               'must be non-empty string'
+        try:
+            self._magnet_type = validate_string(magnet_type, assert_non_empty=True)
+        except Exception as ex:
+            logging.exception('magnet_type must be a non-empty string', exc_info=ex)
+            raise ex
 
-        self.magnet_size = magnet_size
-        assert (self.magnet_size.shape == (3,)), \
-               'must be a single 3-dim vector'
-        assert np.issubdtype(self.magnet_size.dtype, np.floating), \
-               'dtype must be a float'
+        try:
+            self._magnet_size = validate_tensor(magnet_size, shape=(3,))
+        except Exception as ex:
+            logging.exception('magnet_size must be a single 3-dim float vector', exc_info=ex)
+            raise ex
 
-        self.magnet_beams = magnet_beams
-        assert (len(self.magnet_beams) > 0), \
-               'must have at least one magnet beam name'
-        assert all((len(name) > 0) for name in self.magnet_beams), \
-               'all magnet beam names must be non-empty strings'
+        try:
+            self._magnet_beams = validate_string_list(magnet_beams, assert_non_empty_list=True,
+                                                                   assert_non_empty_strings=True)
+        except Exception as ex:
+            logging.exception('magnet_beams must be a non-empty list of non-empty strings', exc_info=ex)
+            raise ex
 
-        self.magnet_positions = magnet_positions
-        assert (self.magnet_positions.shape[0] > 0) and (self.magnet_positions.shape[1:] == (3,)) and \
-               'must be a tensor of N 3-dim vectors of shape (N, 3)'
-        assert np.issubdtype(self.magnet_positions.dtype, np.floating), \
-               'dtype must be a float'
+        # Number of magnet slots derived from number of beam names provided. All other inputs must be consistent.
+        self._count = len(self.magnet_beams)
 
-        self.magnet_direction_matrices = magnet_direction_matrices
-        assert (self.magnet_direction_matrices.shape[0] > 0) and \
-               (self.magnet_direction_matrices.shape[1:] == (3, 3)) and \
-               'must be a tensor of N 3x3 matrices of shape (N, 3, 3)'
-        assert np.issubdtype(self.magnet_direction_matrices.dtype, np.floating), \
-               'dtype must be a float'
+        try:
+            self._magnet_positions = validate_tensor(magnet_positions, shape=(self.count, 3))
+        except Exception as ex:
+            logging.exception('magnet_positions must be a float tensor of shape (N, 3)', exc_info=ex)
+            raise ex
 
-        self.magnet_flip_vectors = magnet_flip_vectors
-        assert (self.magnet_flip_vectors.shape[0] > 0) and (self.magnet_flip_vectors.shape[1:] == (3,)) and \
-               'must be a tensor of N 3-dim vectors of shape (N, 3,)'
-        assert np.issubdtype(self.magnet_flip_vectors.dtype, np.floating), \
-               'dtype must be a float'
+        try:
+            self._magnet_direction_matrices = validate_tensor(magnet_direction_matrices, shape=(self.count, 3, 3))
+        except Exception as ex:
+            logging.exception('magnet_direction_matrices must be a float tensor of shape (N, 3, 3)', exc_info=ex)
+            raise ex
 
-        self.count = len(self.magnet_beams)
-        assert (self.count == self.magnet_positions.shape[0]), \
-               'must have the same number of beam names as magnet positions'
-        assert (self.count == self.magnet_direction_matrices.shape[0]), \
-               'must have the same number of beam names as magnet direction matrices'
-        assert (self.count == self.magnet_flip_vectors.shape[0]), \
-               'must have the same number of beam names as magnet flip vectors'
+        try:
+            self._magnet_flip_vectors = validate_tensor(magnet_flip_vectors, shape=(self.count, 3))
+        except Exception as ex:
+            logging.exception('magnet_flip_vectors must be a float tensor of shape (N, 3)', exc_info=ex)
+            raise ex
+
+    @property
+    def magnet_type(self):
+        return self._magnet_type
+
+    @property
+    def magnet_size(self):
+        return self._magnet_size
+
+    @property
+    def magnet_beams(self):
+        return self._magnet_beams
+
+    @property
+    def magnet_positions(self):
+        return self._magnet_positions
+
+    @property
+    def magnet_direction_matrices(self):
+        return self._magnet_direction_matrices
+
+    @property
+    def magnet_flip_vectors(self):
+        return self._magnet_flip_vectors
+
+    @property
+    def count(self):
+        return self._count
 
     def save(self, file : typing.Union[str, typing.BinaryIO]):
         """
@@ -153,7 +180,7 @@ class MagnetSlots:
 
         else:
             # Assert that the file object provided is an open file handle or can be used to open one
-            raise AttributeError('file must be a string file path or a file handle to an already open file')
+            raise FileHandleError()
 
     @staticmethod
     def from_file(file : typing.Union[str, typing.BinaryIO]) -> 'MagnetSlots':
@@ -210,4 +237,4 @@ class MagnetSlots:
 
         else:
             # Assert that the file object provided is an open file handle or can be used to open one
-            raise AttributeError('file must be a string file path or a file handle to an already open file')
+            raise FileHandleError()

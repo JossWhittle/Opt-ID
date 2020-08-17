@@ -13,6 +13,11 @@
 # language governing permissions and limitations under the License.
 
 
+from optid import magnets
+from optid import utils
+from optid import errors
+
+
 VERSION = 'v3.0a'
 """
 str : Opt-ID version string.

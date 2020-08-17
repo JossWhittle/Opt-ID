@@ -13,7 +13,10 @@
 # language governing permissions and limitations under the License.
 
 
-from optid.magnets.magnet_set import MagnetSet
-from optid.magnets.magnet_slots import MagnetSlots
-from optid.magnets.magnet_slots_lookup import MagnetSlotsLookup
+class FileHandleError(Exception):
+    """
+    Exception to throw when a variable is not a valid file path or open file handle.
+    """
 
+    def __str__(self):
+        return 'file must be a string file path or a file handle to an already open file'

@@ -22,6 +22,7 @@ import inspect
 import numpy as np
 
 # Test imports
+import optid
 from optid.magnets import MagnetSet
 
 
@@ -82,45 +83,45 @@ class MagnetSetTest(unittest.TestCase):
         count, magnet_type, magnet_size, magnet_names, magnet_field_vectors = self.dummy_magnet_set_values()
 
         # Assert constructor throws error from empty magnet type string
-        self.assertRaises(Exception, MagnetSet,
+        self.assertRaises(optid.errors.StringEmptyError, MagnetSet,
                           magnet_type='',
                           magnet_size=magnet_size, magnet_names=magnet_names,
                           magnet_field_vectors=magnet_field_vectors)
 
         # Assert constructor throws error from incorrectly shaped magnet size
-        self.assertRaises(Exception, MagnetSet,
+        self.assertRaises(optid.errors.TensorShapeError, MagnetSet,
                           magnet_type=magnet_type,
                           magnet_size=np.random.uniform(size=(4,)),
                           magnet_names=magnet_names,
                           magnet_field_vectors=magnet_field_vectors)
 
         # Assert constructor throws error from empty list of name strings for magnet names
-        self.assertRaises(Exception, MagnetSet,
+        self.assertRaises(optid.errors.StringListEmptyError, MagnetSet,
                           magnet_type=magnet_type, magnet_size=magnet_size,
                           magnet_names=[],
                           magnet_field_vectors=magnet_field_vectors)
 
         # Assert constructor throws error from empty name string in magnet names
-        self.assertRaises(Exception, MagnetSet,
+        self.assertRaises(optid.errors.StringListElementEmptyError, MagnetSet,
                           magnet_type=magnet_type, magnet_size=magnet_size,
                           magnet_names=['' if (index == 1) else name
                                         for index, name in enumerate(magnet_names)],
                           magnet_field_vectors=magnet_field_vectors)
 
         # Assert constructor throws error from non unique name strings in magnet names
-        self.assertRaises(Exception, MagnetSet,
+        self.assertRaises(optid.errors.StringListElementUniquenessError, MagnetSet,
                           magnet_type=magnet_type, magnet_size=magnet_size,
                           magnet_names=['TEST' if (index % 2 == 0) else name
                                         for index, name in enumerate(magnet_names)],
                           magnet_field_vectors=magnet_field_vectors)
 
         # Assert constructor throws error from incorrectly shaped magnet field vectors
-        self.assertRaises(Exception, MagnetSet,
+        self.assertRaises(optid.errors.TensorShapeError, MagnetSet,
                           magnet_type=magnet_type, magnet_size=magnet_size, magnet_names=magnet_names,
                           magnet_field_vectors=np.random.uniform(size=(count, 4)))
 
         # Assert constructor throws error from magnet names and magnet field vectors being different lengths
-        self.assertRaises(Exception, MagnetSet,
+        self.assertRaises(optid.errors.TensorShapeError, MagnetSet,
                           magnet_type=magnet_type, magnet_size=magnet_size,
                           magnet_names=magnet_names[:-1],
                           magnet_field_vectors=magnet_field_vectors)
@@ -206,7 +207,7 @@ class MagnetSetTest(unittest.TestCase):
                                magnet_names=magnet_names, magnet_field_vectors=magnet_field_vectors)
 
         # Attempt to save to a bad file parameter
-        self.assertRaises(Exception, magnet_set.save, file=None)
+        self.assertRaises(optid.errors.FileHandleError, magnet_set.save, file=None)
 
     def test_static_from_file(self):
         """
@@ -269,7 +270,7 @@ class MagnetSetTest(unittest.TestCase):
         """
 
         # Attempt to load from to a bad file parameter
-        self.assertRaises(Exception, MagnetSet.from_file, file=None)
+        self.assertRaises(optid.errors.FileHandleError, MagnetSet.from_file, file=None)
 
     def test_static_from_sim_file(self):
         """
@@ -337,7 +338,7 @@ class MagnetSetTest(unittest.TestCase):
         _, magnet_type, magnet_size, _, _ = self.dummy_magnet_set_values()
 
         # Assert from_sim_file throws error when file is not a string file path or an open file handle
-        self.assertRaises(Exception, MagnetSet.from_sim_file,
+        self.assertRaises(optid.errors.FileHandleError, MagnetSet.from_sim_file,
                           magnet_type=magnet_type, magnet_size=magnet_size,
                           file=None)
 
