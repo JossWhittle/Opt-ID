@@ -28,7 +28,7 @@ from optid.magnets import MagnetSlots
 
 class MagnetSlotsTest(unittest.TestCase):
     """
-    Tests the MagnetSet class can be imported and used correctly.
+    Tests the MagnetSlots class can be imported and used correctly.
     """
 
     @staticmethod
