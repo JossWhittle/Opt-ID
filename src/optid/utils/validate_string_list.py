@@ -17,6 +17,23 @@ import typing
 import numpy as np
 
 
+class StringListTypeError(Exception):
+    """
+    Exception to throw when a string list is not a list.
+    """
+
+    def __init__(self, dtype):
+        super().__init__()
+        self._dtype = dtype
+
+    @property
+    def dtype(self):
+        return self._dtype
+
+    def __str__(self):
+        return f'string list is not a list: expected {list}, observed {type(self.dtype)}'
+
+
 class StringListEmptyError(Exception):
     """
     Exception to throw when a string list does not have any elements.
@@ -129,6 +146,9 @@ def validate_string_list(values : typing.List[str],
     If the list is valid and matches the expected length and properties then return the list to allow
     streamlined assignment.
     """
+
+    if not isinstance(values, list):
+        raise StringListTypeError(dtype=type(values))
 
     if shape is not None:
         if len(values) != shape:

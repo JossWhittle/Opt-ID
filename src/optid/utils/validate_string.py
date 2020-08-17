@@ -26,6 +26,24 @@ class StringEmptyError(Exception):
         return 'string must have a non-empty value'
 
 
+class StringTypeError(Exception):
+    """
+    Exception to throw when a string is not a string.
+    """
+
+    def __init__(self, element_value : typing.Any):
+        super().__init__()
+        self._element_value = element_value
+
+    @property
+    def element_value(self):
+        return self._element_value
+
+    def __str__(self):
+        return f'parameter with value {self.element_value} is not a string: ' \
+               f'expected {str}, observed {type(self.element_value)}'
+
+
 def validate_string(value : str,
                     assert_non_empty : bool = True):
     """
@@ -43,6 +61,9 @@ def validate_string(value : str,
     -------
     If the string is valid and matches the properties then return the string to allow streamlined assignment.
     """
+
+    if not isinstance(value, str):
+        raise StringTypeError(element_value=value)
 
     if assert_non_empty:
         if len(value) == 0:

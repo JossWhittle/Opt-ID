@@ -69,7 +69,7 @@ class MagnetSlotsTest(unittest.TestCase):
         count, magnet_type, magnet_size, magnet_beams, magnet_positions, \
                          magnet_direction_matrices, magnet_flip_vectors = self.dummy_magnet_slots_values()
 
-        # Construct MagnetSet instance
+        # Construct MagnetSlots instance
         magnet_slots = MagnetSlots(magnet_type=magnet_type, magnet_size=magnet_size,
                                    magnet_beams=magnet_beams, magnet_positions=magnet_positions,
                                    magnet_direction_matrices=magnet_direction_matrices,
@@ -84,7 +84,7 @@ class MagnetSlotsTest(unittest.TestCase):
         self.assertTrue(np.allclose(magnet_slots.magnet_direction_matrices, magnet_direction_matrices))
         self.assertTrue(np.allclose(magnet_slots.magnet_flip_vectors, magnet_flip_vectors))
 
-    def test_constructor_raises_on_bad_parameters(self):
+    def test_constructor_raises_on_bad_parameters_magnet_type(self):
         """
         Tests the MagnetSlots class throws exceptions when constructed with incorrect parameters.
         """
@@ -100,6 +100,22 @@ class MagnetSlotsTest(unittest.TestCase):
                           magnet_direction_matrices=magnet_direction_matrices,
                           magnet_flip_vectors=magnet_flip_vectors)
 
+        # Assert constructor throws error from wrong typed magnet type string
+        self.assertRaises(optid.errors.StringTypeError, MagnetSlots,
+                          magnet_type=None, magnet_size=magnet_size,
+                          magnet_beams=magnet_beams, magnet_positions=magnet_positions,
+                          magnet_direction_matrices=magnet_direction_matrices,
+                          magnet_flip_vectors=magnet_flip_vectors)
+
+    def test_constructor_raises_on_bad_parameters_magnet_size(self):
+        """
+        Tests the MagnetSlots class throws exceptions when constructed with incorrect parameters.
+        """
+
+        # Make dummy parameters
+        count, magnet_type, magnet_size, magnet_beams, magnet_positions, \
+                         magnet_direction_matrices, magnet_flip_vectors = self.dummy_magnet_slots_values()
+
         # Assert constructor throws error from incorrectly shaped magnet size
         self.assertRaises(optid.errors.TensorShapeError, MagnetSlots,
                           magnet_type=magnet_type, magnet_size=np.random.uniform(size=(4,)),
@@ -107,14 +123,37 @@ class MagnetSlotsTest(unittest.TestCase):
                           magnet_direction_matrices=magnet_direction_matrices,
                           magnet_flip_vectors=magnet_flip_vectors)
 
-        # Assert constructor throws error from empty list of name strings for magnet names
+        # Assert constructor throws error from incorrectly typed magnet size
+        self.assertRaises(optid.errors.TensorTypeError, MagnetSlots,
+                          magnet_type=magnet_type, magnet_size=magnet_size.astype(np.int32),
+                          magnet_beams=magnet_beams, magnet_positions=magnet_positions,
+                          magnet_direction_matrices=magnet_direction_matrices,
+                          magnet_flip_vectors=magnet_flip_vectors)
+
+    def test_constructor_raises_on_bad_parameters_magnet_beams(self):
+        """
+        Tests the MagnetSlots class throws exceptions when constructed with incorrect parameters.
+        """
+
+        # Make dummy parameters
+        count, magnet_type, magnet_size, magnet_beams, magnet_positions, \
+                         magnet_direction_matrices, magnet_flip_vectors = self.dummy_magnet_slots_values()
+
+        # Assert constructor throws error from wrong typed list of name strings for magnet beams
+        self.assertRaises(optid.errors.StringListTypeError, MagnetSlots,
+                          magnet_type=magnet_type, magnet_size=magnet_size,
+                          magnet_beams=None, magnet_positions=magnet_positions,
+                          magnet_direction_matrices=magnet_direction_matrices,
+                          magnet_flip_vectors=magnet_flip_vectors)
+
+        # Assert constructor throws error from empty list of name strings for magnet beams
         self.assertRaises(optid.errors.StringListEmptyError, MagnetSlots,
                           magnet_type=magnet_type, magnet_size=magnet_size,
                           magnet_beams=[], magnet_positions=magnet_positions,
                           magnet_direction_matrices=magnet_direction_matrices,
                           magnet_flip_vectors=magnet_flip_vectors)
 
-        # Assert constructor throws error from empty name string in magnet names
+        # Assert constructor throws error from empty name string in magnet beams
         self.assertRaises(optid.errors.StringListElementEmptyError, MagnetSlots,
                           magnet_type=magnet_type, magnet_size=magnet_size,
                           magnet_beams=['' if (index == 1) else beam
@@ -122,6 +161,15 @@ class MagnetSlotsTest(unittest.TestCase):
                           magnet_positions=magnet_positions,
                           magnet_direction_matrices=magnet_direction_matrices,
                           magnet_flip_vectors=magnet_flip_vectors)
+
+    def test_constructor_raises_on_bad_parameters_magnet_positions(self):
+        """
+        Tests the MagnetSlots class throws exceptions when constructed with incorrect parameters.
+        """
+
+        # Make dummy parameters
+        count, magnet_type, magnet_size, magnet_beams, magnet_positions, \
+                         magnet_direction_matrices, magnet_flip_vectors = self.dummy_magnet_slots_values()
 
         # Assert constructor throws error from incorrectly shaped magnet positions
         self.assertRaises(optid.errors.TensorShapeError, MagnetSlots,
@@ -137,6 +185,22 @@ class MagnetSlotsTest(unittest.TestCase):
                           magnet_direction_matrices=magnet_direction_matrices,
                           magnet_flip_vectors=magnet_flip_vectors)
 
+        # Assert constructor throws error from incorrectly typed magnet positions
+        self.assertRaises(optid.errors.TensorTypeError, MagnetSlots,
+                          magnet_type=magnet_type, magnet_size=magnet_size, magnet_beams=magnet_beams,
+                          magnet_positions=magnet_positions.astype(np.int32),
+                          magnet_direction_matrices=magnet_direction_matrices,
+                          magnet_flip_vectors=magnet_flip_vectors)
+
+    def test_constructor_raises_on_bad_parameters_magnet_direction_matrices(self):
+        """
+        Tests the MagnetSlots class throws exceptions when constructed with incorrect parameters.
+        """
+
+        # Make dummy parameters
+        count, magnet_type, magnet_size, magnet_beams, magnet_positions, \
+                         magnet_direction_matrices, magnet_flip_vectors = self.dummy_magnet_slots_values()
+
         # Assert constructor throws error from magnet names and magnet direction matrices being different lengths
         self.assertRaises(optid.errors.TensorShapeError, MagnetSlots,
                           magnet_type=magnet_type, magnet_size=magnet_size,
@@ -144,12 +208,35 @@ class MagnetSlotsTest(unittest.TestCase):
                           magnet_direction_matrices=magnet_direction_matrices[:-1],
                           magnet_flip_vectors=magnet_flip_vectors)
 
+        # Assert constructor throws error from incorrectly typed magnet direction matrices
+        self.assertRaises(optid.errors.TensorTypeError, MagnetSlots,
+                          magnet_type=magnet_type, magnet_size=magnet_size,
+                          magnet_beams=magnet_beams, magnet_positions=magnet_positions,
+                          magnet_direction_matrices=magnet_direction_matrices.astype(np.int32),
+                          magnet_flip_vectors=magnet_flip_vectors)
+
+    def test_constructor_raises_on_bad_parameters_magnet_flip_vectors(self):
+        """
+        Tests the MagnetSlots class throws exceptions when constructed with incorrect parameters.
+        """
+
+        # Make dummy parameters
+        count, magnet_type, magnet_size, magnet_beams, magnet_positions, \
+                         magnet_direction_matrices, magnet_flip_vectors = self.dummy_magnet_slots_values()
+
         # Assert constructor throws error from magnet names and magnet flip vectors being different lengths
         self.assertRaises(optid.errors.TensorShapeError, MagnetSlots,
                           magnet_type=magnet_type, magnet_size=magnet_size,
                           magnet_beams=magnet_beams, magnet_positions=magnet_positions,
                           magnet_direction_matrices=magnet_direction_matrices,
                           magnet_flip_vectors=magnet_flip_vectors[:-1])
+
+        # Assert constructor throws error from incorrectly typed magnet flip vectors
+        self.assertRaises(optid.errors.TensorTypeError, MagnetSlots,
+                          magnet_type=magnet_type, magnet_size=magnet_size,
+                          magnet_beams=magnet_beams, magnet_positions=magnet_positions,
+                          magnet_direction_matrices=magnet_direction_matrices,
+                          magnet_flip_vectors=magnet_flip_vectors.astype(np.int32))
 
     def test_save(self):
         """
@@ -165,7 +252,7 @@ class MagnetSlotsTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp_path:
             tmp_file_path = os.path.join(tmp_path, 'example.magslots')
 
-            # Construct MagnetSet instance
+            # Construct MagnetSlots instance
             magnet_slots = MagnetSlots(magnet_type=magnet_type, magnet_size=magnet_size,
                                        magnet_beams=magnet_beams, magnet_positions=magnet_positions,
                                        magnet_direction_matrices=magnet_direction_matrices,
@@ -203,7 +290,7 @@ class MagnetSlotsTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp_path:
             tmp_file_path = os.path.join(tmp_path, 'example.magslots')
 
-            # Construct MagnetSet instance
+            # Construct MagnetSlots instance
             magnet_slots = MagnetSlots(magnet_type=magnet_type, magnet_size=magnet_size,
                                        magnet_beams=magnet_beams, magnet_positions=magnet_positions,
                                        magnet_direction_matrices=magnet_direction_matrices,
@@ -238,7 +325,7 @@ class MagnetSlotsTest(unittest.TestCase):
         count, magnet_type, magnet_size, magnet_beams, magnet_positions, \
                          magnet_direction_matrices, magnet_flip_vectors = self.dummy_magnet_slots_values()
 
-        # Construct MagnetSet instance
+        # Construct MagnetSlots instance
         magnet_slots = MagnetSlots(magnet_type=magnet_type, magnet_size=magnet_size,
                                    magnet_beams=magnet_beams, magnet_positions=magnet_positions,
                                    magnet_direction_matrices=magnet_direction_matrices,
@@ -264,7 +351,7 @@ class MagnetSlotsTest(unittest.TestCase):
         count, magnet_type, magnet_size, magnet_beams, magnet_positions, \
                          magnet_direction_matrices, magnet_flip_vectors = self.dummy_magnet_slots_values()
 
-        # Construct MagnetSet instance
+        # Construct MagnetSlots instance
         magnet_slots = MagnetSlots.from_file(file=os.path.join(inputs_path, 'example.magslots'))
 
         # Assert object members have been correctly assigned
@@ -295,7 +382,7 @@ class MagnetSlotsTest(unittest.TestCase):
                          magnet_direction_matrices, magnet_flip_vectors = self.dummy_magnet_slots_values()
 
         with open(os.path.join(inputs_path, 'example.magslots'), 'rb') as file_handle:
-            # Construct MagnetSet instance
+            # Construct MagnetSlots instance
             magnet_slots = MagnetSlots.from_file(file=file_handle)
 
         # Assert object members have been correctly assigned

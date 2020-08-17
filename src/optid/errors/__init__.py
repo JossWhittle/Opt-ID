@@ -15,9 +15,9 @@
 
 from optid.utils.validate_tensor import TensorShapeError, TensorTypeError
 
-from optid.utils.validate_string import StringEmptyError
+from optid.utils.validate_string import StringEmptyError, StringTypeError
 
-from optid.utils.validate_string_list import StringListEmptyError, StringListShapeError, \
+from optid.utils.validate_string_list import StringListTypeError, StringListEmptyError, StringListShapeError, \
                                              StringListElementTypeError, StringListElementEmptyError, \
                                              StringListElementUniquenessError
 
