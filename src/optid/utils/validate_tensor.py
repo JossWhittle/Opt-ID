@@ -47,7 +47,7 @@ class TensorTypeError(Exception):
     Exception to throw when a tensor does not have the expected dtype.
     """
 
-    def __init__(self, expected_dtype: np.dtype, observed_dtype: np.dtype):
+    def __init__(self, expected_dtype : typing.Any, observed_dtype : typing.Any):
         super().__init__()
         self._expected_dtype = expected_dtype
         self._observed_dtype = observed_dtype
@@ -89,6 +89,9 @@ def validate_tensor(tensor: np.ndarray,
     If the tensor is valid and matches the expected shape and type then return the tensor to allow
     streamlined assignment.
     """
+
+    if not isinstance(tensor, np.ndarray):
+        raise TensorTypeError(expected_dtype=np.ndarray, observed_dtype=type(tensor))
 
     if shape is not None:
         if tensor.ndim != len(shape):
