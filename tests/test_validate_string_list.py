@@ -17,15 +17,17 @@
 import unittest
 
 # Test imports
+import optid
 from optid.utils import validate_string_list
 
-import optid
-optid.utils.logging.attach_console_logger(remove_existing=True)
+# Configure debug logging
+from optid.utils.logging import attach_console_logger
+attach_console_logger(remove_existing=True)
 
 
-class ValidateStringListTest(unittest.TestCase):
+class ValidateStringTest(unittest.TestCase):
     """
-    Tests the validate_string_list class can be imported and used correctly.
+    Tests the validate_string_list function can be imported and used correctly.
     """
 
     def test_type(self):

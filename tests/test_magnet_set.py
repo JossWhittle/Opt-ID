@@ -22,10 +22,12 @@ import inspect
 import numpy as np
 
 # Test imports
+import optid
 from optid.magnets import MagnetSet
 
-import optid
-optid.utils.logging.attach_console_logger(remove_existing=True)
+# Configure debug logging
+from optid.utils.logging import attach_console_logger
+attach_console_logger(remove_existing=True)
 
 
 class MagnetSetTest(unittest.TestCase):
