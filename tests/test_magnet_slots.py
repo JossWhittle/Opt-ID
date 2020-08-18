@@ -125,6 +125,13 @@ class MagnetSlotsTest(unittest.TestCase):
                                magnet_direction_matrices=magnet_direction_matrices,
                                magnet_flip_vectors=magnet_flip_vectors)
 
+        # Assert constructor throws error from incorrectly shaped magnet size
+        self.assertRaisesRegex(optid.errors.ValidateTensorShapeError, '.*', MagnetSlots,
+                               magnet_type=magnet_type, magnet_size=np.random.uniform(size=(3, 1)),
+                               magnet_beams=magnet_beams, magnet_positions=magnet_positions,
+                               magnet_direction_matrices=magnet_direction_matrices,
+                               magnet_flip_vectors=magnet_flip_vectors)
+
         # Assert constructor throws error from incorrectly typed magnet size
         self.assertRaisesRegex(optid.errors.ValidateTensorElementTypeError, '.*', MagnetSlots,
                                magnet_type=magnet_type, magnet_size=magnet_size.astype(np.int32),

@@ -111,6 +111,13 @@ class MagnetSetTest(unittest.TestCase):
                                magnet_names=magnet_names,
                                magnet_field_vectors=magnet_field_vectors)
 
+        # Assert constructor throws error from incorrectly shaped magnet size
+        self.assertRaisesRegex(optid.errors.ValidateTensorShapeError, '.*', MagnetSet,
+                               magnet_type=magnet_type,
+                               magnet_size=np.random.uniform(size=(3, 1)),
+                               magnet_names=magnet_names,
+                               magnet_field_vectors=magnet_field_vectors)
+
         # Assert constructor throws error from incorrectly typed magnet size
         self.assertRaisesRegex(optid.errors.ValidateTensorElementTypeError, '.*', MagnetSet,
                                magnet_type=magnet_type,
