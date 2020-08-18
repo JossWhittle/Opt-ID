@@ -1,0 +1,51 @@
+# Copyright 2017 Diamond Light Source
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+# either express or implied. See the License for the specific
+# language governing permissions and limitations under the License.
+
+
+# Utility imports
+import unittest
+
+# Test imports
+import optid
+from optid.utils import validate_string
+
+# Configure debug logging
+from optid.utils.logging import attach_console_logger
+attach_console_logger(remove_existing=True)
+
+
+class ValidateStringListTest(unittest.TestCase):
+    """
+    Tests the validate_string function can be imported and used correctly.
+    """
+
+    def test_type(self):
+        """
+        Tests the validate_string function checks for values type.
+        """
+
+        validate_string(value='hello')
+
+        self.assertRaisesRegex(optid.errors.ValidateStringTypeError, '.*', validate_string,
+                               value=None)
+
+    def test_empty(self):
+        """
+        Tests the validate_string function checks if the string is empty if requested.
+        """
+
+        validate_string(value='', assert_non_empty=False)
+
+        self.assertRaisesRegex(optid.errors.ValidateStringEmptyError, '.*', validate_string,
+                               value='', assert_non_empty=True)
