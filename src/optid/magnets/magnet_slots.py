@@ -161,18 +161,13 @@ class MagnetSlots:
                 An open writable file handle to a .magslots file.
             """
 
-            try:
-                # Pack members into .magslots file as a single tuple
-                pickle.dump((self.magnet_type, self.magnet_size,
-                             self.magnet_beams, self.magnet_positions,
-                             self.magnet_direction_matrices,
-                             self.magnet_flip_vectors), file_handle)
+            # Pack members into .magslots file as a single tuple
+            pickle.dump((self.magnet_type, self.magnet_size,
+                         self.magnet_beams, self.magnet_positions,
+                         self.magnet_direction_matrices,
+                         self.magnet_flip_vectors), file_handle)
 
-                logger.info('Saved magnet slots to .magslots file handle')
-
-            except Exception as ex:
-                logger.exception('Failed to save magnet slots to .magslots file', exc_info=ex)
-                raise ex
+            logger.info('Saved magnet slots to .magslots file handle')
 
         if isinstance(file, (io.RawIOBase, io.BufferedIOBase, typing.BinaryIO)):
             # Load directly from the already open file handle
@@ -218,22 +213,17 @@ class MagnetSlots:
             A MagnetSet instance with the desired values loaded from the .magslots file.
             """
 
-            try:
-                # Unpack members from .magslots file as a single tuple
-                (magnet_type, magnet_size, magnet_beams, magnet_positions,
-                 magnet_direction_matrices, magnet_flip_vectors) = pickle.load(file_handle)
+            # Unpack members from .magslots file as a single tuple
+            (magnet_type, magnet_size, magnet_beams, magnet_positions,
+             magnet_direction_matrices, magnet_flip_vectors) = pickle.load(file_handle)
 
-                # Offload object construction and validation to the MagnetSlots constructor
-                magnet_slots = MagnetSlots(magnet_type=magnet_type, magnet_size=magnet_size,
-                                           magnet_beams=magnet_beams, magnet_positions=magnet_positions,
-                                           magnet_direction_matrices=magnet_direction_matrices,
-                                           magnet_flip_vectors=magnet_flip_vectors)
+            # Offload object construction and validation to the MagnetSlots constructor
+            magnet_slots = MagnetSlots(magnet_type=magnet_type, magnet_size=magnet_size,
+                                       magnet_beams=magnet_beams, magnet_positions=magnet_positions,
+                                       magnet_direction_matrices=magnet_direction_matrices,
+                                       magnet_flip_vectors=magnet_flip_vectors)
 
-                logger.info('Loaded magnet slots [%s] with [%d] slots', magnet_type, len(magnet_beams))
-
-            except Exception as ex:
-                logger.exception('Failed to load magnet slots from .magslots file', exc_info=ex)
-                raise ex
+            logger.info('Loaded magnet slots [%s] with [%d] slots', magnet_type, len(magnet_beams))
 
             return magnet_slots
 

@@ -127,16 +127,11 @@ class MagnetSet:
                 An open writable file handle to a .magset file.
             """
 
-            try:
-                # Pack members into .magset file as a single tuple
-                pickle.dump((self.magnet_type, self.magnet_size,
-                             self.magnet_names, self.magnet_field_vectors), file_handle)
+            # Pack members into .magset file as a single tuple
+            pickle.dump((self.magnet_type, self.magnet_size,
+                         self.magnet_names, self.magnet_field_vectors), file_handle)
 
-                logger.info('Saved magnet set to .magset file handle')
-
-            except Exception as ex:
-                logger.exception('Failed to save magnet set to .magset file', exc_info=ex)
-                raise ex
+            logger.info('Saved magnet set to .magset file handle')
 
         if isinstance(file, (io.RawIOBase, io.BufferedIOBase, typing.BinaryIO)):
             # Load directly from the already open file handle
@@ -182,19 +177,14 @@ class MagnetSet:
             A MagnetSet instance with the desired values loaded from the .magset file.
             """
 
-            try:
-                # Unpack members from .magset file as a single tuple
-                (magnet_type, magnet_size, magnet_names, magnet_field_vectors) = pickle.load(file_handle)
+            # Unpack members from .magset file as a single tuple
+            (magnet_type, magnet_size, magnet_names, magnet_field_vectors) = pickle.load(file_handle)
 
-                # Offload object construction and validation to the MagnetSet constructor
-                magnet_set = MagnetSet(magnet_type=magnet_type, magnet_size=magnet_size,
-                                       magnet_names=magnet_names, magnet_field_vectors=magnet_field_vectors)
+            # Offload object construction and validation to the MagnetSet constructor
+            magnet_set = MagnetSet(magnet_type=magnet_type, magnet_size=magnet_size,
+                                   magnet_names=magnet_names, magnet_field_vectors=magnet_field_vectors)
 
-                logger.info('Loaded magnet set [%s] with [%d] magnets', magnet_type, len(magnet_names))
-
-            except Exception as ex:
-                logger.exception('Failed to load magnet set from .magset file', exc_info=ex)
-                raise ex
+            logger.info('Loaded magnet set [%s] with [%d] magnets', magnet_type, len(magnet_names))
 
             return magnet_set
 
