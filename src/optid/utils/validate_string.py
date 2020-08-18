@@ -14,10 +14,15 @@
 
 
 import typing
-import numpy as np
 
 
-class StringEmptyError(Exception):
+class ValidateStringErrorBase(Exception):
+    """
+    Base Exception to inherit from for string errors.
+    """
+
+
+class ValidateStringEmptyError(ValidateStringErrorBase):
     """
     Exception to throw when a string is empty.
     """
@@ -26,7 +31,7 @@ class StringEmptyError(Exception):
         return 'string must have a non-empty value'
 
 
-class StringTypeError(Exception):
+class ValidateStringTypeError(ValidateStringErrorBase):
     """
     Exception to throw when a string is not a string.
     """
@@ -63,11 +68,11 @@ def validate_string(value : str,
     """
 
     if not isinstance(value, str):
-        raise StringTypeError(element_value=value)
+        raise ValidateStringTypeError(element_value=value)
 
     if assert_non_empty:
         if len(value) == 0:
-            raise StringEmptyError()
+            raise ValidateStringEmptyError()
 
     # Return the string if it is valid
     return value

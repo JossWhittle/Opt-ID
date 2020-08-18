@@ -16,11 +16,13 @@
 import io
 import typing
 import nptyping as npt
-import logging
 import pickle
 
 from optid.utils import validate_tensor, validate_string, validate_string_list
 from optid.errors import FileHandleError
+
+import optid
+logger = optid.utils.logging.get_logger('optid.magnets.MagnetSlots')
 
 
 class MagnetSlots:
@@ -73,20 +75,20 @@ class MagnetSlots:
         try:
             self._magnet_type = validate_string(magnet_type, assert_non_empty=True)
         except Exception as ex:
-            logging.exception('magnet_type must be a non-empty string', exc_info=ex)
+            logger.exception('magnet_type must be a non-empty string', exc_info=ex)
             raise ex
 
         try:
             self._magnet_size = validate_tensor(magnet_size, shape=(3,))
         except Exception as ex:
-            logging.exception('magnet_size must be a single 3-dim float vector', exc_info=ex)
+            logger.exception('magnet_size must be a single 3-dim float vector', exc_info=ex)
             raise ex
 
         try:
             self._magnet_beams = validate_string_list(magnet_beams, assert_non_empty_list=True,
                                                                    assert_non_empty_strings=True)
         except Exception as ex:
-            logging.exception('magnet_beams must be a non-empty list of non-empty strings', exc_info=ex)
+            logger.exception('magnet_beams must be a non-empty list of non-empty strings', exc_info=ex)
             raise ex
 
         # Number of magnet slots derived from number of beam names provided. All other inputs must be consistent.
@@ -95,19 +97,19 @@ class MagnetSlots:
         try:
             self._magnet_positions = validate_tensor(magnet_positions, shape=(self.count, 3))
         except Exception as ex:
-            logging.exception('magnet_positions must be a float tensor of shape (N, 3)', exc_info=ex)
+            logger.exception('magnet_positions must be a float tensor of shape (N, 3)', exc_info=ex)
             raise ex
 
         try:
             self._magnet_direction_matrices = validate_tensor(magnet_direction_matrices, shape=(self.count, 3, 3))
         except Exception as ex:
-            logging.exception('magnet_direction_matrices must be a float tensor of shape (N, 3, 3)', exc_info=ex)
+            logger.exception('magnet_direction_matrices must be a float tensor of shape (N, 3, 3)', exc_info=ex)
             raise ex
 
         try:
             self._magnet_flip_vectors = validate_tensor(magnet_flip_vectors, shape=(self.count, 3))
         except Exception as ex:
-            logging.exception('magnet_flip_vectors must be a float tensor of shape (N, 3)', exc_info=ex)
+            logger.exception('magnet_flip_vectors must be a float tensor of shape (N, 3)', exc_info=ex)
             raise ex
 
     @property
@@ -159,23 +161,28 @@ class MagnetSlots:
                 An open writable file handle to a .magslots file.
             """
 
-            # Pack members into .magslots file as a single tuple
-            pickle.dump((self.magnet_type, self.magnet_size,
-                         self.magnet_beams, self.magnet_positions,
-                         self.magnet_direction_matrices,
-                         self.magnet_flip_vectors), file_handle)
+            try:
+                # Pack members into .magslots file as a single tuple
+                pickle.dump((self.magnet_type, self.magnet_size,
+                             self.magnet_beams, self.magnet_positions,
+                             self.magnet_direction_matrices,
+                             self.magnet_flip_vectors), file_handle)
 
-            logging.info('Saved magnet slots to .magslots file handle')
+                logger.info('Saved magnet slots to .magslots file handle')
+
+            except Exception as ex:
+                logger.exception('Failed to save magnet slots to .magslots file', exc_info=ex)
+                raise ex
 
         if isinstance(file, (io.RawIOBase, io.BufferedIOBase, typing.BinaryIO)):
             # Load directly from the already open file handle
-            logging.info('Saving magnet slots to .magslots file handle')
+            logger.info('Saving magnet slots to .magslots file handle')
             write_file(file_handle=file)
 
         elif isinstance(file, str):
             # Open the .magslots file in a closure to ensure it gets closed on error
             with open(file, 'wb') as file_handle:
-                logging.info('Saving magnet slots to .magslots file [%s]', file)
+                logger.info('Saving magnet slots to .magslots file [%s]', file)
                 write_file(file_handle=file_handle)
 
         else:
@@ -211,28 +218,34 @@ class MagnetSlots:
             A MagnetSet instance with the desired values loaded from the .magslots file.
             """
 
-            # Unpack members from .magslots file as a single tuple
-            (magnet_type, magnet_size, magnet_beams, magnet_positions,
-             magnet_direction_matrices, magnet_flip_vectors) = pickle.load(file_handle)
+            try:
+                # Unpack members from .magslots file as a single tuple
+                (magnet_type, magnet_size, magnet_beams, magnet_positions,
+                 magnet_direction_matrices, magnet_flip_vectors) = pickle.load(file_handle)
 
-            # Offload object construction and validation to the MagnetSlots constructor
-            magnet_slots = MagnetSlots(magnet_type=magnet_type, magnet_size=magnet_size,
-                                       magnet_beams=magnet_beams, magnet_positions=magnet_positions,
-                                       magnet_direction_matrices=magnet_direction_matrices,
-                                       magnet_flip_vectors=magnet_flip_vectors)
+                # Offload object construction and validation to the MagnetSlots constructor
+                magnet_slots = MagnetSlots(magnet_type=magnet_type, magnet_size=magnet_size,
+                                           magnet_beams=magnet_beams, magnet_positions=magnet_positions,
+                                           magnet_direction_matrices=magnet_direction_matrices,
+                                           magnet_flip_vectors=magnet_flip_vectors)
 
-            logging.info('Loaded magnet slots [%s] with [%d] slots', magnet_type, len(magnet_beams))
+                logger.info('Loaded magnet slots [%s] with [%d] slots', magnet_type, len(magnet_beams))
+
+            except Exception as ex:
+                logger.exception('Failed to load magnet slots from .magslots file', exc_info=ex)
+                raise ex
+
             return magnet_slots
 
         if isinstance(file, (io.RawIOBase, io.BufferedIOBase, typing.BinaryIO)):
             # Load directly from the already open file handle
-            logging.info('Loading magnet set from .magslots file handle')
+            logger.info('Loading magnet set from .magslots file handle')
             return read_file(file_handle=file)
 
         elif isinstance(file, str):
             # Open the .magslots file in a closure to ensure it gets closed on error
             with open(file, 'rb') as file_handle:
-                logging.info('Loading magnet set from .magslots file [%s]', file)
+                logger.info('Loading magnet set from .magslots file [%s]', file)
                 return read_file(file_handle=file_handle)
 
         else:

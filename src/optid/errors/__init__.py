@@ -15,10 +15,16 @@
 
 from optid.utils.validate_tensor import TensorShapeError, TensorTypeError
 
-from optid.utils.validate_string import StringEmptyError, StringTypeError
+from optid.utils.validate_tensor import \
+    ValidateTensorTypeError, ValidateTensorShapeError, ValidateTensorElementTypeError
 
-from optid.utils.validate_string_list import StringListTypeError, StringListEmptyError, StringListShapeError, \
-                                             StringListElementTypeError, StringListElementEmptyError, \
-                                             StringListElementUniquenessError
+from optid.utils.validate_string import \
+    ValidateStringEmptyError, ValidateStringTypeError
 
-from optid.errors.file_handle_error import FileHandleError
+from optid.utils.validate_string_list import \
+    ValidateStringListTypeError, ValidateStringListEmptyError, ValidateStringListShapeError, \
+    ValidateStringListElementTypeError, ValidateStringListElementEmptyError, \
+    ValidateStringListElementUniquenessError
+
+from optid.errors.file_handle_error import \
+    FileHandleError

@@ -18,6 +18,7 @@ import unittest
 
 # Test imports
 import optid
+optid.utils.logging.attach_console_logger(remove_existing=True)
 
 
 class ImportModuleTest(unittest.TestCase):

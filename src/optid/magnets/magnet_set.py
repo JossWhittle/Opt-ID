@@ -16,12 +16,14 @@
 import io
 import typing
 import nptyping as npt
-import logging
 import pickle
 import numpy as np
 
 from optid.utils import validate_tensor, validate_string, validate_string_list
 from optid.errors import FileHandleError
+
+import optid
+logger = optid.utils.logging.get_logger('optid.magnets.MagnetSet')
 
 
 class MagnetSet:
@@ -58,13 +60,13 @@ class MagnetSet:
         try:
             self._magnet_type = validate_string(magnet_type, assert_non_empty=True)
         except Exception as ex:
-            logging.exception('magnet_type must be a non-empty string', exc_info=ex)
+            logger.exception('magnet_type must be a non-empty string', exc_info=ex)
             raise ex
 
         try:
             self._magnet_size = validate_tensor(magnet_size, shape=(3,))
         except Exception as ex:
-            logging.exception('magnet_size must be a single 3-dim float vector', exc_info=ex)
+            logger.exception('magnet_size must be a single 3-dim float vector', exc_info=ex)
             raise ex
 
         try:
@@ -72,7 +74,7 @@ class MagnetSet:
                                                                     assert_non_empty_strings=True,
                                                                     assert_unique_strings=True)
         except Exception as ex:
-            logging.exception('magnet_names must be a non-empty list of non-empty and unique strings', exc_info=ex)
+            logger.exception('magnet_names must be a non-empty list of non-empty and unique strings', exc_info=ex)
             raise ex
 
         # Number of magnets derived from number of names provided. All other inputs must be consistent.
@@ -81,7 +83,7 @@ class MagnetSet:
         try:
             self._magnet_field_vectors = validate_tensor(magnet_field_vectors, shape=(self.count, 3))
         except Exception as ex:
-            logging.exception('magnet_field_vectors must be a float tensor of shape (N, 3)', exc_info=ex)
+            logger.exception('magnet_field_vectors must be a float tensor of shape (N, 3)', exc_info=ex)
             raise ex
 
     @property
@@ -125,21 +127,26 @@ class MagnetSet:
                 An open writable file handle to a .magset file.
             """
 
-            # Pack members into .magset file as a single tuple
-            pickle.dump((self.magnet_type, self.magnet_size,
-                         self.magnet_names, self.magnet_field_vectors), file_handle)
+            try:
+                # Pack members into .magset file as a single tuple
+                pickle.dump((self.magnet_type, self.magnet_size,
+                             self.magnet_names, self.magnet_field_vectors), file_handle)
 
-            logging.info('Saved magnet set to .magset file handle')
+                logger.info('Saved magnet set to .magset file handle')
+
+            except Exception as ex:
+                logger.exception('Failed to save magnet set to .magset file', exc_info=ex)
+                raise ex
 
         if isinstance(file, (io.RawIOBase, io.BufferedIOBase, typing.BinaryIO)):
             # Load directly from the already open file handle
-            logging.info('Saving magnet set to .magset file handle')
+            logger.info('Saving magnet set to .magset file handle')
             write_file(file_handle=file)
 
         elif isinstance(file, str):
             # Open the .magset file in a closure to ensure it gets closed on error
             with open(file, 'wb') as file_handle:
-                logging.info('Saving magnet set to .magset file [%s]', file)
+                logger.info('Saving magnet set to .magset file [%s]', file)
                 write_file(file_handle=file_handle)
 
         else:
@@ -175,25 +182,31 @@ class MagnetSet:
             A MagnetSet instance with the desired values loaded from the .magset file.
             """
 
-            # Unpack members from .magset file as a single tuple
-            (magnet_type, magnet_size, magnet_names, magnet_field_vectors) = pickle.load(file_handle)
+            try:
+                # Unpack members from .magset file as a single tuple
+                (magnet_type, magnet_size, magnet_names, magnet_field_vectors) = pickle.load(file_handle)
 
-            # Offload object construction and validation to the MagnetSet constructor
-            magnet_set = MagnetSet(magnet_type=magnet_type, magnet_size=magnet_size,
-                                   magnet_names=magnet_names, magnet_field_vectors=magnet_field_vectors)
+                # Offload object construction and validation to the MagnetSet constructor
+                magnet_set = MagnetSet(magnet_type=magnet_type, magnet_size=magnet_size,
+                                       magnet_names=magnet_names, magnet_field_vectors=magnet_field_vectors)
 
-            logging.info('Loaded magnet set [%s] with [%d] magnets', magnet_type, len(magnet_names))
+                logger.info('Loaded magnet set [%s] with [%d] magnets', magnet_type, len(magnet_names))
+
+            except Exception as ex:
+                logger.exception('Failed to load magnet set from .magset file', exc_info=ex)
+                raise ex
+
             return magnet_set
 
         if isinstance(file, (io.RawIOBase, io.BufferedIOBase, typing.BinaryIO)):
             # Load directly from the already open file handle
-            logging.info('Loading magnet set from .magset file handle')
+            logger.info('Loading magnet set from .magset file handle')
             return read_file(file_handle=file)
 
         elif isinstance(file, str):
             # Open the .magset file in a closure to ensure it gets closed on error
             with open(file, 'rb') as file_handle:
-                logging.info('Loading magnet set from .magset file [%s]', file)
+                logger.info('Loading magnet set from .magset file [%s]', file)
                 return read_file(file_handle=file_handle)
 
         else:
@@ -250,42 +263,48 @@ class MagnetSet:
             A MagnetSet instance with the desired values loaded from the .sim file.
             """
 
-            # Load the data into python lists
-            magnet_names = []
-            magnet_field_vectors = []
+            try:
+                # Load the data into python lists
+                magnet_names = []
+                magnet_field_vectors = []
 
-            for line_index, line in enumerate(file_handle):
-                # Skip this line if it is blank
-                line = line.strip()
-                if len(line) == 0:
-                    continue
+                for line_index, line in enumerate(file_handle):
+                    # Skip this line if it is blank
+                    line = line.strip()
+                    if len(line) == 0:
+                        continue
 
-                logging.debug('Line [%d] : [%s]', line_index, line)
+                    logger.debug('Line [%d] : [%s]', line_index, line)
 
-                # Unpack and parse values for the current magnet
-                name, field_x, field_z, field_s = line.split()
-                magnet_names += [name]
-                magnet_field_vectors += [(float(field_x), float(field_z), float(field_s))]
+                    # Unpack and parse values for the current magnet
+                    name, field_x, field_z, field_s = line.split()
+                    magnet_names += [name]
+                    magnet_field_vectors += [(float(field_x), float(field_z), float(field_s))]
 
-            # Convert python list of field vector tuples into numpy array with shape (N, 3)
-            magnet_field_vectors = np.array(magnet_field_vectors, dtype=np.float32)
+                # Convert python list of field vector tuples into numpy array with shape (N, 3)
+                magnet_field_vectors = np.array(magnet_field_vectors, dtype=np.float32)
 
-            # Offload object construction and validation to the MagnetSet constructor
-            magnet_set = MagnetSet(magnet_type=magnet_type, magnet_size=magnet_size,
-                                   magnet_names=magnet_names, magnet_field_vectors=magnet_field_vectors)
+                # Offload object construction and validation to the MagnetSet constructor
+                magnet_set = MagnetSet(magnet_type=magnet_type, magnet_size=magnet_size,
+                                       magnet_names=magnet_names, magnet_field_vectors=magnet_field_vectors)
 
-            logging.info('Loaded magnet set [%s] with [%d] magnets', magnet_type, len(magnet_names))
+                logger.info('Loaded magnet set [%s] with [%d] magnets', magnet_type, len(magnet_names))
+
+            except Exception as ex:
+                logger.exception('Failed to load magnet set from .sim file', exc_info=ex)
+                raise ex
+
             return magnet_set
 
         if isinstance(file, io.TextIOWrapper):
             # Load directly from the already open file handle
-            logging.info('Loading magnet set [%s] from open .sim file handle', magnet_type)
+            logger.info('Loading magnet set [%s] from open .sim file handle', magnet_type)
             return read_file(magnet_type=magnet_type, magnet_size=magnet_size, file_handle=file)
 
         elif isinstance(file, str):
             # Open the .sim file in a closure to ensure it gets closed on error
             with open(file, 'r') as file_handle:
-                logging.info('Loading magnet set [%s] from .sim file [%s]', magnet_type, file)
+                logger.info('Loading magnet set [%s] from .sim file [%s]', magnet_type, file)
                 return read_file(magnet_type=magnet_type, magnet_size=magnet_size, file_handle=file_handle)
 
         else:

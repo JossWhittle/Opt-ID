@@ -22,8 +22,10 @@ import inspect
 import numpy as np
 
 # Test imports
-import optid
 from optid.magnets import MagnetSlots
+
+import optid
+optid.utils.logging.attach_console_logger(remove_existing=True)
 
 
 class MagnetSlotsTest(unittest.TestCase):
@@ -94,14 +96,14 @@ class MagnetSlotsTest(unittest.TestCase):
                          magnet_direction_matrices, magnet_flip_vectors = self.dummy_magnet_slots_values()
 
         # Assert constructor throws error from empty magnet type string
-        self.assertRaisesRegex(optid.errors.StringEmptyError, '.*', MagnetSlots,
+        self.assertRaisesRegex(optid.errors.ValidateStringEmptyError, '.*', MagnetSlots,
                                magnet_type='', magnet_size=magnet_size,
                                magnet_beams=magnet_beams, magnet_positions=magnet_positions,
                                magnet_direction_matrices=magnet_direction_matrices,
                                magnet_flip_vectors=magnet_flip_vectors)
 
         # Assert constructor throws error from wrong typed magnet type string
-        self.assertRaisesRegex(optid.errors.StringTypeError, '.*', MagnetSlots,
+        self.assertRaisesRegex(optid.errors.ValidateStringTypeError, '.*', MagnetSlots,
                                magnet_type=None, magnet_size=magnet_size,
                                magnet_beams=magnet_beams, magnet_positions=magnet_positions,
                                magnet_direction_matrices=magnet_direction_matrices,
@@ -117,15 +119,22 @@ class MagnetSlotsTest(unittest.TestCase):
                          magnet_direction_matrices, magnet_flip_vectors = self.dummy_magnet_slots_values()
 
         # Assert constructor throws error from incorrectly shaped magnet size
-        self.assertRaisesRegex(optid.errors.TensorShapeError, '.*', MagnetSlots,
+        self.assertRaisesRegex(optid.errors.ValidateTensorShapeError, '.*', MagnetSlots,
                                magnet_type=magnet_type, magnet_size=np.random.uniform(size=(4,)),
                                magnet_beams=magnet_beams, magnet_positions=magnet_positions,
                                magnet_direction_matrices=magnet_direction_matrices,
                                magnet_flip_vectors=magnet_flip_vectors)
 
         # Assert constructor throws error from incorrectly typed magnet size
-        self.assertRaisesRegex(optid.errors.TensorTypeError, '.*', MagnetSlots,
+        self.assertRaisesRegex(optid.errors.ValidateTensorElementTypeError, '.*', MagnetSlots,
                                magnet_type=magnet_type, magnet_size=magnet_size.astype(np.int32),
+                               magnet_beams=magnet_beams, magnet_positions=magnet_positions,
+                               magnet_direction_matrices=magnet_direction_matrices,
+                               magnet_flip_vectors=magnet_flip_vectors)
+
+        # Assert constructor throws error from incorrectly typed magnet size
+        self.assertRaisesRegex(optid.errors.ValidateTensorTypeError, '.*', MagnetSlots,
+                               magnet_type=magnet_type, magnet_size=None,
                                magnet_beams=magnet_beams, magnet_positions=magnet_positions,
                                magnet_direction_matrices=magnet_direction_matrices,
                                magnet_flip_vectors=magnet_flip_vectors)
@@ -140,21 +149,21 @@ class MagnetSlotsTest(unittest.TestCase):
                          magnet_direction_matrices, magnet_flip_vectors = self.dummy_magnet_slots_values()
 
         # Assert constructor throws error from wrong typed list of name strings for magnet beams
-        self.assertRaisesRegex(optid.errors.StringListTypeError, '.*', MagnetSlots,
+        self.assertRaisesRegex(optid.errors.ValidateStringListTypeError, '.*', MagnetSlots,
                                magnet_type=magnet_type, magnet_size=magnet_size,
                                magnet_beams=None, magnet_positions=magnet_positions,
                                magnet_direction_matrices=magnet_direction_matrices,
                                magnet_flip_vectors=magnet_flip_vectors)
 
         # Assert constructor throws error from empty list of name strings for magnet beams
-        self.assertRaisesRegex(optid.errors.StringListEmptyError, '.*', MagnetSlots,
+        self.assertRaisesRegex(optid.errors.ValidateStringListEmptyError, '.*', MagnetSlots,
                                magnet_type=magnet_type, magnet_size=magnet_size,
                                magnet_beams=[], magnet_positions=magnet_positions,
                                magnet_direction_matrices=magnet_direction_matrices,
                                magnet_flip_vectors=magnet_flip_vectors)
 
         # Assert constructor throws error from empty name string in magnet beams
-        self.assertRaisesRegex(optid.errors.StringListElementEmptyError, '.*', MagnetSlots,
+        self.assertRaisesRegex(optid.errors.ValidateStringListElementEmptyError, '.*', MagnetSlots,
                                magnet_type=magnet_type, magnet_size=magnet_size,
                                magnet_beams=['' if (index == 1) else beam
                                              for index, beam in enumerate(magnet_beams)],
@@ -172,23 +181,30 @@ class MagnetSlotsTest(unittest.TestCase):
                          magnet_direction_matrices, magnet_flip_vectors = self.dummy_magnet_slots_values()
 
         # Assert constructor throws error from incorrectly shaped magnet positions
-        self.assertRaisesRegex(optid.errors.TensorShapeError, '.*', MagnetSlots,
+        self.assertRaisesRegex(optid.errors.ValidateTensorShapeError, '.*', MagnetSlots,
                                magnet_type=magnet_type, magnet_size=magnet_size, magnet_beams=magnet_beams,
                                magnet_positions=np.random.uniform(size=(count, 4)),
                                magnet_direction_matrices=magnet_direction_matrices,
                                magnet_flip_vectors=magnet_flip_vectors)
 
         # Assert constructor throws error from magnet names and magnet positions being different lengths
-        self.assertRaisesRegex(optid.errors.TensorShapeError, '.*', MagnetSlots,
+        self.assertRaisesRegex(optid.errors.ValidateTensorShapeError, '.*', MagnetSlots,
                                magnet_type=magnet_type, magnet_size=magnet_size,
                                magnet_beams=magnet_beams, magnet_positions=magnet_positions[:-1],
                                magnet_direction_matrices=magnet_direction_matrices,
                                magnet_flip_vectors=magnet_flip_vectors)
 
         # Assert constructor throws error from incorrectly typed magnet positions
-        self.assertRaisesRegex(optid.errors.TensorTypeError, '.*', MagnetSlots,
+        self.assertRaisesRegex(optid.errors.ValidateTensorElementTypeError, '.*', MagnetSlots,
                                magnet_type=magnet_type, magnet_size=magnet_size, magnet_beams=magnet_beams,
                                magnet_positions=magnet_positions.astype(np.int32),
+                               magnet_direction_matrices=magnet_direction_matrices,
+                               magnet_flip_vectors=magnet_flip_vectors)
+
+        # Assert constructor throws error from incorrectly typed magnet positions
+        self.assertRaisesRegex(optid.errors.ValidateTensorTypeError, '.*', MagnetSlots,
+                               magnet_type=magnet_type, magnet_size=magnet_size, magnet_beams=magnet_beams,
+                               magnet_positions=None,
                                magnet_direction_matrices=magnet_direction_matrices,
                                magnet_flip_vectors=magnet_flip_vectors)
 
@@ -202,17 +218,24 @@ class MagnetSlotsTest(unittest.TestCase):
                          magnet_direction_matrices, magnet_flip_vectors = self.dummy_magnet_slots_values()
 
         # Assert constructor throws error from magnet names and magnet direction matrices being different lengths
-        self.assertRaisesRegex(optid.errors.TensorShapeError, '.*', MagnetSlots,
+        self.assertRaisesRegex(optid.errors.ValidateTensorShapeError, '.*', MagnetSlots,
                                magnet_type=magnet_type, magnet_size=magnet_size,
                                magnet_beams=magnet_beams, magnet_positions=magnet_positions,
                                magnet_direction_matrices=magnet_direction_matrices[:-1],
                                magnet_flip_vectors=magnet_flip_vectors)
 
         # Assert constructor throws error from incorrectly typed magnet direction matrices
-        self.assertRaisesRegex(optid.errors.TensorTypeError, '.*', MagnetSlots,
+        self.assertRaisesRegex(optid.errors.ValidateTensorElementTypeError, '.*', MagnetSlots,
                                magnet_type=magnet_type, magnet_size=magnet_size,
                                magnet_beams=magnet_beams, magnet_positions=magnet_positions,
                                magnet_direction_matrices=magnet_direction_matrices.astype(np.int32),
+                               magnet_flip_vectors=magnet_flip_vectors)
+
+        # Assert constructor throws error from incorrectly typed magnet direction matrices
+        self.assertRaisesRegex(optid.errors.ValidateTensorTypeError, '.*', MagnetSlots,
+                               magnet_type=magnet_type, magnet_size=magnet_size,
+                               magnet_beams=magnet_beams, magnet_positions=magnet_positions,
+                               magnet_direction_matrices=None,
                                magnet_flip_vectors=magnet_flip_vectors)
 
     def test_constructor_raises_on_bad_parameters_magnet_flip_vectors(self):
@@ -225,18 +248,25 @@ class MagnetSlotsTest(unittest.TestCase):
                          magnet_direction_matrices, magnet_flip_vectors = self.dummy_magnet_slots_values()
 
         # Assert constructor throws error from magnet names and magnet flip vectors being different lengths
-        self.assertRaisesRegex(optid.errors.TensorShapeError, '.*', MagnetSlots,
+        self.assertRaisesRegex(optid.errors.ValidateTensorShapeError, '.*', MagnetSlots,
                                magnet_type=magnet_type, magnet_size=magnet_size,
                                magnet_beams=magnet_beams, magnet_positions=magnet_positions,
                                magnet_direction_matrices=magnet_direction_matrices,
                                magnet_flip_vectors=magnet_flip_vectors[:-1])
 
         # Assert constructor throws error from incorrectly typed magnet flip vectors
-        self.assertRaisesRegex(optid.errors.TensorTypeError, '.*', MagnetSlots,
+        self.assertRaisesRegex(optid.errors.ValidateTensorElementTypeError, '.*', MagnetSlots,
                                magnet_type=magnet_type, magnet_size=magnet_size,
                                magnet_beams=magnet_beams, magnet_positions=magnet_positions,
                                magnet_direction_matrices=magnet_direction_matrices,
                                magnet_flip_vectors=magnet_flip_vectors.astype(np.int32))
+
+        # Assert constructor throws error from incorrectly typed magnet flip vectors
+        self.assertRaisesRegex(optid.errors.ValidateTensorTypeError, '.*', MagnetSlots,
+                               magnet_type=magnet_type, magnet_size=magnet_size,
+                               magnet_beams=magnet_beams, magnet_positions=magnet_positions,
+                               magnet_direction_matrices=magnet_direction_matrices,
+                               magnet_flip_vectors=None)
 
     def test_save(self):
         """

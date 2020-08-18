@@ -22,8 +22,10 @@ import inspect
 import numpy as np
 
 # Test imports
-import optid
 from optid.magnets import MagnetSet
+
+import optid
+optid.utils.logging.attach_console_logger(remove_existing=True)
 
 
 class MagnetSetTest(unittest.TestCase):
@@ -83,13 +85,13 @@ class MagnetSetTest(unittest.TestCase):
         count, magnet_type, magnet_size, magnet_names, magnet_field_vectors = self.dummy_magnet_set_values()
 
         # Assert constructor throws error from empty magnet type string
-        self.assertRaisesRegex(optid.errors.StringEmptyError, '.*', MagnetSet,
+        self.assertRaisesRegex(optid.errors.ValidateStringEmptyError, '.*', MagnetSet,
                                magnet_type='',
                                magnet_size=magnet_size, magnet_names=magnet_names,
                                magnet_field_vectors=magnet_field_vectors)
 
         # Assert constructor throws error from magnet type not being a string
-        self.assertRaisesRegex(optid.errors.StringTypeError, '.*', MagnetSet,
+        self.assertRaisesRegex(optid.errors.ValidateStringTypeError, '.*', MagnetSet,
                                magnet_type=None,
                                magnet_size=magnet_size, magnet_names=magnet_names,
                                magnet_field_vectors=magnet_field_vectors)
@@ -103,16 +105,23 @@ class MagnetSetTest(unittest.TestCase):
         count, magnet_type, magnet_size, magnet_names, magnet_field_vectors = self.dummy_magnet_set_values()
 
         # Assert constructor throws error from incorrectly shaped magnet size
-        self.assertRaisesRegex(optid.errors.TensorShapeError, '.*', MagnetSet,
+        self.assertRaisesRegex(optid.errors.ValidateTensorShapeError, '.*', MagnetSet,
                                magnet_type=magnet_type,
                                magnet_size=np.random.uniform(size=(4,)),
                                magnet_names=magnet_names,
                                magnet_field_vectors=magnet_field_vectors)
 
         # Assert constructor throws error from incorrectly typed magnet size
-        self.assertRaisesRegex(optid.errors.TensorTypeError, '.*', MagnetSet,
+        self.assertRaisesRegex(optid.errors.ValidateTensorElementTypeError, '.*', MagnetSet,
                                magnet_type=magnet_type,
                                magnet_size=magnet_size.astype(np.int32),
+                               magnet_names=magnet_names,
+                               magnet_field_vectors=magnet_field_vectors)
+
+        # Assert constructor throws error from incorrectly typed magnet size
+        self.assertRaisesRegex(optid.errors.ValidateTensorTypeError, '.*', MagnetSet,
+                               magnet_type=magnet_type,
+                               magnet_size=None,
                                magnet_names=magnet_names,
                                magnet_field_vectors=magnet_field_vectors)
 
@@ -125,33 +134,33 @@ class MagnetSetTest(unittest.TestCase):
         count, magnet_type, magnet_size, magnet_names, magnet_field_vectors = self.dummy_magnet_set_values()
 
         # Assert constructor throws error from wrong typed list of name strings for magnet names
-        self.assertRaisesRegex(optid.errors.StringListTypeError, '.*', MagnetSet,
+        self.assertRaisesRegex(optid.errors.ValidateStringListTypeError, '.*', MagnetSet,
                                magnet_type=magnet_type, magnet_size=magnet_size,
                                magnet_names=None,
                                magnet_field_vectors=magnet_field_vectors)
 
         # Assert constructor throws error from empty list of name strings for magnet names
-        self.assertRaisesRegex(optid.errors.StringListEmptyError, '.*', MagnetSet,
+        self.assertRaisesRegex(optid.errors.ValidateStringListEmptyError, '.*', MagnetSet,
                                magnet_type=magnet_type, magnet_size=magnet_size,
                                magnet_names=[],
                                magnet_field_vectors=magnet_field_vectors)
 
         # Assert constructor throws error from empty name string in magnet names
-        self.assertRaisesRegex(optid.errors.StringListElementEmptyError, '.*', MagnetSet,
+        self.assertRaisesRegex(optid.errors.ValidateStringListElementEmptyError, '.*', MagnetSet,
                                magnet_type=magnet_type, magnet_size=magnet_size,
                                magnet_names=['' if (index == 1) else name
                                              for index, name in enumerate(magnet_names)],
                                magnet_field_vectors=magnet_field_vectors)
 
         # Assert constructor throws error from non unique name strings in magnet names
-        self.assertRaisesRegex(optid.errors.StringListElementUniquenessError, '.*', MagnetSet,
+        self.assertRaisesRegex(optid.errors.ValidateStringListElementUniquenessError, '.*', MagnetSet,
                                magnet_type=magnet_type, magnet_size=magnet_size,
                                magnet_names=['TEST' if (index % 2 == 0) else name
                                              for index, name in enumerate(magnet_names)],
                                magnet_field_vectors=magnet_field_vectors)
 
         # Assert constructor throws error from magnet names and magnet field vectors being different lengths
-        self.assertRaisesRegex(optid.errors.TensorShapeError, '.*', MagnetSet,
+        self.assertRaisesRegex(optid.errors.ValidateTensorShapeError, '.*', MagnetSet,
                                magnet_type=magnet_type, magnet_size=magnet_size,
                                magnet_names=magnet_names[:-1],
                                magnet_field_vectors=magnet_field_vectors)
@@ -165,14 +174,19 @@ class MagnetSetTest(unittest.TestCase):
         count, magnet_type, magnet_size, magnet_names, magnet_field_vectors = self.dummy_magnet_set_values()
 
         # Assert constructor throws error from incorrectly shaped magnet field vectors
-        self.assertRaisesRegex(optid.errors.TensorShapeError, '.*', MagnetSet,
+        self.assertRaisesRegex(optid.errors.ValidateTensorShapeError, '.*', MagnetSet,
                                magnet_type=magnet_type, magnet_size=magnet_size, magnet_names=magnet_names,
                                magnet_field_vectors=np.random.uniform(size=(count, 4)))
 
-        # Assert constructor throws error from incorrectly shaped magnet field vectors
-        self.assertRaisesRegex(optid.errors.TensorTypeError, '.*', MagnetSet,
+        # Assert constructor throws error from incorrectly typed magnet field vectors
+        self.assertRaisesRegex(optid.errors.ValidateTensorElementTypeError, '.*', MagnetSet,
                                magnet_type=magnet_type, magnet_size=magnet_size, magnet_names=magnet_names,
                                magnet_field_vectors=magnet_field_vectors.astype(np.int32))
+
+        # Assert constructor throws error from incorrectly typed magnet field vectors
+        self.assertRaisesRegex(optid.errors.ValidateTensorTypeError, '.*', MagnetSet,
+                               magnet_type=magnet_type, magnet_size=magnet_size, magnet_names=magnet_names,
+                               magnet_field_vectors=None)
 
     def test_save(self):
         """

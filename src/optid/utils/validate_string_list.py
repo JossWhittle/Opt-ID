@@ -14,10 +14,15 @@
 
 
 import typing
-import numpy as np
 
 
-class StringListTypeError(Exception):
+class ValidateStringListErrorBase(Exception):
+    """
+    Base Exception to inherit from for string list errors.
+    """
+
+
+class ValidateStringListTypeError(ValidateStringListErrorBase):
     """
     Exception to throw when a string list is not a list.
     """
@@ -34,7 +39,7 @@ class StringListTypeError(Exception):
         return f'string list is not a list: expected {list}, observed {type(self.dtype)}'
 
 
-class StringListEmptyError(Exception):
+class ValidateStringListEmptyError(ValidateStringListErrorBase):
     """
     Exception to throw when a string list does not have any elements.
     """
@@ -43,7 +48,7 @@ class StringListEmptyError(Exception):
         return 'list must have at least one element'
 
 
-class StringListShapeError(Exception):
+class ValidateStringListShapeError(ValidateStringListErrorBase):
     """
     Exception to throw when a string list does not have the expected length.
     """
@@ -66,7 +71,7 @@ class StringListShapeError(Exception):
                f'expected ({self.expected_shape},), observed ({self.observed_shape},)'
 
 
-class StringListElementTypeError(Exception):
+class ValidateStringListElementTypeError(ValidateStringListErrorBase):
     """
     Exception to throw when a string list element is not a string.
     """
@@ -89,7 +94,7 @@ class StringListElementTypeError(Exception):
                f'expected {str}, observed {type(self.element_value)}'
 
 
-class StringListElementEmptyError(Exception):
+class ValidateStringListElementEmptyError(ValidateStringListErrorBase):
     """
     Exception to throw when a string list element an empty string.
     """
@@ -106,7 +111,7 @@ class StringListElementEmptyError(Exception):
         return f'list element at index {self.element_index} is an empty string'
 
 
-class StringListElementUniquenessError(Exception):
+class ValidateStringListElementUniquenessError(ValidateStringListErrorBase):
     """
     Exception to throw when a string list contains duplicate elements.
     """
@@ -148,27 +153,27 @@ def validate_string_list(values : typing.List[str],
     """
 
     if not isinstance(values, list):
-        raise StringListTypeError(dtype=type(values))
+        raise ValidateStringListTypeError(dtype=type(values))
 
     if shape is not None:
         if len(values) != shape:
-            raise StringListShapeError(expected_shape=shape, observed_shape=len(values))
+            raise ValidateStringListShapeError(expected_shape=shape, observed_shape=len(values))
 
     if assert_non_empty_list:
         if len(values) == 0:
-            raise StringListEmptyError()
+            raise ValidateStringListEmptyError()
 
     for index, value in enumerate(values):
         if type(value) != str:
-            raise StringListElementTypeError(element_index=index, element_value=value)
+            raise ValidateStringListElementTypeError(element_index=index, element_value=value)
 
         if assert_non_empty_strings:
             if len(value) == 0:
-                raise StringListElementEmptyError(element_index=index)
+                raise ValidateStringListElementEmptyError(element_index=index)
 
     if assert_unique_strings:
         if len(set(values)) != len(values):
-            raise StringListElementUniquenessError()
+            raise ValidateStringListElementUniquenessError()
 
     # Return the list if it is valid
     return values
