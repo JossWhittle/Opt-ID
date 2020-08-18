@@ -152,6 +152,13 @@ class MagnetSetTest(unittest.TestCase):
                                              for index, name in enumerate(magnet_names)],
                                magnet_field_vectors=magnet_field_vectors)
 
+        # Assert constructor throws error from wrong typed string in magnet names
+        self.assertRaisesRegex(optid.errors.ValidateStringListElementTypeError, '.*', MagnetSet,
+                               magnet_type=magnet_type, magnet_size=magnet_size,
+                               magnet_names=[None if (index == 1) else name
+                                             for index, name in enumerate(magnet_names)],
+                               magnet_field_vectors=magnet_field_vectors)
+
         # Assert constructor throws error from non unique name strings in magnet names
         self.assertRaisesRegex(optid.errors.ValidateStringListElementUniquenessError, '.*', MagnetSet,
                                magnet_type=magnet_type, magnet_size=magnet_size,

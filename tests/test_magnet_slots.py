@@ -171,6 +171,15 @@ class MagnetSlotsTest(unittest.TestCase):
                                magnet_direction_matrices=magnet_direction_matrices,
                                magnet_flip_vectors=magnet_flip_vectors)
 
+        # Assert constructor throws error from wrong typed string in magnet beams
+        self.assertRaisesRegex(optid.errors.ValidateStringListElementTypeError, '.*', MagnetSlots,
+                               magnet_type=magnet_type, magnet_size=magnet_size,
+                               magnet_beams=[None if (index == 1) else beam
+                                             for index, beam in enumerate(magnet_beams)],
+                               magnet_positions=magnet_positions,
+                               magnet_direction_matrices=magnet_direction_matrices,
+                               magnet_flip_vectors=magnet_flip_vectors)
+
     def test_constructor_raises_on_bad_parameters_magnet_positions(self):
         """
         Tests the MagnetSlots class throws exceptions when constructed with incorrect parameters.
