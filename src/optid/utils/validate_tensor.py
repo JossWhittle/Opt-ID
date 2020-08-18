@@ -94,9 +94,9 @@ class ValidateTensorElementTypeError(ValidateTensorErrorBase):
                f'expected {self.expected_dtype}, observed {self.observed_dtype}'
 
 
-def validate_tensor(tensor: np.ndarray,
-                    shape: typing.Optional[typing.Tuple[typing.Optional[int], ...]] = None,
-                    dtype: np.dtype = np.floating):
+def validate_tensor(tensor : np.ndarray,
+                    shape : typing.Optional[typing.Tuple[typing.Optional[int], ...]] = None,
+                    dtype : typing.Any = np.floating):
     """
     Tests whether a given numpy tensor has the number of dimensions and shape matching a shape pattern, and that
     the dtype matches an expected dtype. Raises an exception on invalid tensor inputs.
