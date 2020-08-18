@@ -19,10 +19,10 @@ import nptyping as npt
 import pickle
 import numpy as np
 
+import optid
 from optid.utils import validate_tensor, validate_string, validate_string_list
 from optid.errors import FileHandleError
 
-import optid
 logger = optid.utils.logging.get_logger('optid.magnets.MagnetSet')
 
 

@@ -13,8 +13,9 @@
 # language governing permissions and limitations under the License.
 
 
-# from optid.utils.validate_range import \
-#     RangeTypeError, RangeBoundaryError, RangeStepsError
+from optid.utils.validate_range import \
+    ValidateRangeTypeError, ValidateRangeShapeError, ValidateRangeElementTypeError, \
+    ValidateRangeBoundaryError, ValidateRangeStepsError, ValidateRangeSingularityError
 
 from optid.utils.validate_tensor import \
     ValidateTensorTypeError, ValidateTensorShapeError, ValidateTensorElementTypeError

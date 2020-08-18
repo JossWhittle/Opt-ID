@@ -25,7 +25,7 @@ from optid.utils.logging import attach_console_logger
 attach_console_logger(remove_existing=True)
 
 
-class ValidateStringListTest(unittest.TestCase):
+class ValidateStringTest(unittest.TestCase):
     """
     Tests the validate_string function can be imported and used correctly.
     """

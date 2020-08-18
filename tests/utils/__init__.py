@@ -12,8 +12,3 @@
 # either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 
-
-from optid.magnets.magnet_set import MagnetSet
-from optid.magnets.magnet_slots import MagnetSlots
-from optid.magnets.magnet_slots_lookup import MagnetSlotsLookup
-
