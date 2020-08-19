@@ -19,7 +19,7 @@ import nptyping as npt
 import pickle
 
 import optid
-from optid.utils import validate_tensor, validate_string, validate_string_list
+from optid.utils import validate_tensor, validate_magnet_cutouts, validate_string, validate_string_list
 from optid.errors import FileHandleError
 
 logger = optid.utils.logging.get_logger('optid.magnets.MagnetSlots')
@@ -35,6 +35,7 @@ class MagnetSlots:
     def __init__(self,
                  magnet_type : str,
                  magnet_size : npt.NDArray[(3,), npt.Float],
+                 magnet_cutouts: npt.NDArray[(typing.Any, 2, 3), npt.Float],
                  magnet_beams : typing.List[str],
                  magnet_positions : npt.NDArray[(typing.Any, 3), npt.Float],
                  magnet_direction_matrices : npt.NDArray[(typing.Any, 3, 3), npt.Float],
@@ -50,6 +51,11 @@ class MagnetSlots:
 
         magnet_size : float tensor (3,)
             A single 3-dim float vector representing the constant size for all magnets in this set.
+
+        magnet_cutouts : float tensor (C, 2, 3)
+            A tensor of C pairs of 3-dim float vectors of shape (C, 2, 3) representing the constant position offset
+            and size for all magnet cutout regions. These regions are applied to the magnet in its identity orientation
+            before it is transformed by a MagnetSlots direction matrix.
 
         magnet_beams : list(str)
             A list of named identifiers for physical beams in the insertion device that each magnet of this type
@@ -82,6 +88,13 @@ class MagnetSlots:
             self._magnet_size = validate_tensor(magnet_size, shape=(3,))
         except Exception as ex:
             logger.exception('magnet_size must be a single 3-dim float vector', exc_info=ex)
+            raise ex
+
+        try:
+            self._magnet_cutouts = validate_magnet_cutouts(magnet_cutouts, magnet_size=self.magnet_size)
+        except Exception as ex:
+            logger.exception('magnet_cutouts must be a float tensor of shape (C, 2, 3) where cutout regions'
+                             'do not extend outside the size of the magnet', exc_info=ex)
             raise ex
 
         try:
@@ -119,6 +132,10 @@ class MagnetSlots:
     @property
     def magnet_size(self):
         return self._magnet_size
+
+    @property
+    def magnet_cutouts(self):
+        return self._magnet_cutouts
 
     @property
     def magnet_beams(self):
@@ -162,7 +179,7 @@ class MagnetSlots:
             """
 
             # Pack members into .magslots file as a single tuple
-            pickle.dump((self.magnet_type, self.magnet_size,
+            pickle.dump((self.magnet_type, self.magnet_size, self.magnet_cutouts,
                          self.magnet_beams, self.magnet_positions,
                          self.magnet_direction_matrices,
                          self.magnet_flip_vectors), file_handle)
@@ -214,11 +231,11 @@ class MagnetSlots:
             """
 
             # Unpack members from .magslots file as a single tuple
-            (magnet_type, magnet_size, magnet_beams, magnet_positions,
-             magnet_direction_matrices, magnet_flip_vectors) = pickle.load(file_handle)
+            (magnet_type, magnet_size, magnet_cutouts, magnet_beams, magnet_positions,
+                magnet_direction_matrices, magnet_flip_vectors) = pickle.load(file_handle)
 
             # Offload object construction and validation to the MagnetSlots constructor
-            magnet_slots = MagnetSlots(magnet_type=magnet_type, magnet_size=magnet_size,
+            magnet_slots = MagnetSlots(magnet_type=magnet_type, magnet_size=magnet_size, magnet_cutouts=magnet_cutouts,
                                        magnet_beams=magnet_beams, magnet_positions=magnet_positions,
                                        magnet_direction_matrices=magnet_direction_matrices,
                                        magnet_flip_vectors=magnet_flip_vectors)
