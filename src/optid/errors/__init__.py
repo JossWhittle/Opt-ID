@@ -20,6 +20,9 @@ from optid.utils.validate_range import \
 from optid.utils.validate_tensor import \
     ValidateTensorTypeError, ValidateTensorShapeError, ValidateTensorElementTypeError
 
+from optid.utils.validate_magnet_cutouts import \
+    ValidateMagnetCutoutsOverlapError
+
 from optid.utils.validate_string import \
     ValidateStringEmptyError, ValidateStringTypeError
 
