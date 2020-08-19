@@ -33,7 +33,6 @@ class MagnetSet:
 
     def __init__(self,
                  magnet_type : str,
-                 magnet_size : npt.NDArray[(3,), npt.Float],
                  magnet_names : typing.List[str],
                  magnet_field_vectors : npt.NDArray[(typing.Any, 3), npt.Float]):
         """
@@ -44,9 +43,6 @@ class MagnetSet:
         magnet_type : str
             A non-empty string name for this magnet type that should be unique in the context of the full insertion
             device. Names such as 'HH', 'VV', 'HE', 'VE', 'HT' are common.
-
-        magnet_size : float tensor (3,)
-            A single 3-dim float vector representing the constant size for all magnets in this set.
 
         magnet_names : list(str)
             A list of unique non-empty strings representing the named identifier for each physical magnet as
@@ -61,12 +57,6 @@ class MagnetSet:
             self._magnet_type = validate_string(magnet_type, assert_non_empty=True)
         except Exception as ex:
             logger.exception('magnet_type must be a non-empty string', exc_info=ex)
-            raise ex
-
-        try:
-            self._magnet_size = validate_tensor(magnet_size, shape=(3,))
-        except Exception as ex:
-            logger.exception('magnet_size must be a single 3-dim float vector', exc_info=ex)
             raise ex
 
         try:
@@ -89,10 +79,6 @@ class MagnetSet:
     @property
     def magnet_type(self):
         return self._magnet_type
-
-    @property
-    def magnet_size(self):
-        return self._magnet_size
 
     @property
     def magnet_names(self):
@@ -128,8 +114,7 @@ class MagnetSet:
             """
 
             # Pack members into .magset file as a single tuple
-            pickle.dump((self.magnet_type, self.magnet_size,
-                         self.magnet_names, self.magnet_field_vectors), file_handle)
+            pickle.dump((self.magnet_type, self.magnet_names, self.magnet_field_vectors), file_handle)
 
             logger.info('Saved magnet set to .magset file handle')
 
@@ -178,11 +163,11 @@ class MagnetSet:
             """
 
             # Unpack members from .magset file as a single tuple
-            (magnet_type, magnet_size, magnet_names, magnet_field_vectors) = pickle.load(file_handle)
+            (magnet_type, magnet_names, magnet_field_vectors) = pickle.load(file_handle)
 
             # Offload object construction and validation to the MagnetSet constructor
-            magnet_set = MagnetSet(magnet_type=magnet_type, magnet_size=magnet_size,
-                                   magnet_names=magnet_names, magnet_field_vectors=magnet_field_vectors)
+            magnet_set = MagnetSet(magnet_type=magnet_type, magnet_names=magnet_names,
+                                   magnet_field_vectors=magnet_field_vectors)
 
             logger.info('Loaded magnet set [%s] with [%d] magnets', magnet_type, len(magnet_names))
 
@@ -205,7 +190,6 @@ class MagnetSet:
 
     @staticmethod
     def from_sim_file(magnet_type : str,
-                      magnet_size : npt.NDArray[(3,), npt.Float],
                       file : typing.Union[str, typing.TextIO]) -> 'MagnetSet':
         """
         Constructs a MagnetSet instance using per magnet names and field vectors from a .sim file provided by
@@ -217,9 +201,6 @@ class MagnetSet:
             A non-empty string name for this magnet type that should be unique in the context of the full insertion
             device. Names such as 'HH', 'VV', 'HE', 'VE', 'HT' are common.
 
-        magnet_size : float tensor (3,)
-            A single 3-dim float vector representing the constant size for all magnets in this set.
-
         file : str or open file handle
             A path to a .sim file or an open file handle to a .sim file containing per magnet names and field
             vectors as provided by the magnet manufacturer.
@@ -230,7 +211,6 @@ class MagnetSet:
         """
 
         def read_file(magnet_type : str,
-                      magnet_size : npt.NDArray[(3,), npt.Float],
                       file_handle : typing.TextIO) -> 'MagnetSet':
             """
             Private helper function for reading data from a .sim file given an already open file handle.
@@ -240,9 +220,6 @@ class MagnetSet:
             magnet_type : str
                 A non-empty string name for this magnet type that should be unique in the context of the full insertion
                 device. Names such as 'HH', 'VV', 'HE', 'VE', 'HT' are common.
-
-            magnet_size : float tensor (3,)
-                A single 3-dim float vector representing the constant size for all magnets in this set.
 
             file_handle : open file handle
                 An open file handle to a .sim file containing per magnet names and field
@@ -275,8 +252,8 @@ class MagnetSet:
                 magnet_field_vectors = np.array(magnet_field_vectors, dtype=np.float32)
 
                 # Offload object construction and validation to the MagnetSet constructor
-                magnet_set = MagnetSet(magnet_type=magnet_type, magnet_size=magnet_size,
-                                       magnet_names=magnet_names, magnet_field_vectors=magnet_field_vectors)
+                magnet_set = MagnetSet(magnet_type=magnet_type, magnet_names=magnet_names,
+                                       magnet_field_vectors=magnet_field_vectors)
 
                 logger.info('Loaded magnet set [%s] with [%d] magnets', magnet_type, len(magnet_names))
 
@@ -289,13 +266,13 @@ class MagnetSet:
         if isinstance(file, io.TextIOWrapper):
             # Load directly from the already open file handle
             logger.info('Loading magnet set [%s] from open .sim file handle', magnet_type)
-            return read_file(magnet_type=magnet_type, magnet_size=magnet_size, file_handle=file)
+            return read_file(magnet_type=magnet_type, file_handle=file)
 
         elif isinstance(file, str):
             # Open the .sim file in a closure to ensure it gets closed on error
             with open(file, 'r') as file_handle:
                 logger.info('Loading magnet set [%s] from .sim file [%s]', magnet_type, file)
-                return read_file(magnet_type=magnet_type, magnet_size=magnet_size, file_handle=file_handle)
+                return read_file(magnet_type=magnet_type, file_handle=file_handle)
 
         else:
             # Assert that the file object provided is an open file handle or can be used to open one
