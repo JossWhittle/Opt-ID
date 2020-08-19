@@ -13,14 +13,7 @@
 # language governing permissions and limitations under the License.
 
 
-# Logging utilities
-from optid.utils.logging import get_logger, configure_base_logger, attach_console_logger
+import typing
 
-# Ranger helper type for deferred range creation
-from optid.utils.range import Range
 
-# Validation functions
-from optid.utils.validate_range import validate_range
-from optid.utils.validate_tensor import validate_tensor
-from optid.utils.validate_string import validate_string
-from optid.utils.validate_string_list import validate_string_list
+Range = typing.NamedTuple('Range', [('min', float), ('max', float), ('steps', int)])

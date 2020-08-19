@@ -19,7 +19,7 @@ import nptyping as npt
 import pickle
 
 import optid
-from optid.utils import validate_tensor, validate_string, validate_range
+from optid.utils import Range, validate_tensor, validate_string, validate_range
 from optid.errors import FileHandleError
 
 logger = optid.utils.logging.get_logger('optid.magnets.MagnetSlotsLookup')
@@ -32,9 +32,7 @@ class MagnetSlotsLookup:
 
     def __init__(self,
                  magnet_type : str,
-                 x_range : typing.Tuple[float, float, int],
-                 z_range : typing.Tuple[float, float, int],
-                 s_range : typing.Tuple[float, float, int],
+                 x_range : Range, z_range : Range, s_range : Range,
                  lookup : npt.NDArray[(typing.Any, typing.Any, typing.Any, typing.Any, 3, 3), npt.Float]):
         """
         Constructs a MagnetSlotsLookup instance and validates the values are the correct types and consistent sizes.
@@ -45,20 +43,20 @@ class MagnetSlotsLookup:
             A non-empty string name for this magnet type that should be unique in the context of the full insertion
             device. Names such as 'HH', 'VV', 'HE', 'VE', 'HT' are common.
 
-        x_range : tuple(min : float, max : float, steps : int)
+        x_range : Range(min : float, max : float, steps : int)
             A tuple representing the sample range across the x-axis for the lookup table. This is used for validating
             that multiple MagnetSlotsLookup objects represent lookup tables constructed over the same sampling grid.
             The grid is used to construct samples w.r.t an np.linspace(*x_range) == np.linspace(min, max, steps)
 
-        z_range : tuple(min : float, max : float, steps : int)
+        z_range : Range(min : float, max : float, steps : int)
             A tuple representing the sample range across the z-axis for the lookup table.
             See documentation for x_range parameter.
 
-        s_range : tuple(min : float, max : float, steps : int)
+        s_range : Range(min : float, max : float, steps : int)
             A tuple representing the sample range across the s-axis for the lookup table.
             See documentation for x_range parameter.
 
-        lookup : np.ndarray
+        lookup : float tensor (S, x_steps, z_steps, s_steps, 3, 3)
             A float tensor of shape (slots, x_steps, z_steps, s_steps, 3, 3) representing the unscaled magnetic field
             strengths in the x, z, and s axes (last two dimensions), sampled at each spatial location represented by
             the lattice over x_range, z_range, and s_range using np.meshgrid (middle three dimensions), and duplicated

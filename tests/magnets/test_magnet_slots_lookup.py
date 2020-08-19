@@ -24,6 +24,7 @@ import numpy as np
 # Test imports
 import optid
 from optid.magnets import MagnetSlotsLookup
+from optid.utils import Range
 
 # Configure debug logging
 from optid.utils.logging import attach_console_logger
@@ -48,9 +49,9 @@ class MagnetSlotsLookupTest(unittest.TestCase):
 
         count = 4
         magnet_type  = 'HH'
-        x_range = (-1, 1, 5)
-        z_range = (-1, 1, 5)
-        s_range = (-1, 1, 5)
+        x_range = Range(-1, 1, 5)
+        z_range = Range(-1, 1, 5)
+        s_range = Range(-1, 1, 5)
         lookup = np.empty((count, x_range[2], z_range[2], s_range[2], 3, 3), dtype=np.float32)
         lookup[..., :, :] = np.eye(3, dtype=np.float32)
 
