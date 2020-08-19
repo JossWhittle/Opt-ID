@@ -48,7 +48,7 @@ class MagnetSlots:
             A non-empty string name for this magnet type that should be unique in the context of the full insertion
             device. Names such as 'HH', 'VV', 'HE', 'VE', 'HT' are common.
 
-        magnet_size : np.ndarray
+        magnet_size : float tensor (3,)
             A single 3-dim float vector representing the constant size for all magnets in this set.
 
         magnet_beams : list(str)
@@ -56,17 +56,17 @@ class MagnetSlots:
             is placed in. Most devices will have two (PPM, CPMU) or four (APPLE) unique beam identifiers reused by
             multiple magnets. Magnets of a given type will most likely be present in all beams due to device symmetries.
 
-        magnet_positions : np.ndarray
-            A tensor of N 3-dim float vectors of shape (N, 3) representing the bottom left hand near corner of each
+        magnet_positions : float tensor (S, 3)
+            A tensor of S 3-dim float vectors of shape (S, 3) representing the bottom left hand near corner of each
             magnet slot of this type.
 
         magnet_direction_matrices : np.ndarray
-            A tensor of N 3x3 float matrices of shape (N, 3, 3) representing the set of orthogonal rotations that
+            A tensor of S 3x3 float matrices of shape (S, 3, 3) representing the set of orthogonal rotations that
             would be applied to a magnets primary coordinate system if its field were aligned w.r.t an X,Z,S
             coordinate system.
 
         magnet_flip_vectors : np.ndarray
-            A tensor of N 3-dim float vectors of shape (N, 3) representing the set of flips that would be applied
+            A tensor of S 3-dim float vectors of shape (S, 3) representing the set of flips that would be applied
             to a magnet in this slot in order to swap the direction of its minor axis vectors while keeping its
             primary (easy) axis vector aligned to the direction for this slow, as specified by the corresponding
             direction matrix.
@@ -97,19 +97,19 @@ class MagnetSlots:
         try:
             self._magnet_positions = validate_tensor(magnet_positions, shape=(self.count, 3))
         except Exception as ex:
-            logger.exception('magnet_positions must be a float tensor of shape (N, 3)', exc_info=ex)
+            logger.exception('magnet_positions must be a float tensor of shape (S, 3)', exc_info=ex)
             raise ex
 
         try:
             self._magnet_direction_matrices = validate_tensor(magnet_direction_matrices, shape=(self.count, 3, 3))
         except Exception as ex:
-            logger.exception('magnet_direction_matrices must be a float tensor of shape (N, 3, 3)', exc_info=ex)
+            logger.exception('magnet_direction_matrices must be a float tensor of shape (S, 3, 3)', exc_info=ex)
             raise ex
 
         try:
             self._magnet_flip_vectors = validate_tensor(magnet_flip_vectors, shape=(self.count, 3))
         except Exception as ex:
-            logger.exception('magnet_flip_vectors must be a float tensor of shape (N, 3)', exc_info=ex)
+            logger.exception('magnet_flip_vectors must be a float tensor of shape (S, 3)', exc_info=ex)
             raise ex
 
     @property

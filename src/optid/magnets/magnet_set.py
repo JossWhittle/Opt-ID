@@ -45,15 +45,15 @@ class MagnetSet:
             A non-empty string name for this magnet type that should be unique in the context of the full insertion
             device. Names such as 'HH', 'VV', 'HE', 'VE', 'HT' are common.
 
-        magnet_size : np.ndarray
+        magnet_size : float tensor (3,)
             A single 3-dim float vector representing the constant size for all magnets in this set.
 
         magnet_names : list(str)
             A list of unique non-empty strings representing the named identifier for each physical magnet as
             specified by the manufacturer or build team.
 
-        magnet_field_vectors : np.ndarray
-            A tensor of N 3-dim float vectors of shape (N, 3) representing the average magnetic field strength
+        magnet_field_vectors : float tensor (M, 3)
+            A tensor of M 3-dim float vectors of shape (M, 3) representing the average magnetic field strength
             measurements for each magnet in this set.
         """
 
@@ -83,7 +83,7 @@ class MagnetSet:
         try:
             self._magnet_field_vectors = validate_tensor(magnet_field_vectors, shape=(self.count, 3))
         except Exception as ex:
-            logger.exception('magnet_field_vectors must be a float tensor of shape (N, 3)', exc_info=ex)
+            logger.exception('magnet_field_vectors must be a float tensor of shape (M, 3)', exc_info=ex)
             raise ex
 
     @property
@@ -217,7 +217,7 @@ class MagnetSet:
             A non-empty string name for this magnet type that should be unique in the context of the full insertion
             device. Names such as 'HH', 'VV', 'HE', 'VE', 'HT' are common.
 
-        magnet_size : np.ndarray
+        magnet_size : float tensor (3,)
             A single 3-dim float vector representing the constant size for all magnets in this set.
 
         file : str or open file handle
@@ -241,7 +241,7 @@ class MagnetSet:
                 A non-empty string name for this magnet type that should be unique in the context of the full insertion
                 device. Names such as 'HH', 'VV', 'HE', 'VE', 'HT' are common.
 
-            magnet_size : np.ndarray
+            magnet_size : float tensor (3,)
                 A single 3-dim float vector representing the constant size for all magnets in this set.
 
             file_handle : open file handle
