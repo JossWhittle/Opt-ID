@@ -37,6 +37,3 @@ from optid.utils.validate_string_list import \
 
 from optid.errors.file_handle_error import \
     FileHandleError
-
-from optid.errors.rng_key_error import \
-    RNGKeyError
