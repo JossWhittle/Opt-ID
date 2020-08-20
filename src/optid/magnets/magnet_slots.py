@@ -240,7 +240,7 @@ class MagnetSlots:
                                        magnet_direction_matrices=magnet_direction_matrices,
                                        magnet_flip_vectors=magnet_flip_vectors)
 
-            logger.info('Loaded magnet slots [%s] with [%d] slots', magnet_type, len(magnet_beams))
+            logger.info('Loaded magnet slots [%s] with [%d] slots', magnet_type, magnet_slots.count)
 
             return magnet_slots
 

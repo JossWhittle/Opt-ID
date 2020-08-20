@@ -23,6 +23,10 @@ from optid.utils.validate_tensor import \
 from optid.utils.validate_magnet_cutouts import \
     ValidateMagnetCutoutsOverlapError, ValidateMagnetCutoutsSizeError
 
+from optid.utils.validate_magnet_permutation import \
+    ValidateMagnetPermutationDuplicateError, ValidateMagnetPermutationBoundaryError, \
+    ValidateMagnetPermutationFlipError
+
 from optid.utils.validate_string import \
     ValidateStringEmptyError, ValidateStringTypeError
 
@@ -33,3 +37,6 @@ from optid.utils.validate_string_list import \
 
 from optid.errors.file_handle_error import \
     FileHandleError
+
+from optid.errors.rng_key_error import \
+    RNGKeyError

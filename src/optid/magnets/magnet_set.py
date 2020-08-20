@@ -169,7 +169,7 @@ class MagnetSet:
             magnet_set = MagnetSet(magnet_type=magnet_type, magnet_names=magnet_names,
                                    magnet_field_vectors=magnet_field_vectors)
 
-            logger.info('Loaded magnet set [%s] with [%d] magnets', magnet_type, len(magnet_names))
+            logger.info('Loaded magnet set [%s] with [%d] magnets', magnet_type, magnet_set.count)
 
             return magnet_set
 
@@ -255,7 +255,7 @@ class MagnetSet:
                 magnet_set = MagnetSet(magnet_type=magnet_type, magnet_names=magnet_names,
                                        magnet_field_vectors=magnet_field_vectors)
 
-                logger.info('Loaded magnet set [%s] with [%d] magnets', magnet_type, len(magnet_names))
+                logger.info('Loaded magnet set [%s] with [%d] magnets', magnet_type, magnet_set.count)
 
             except Exception as ex:
                 logger.exception('Failed to load magnet set from .sim file', exc_info=ex)

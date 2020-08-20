@@ -74,8 +74,8 @@ class ValidateMagnetCutoutsSizeError(ValidateMagnetCutoutsErrorBase):
 def validate_magnet_cutouts(magnet_cutouts : npt.NDArray[(typing.Any, 2, 3), npt.Float],
                             magnet_size : npt.NDArray[(3,), npt.Float]):
     """
-    Tests whether a given numpy tensor has the number of dimensions and shape matching a shape pattern, and that
-    the dtype matches an expected dtype. Raises an exception on invalid tensor inputs.
+    Tests whether a given numpy tensor is a valid set of magnet cutouts for a magnet of a given size.
+    Raises an exception on invalid tensor inputs.
 
     Parameters
     ----------
