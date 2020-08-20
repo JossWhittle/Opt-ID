@@ -53,7 +53,7 @@ class MagnetSlotsTest(unittest.TestCase):
         # Cutout the 2mm cubed region in the bottom left corner and top right corner
         magnet_cutouts = np.array([
             [[0, 0, 0], [2, 2, 2]],
-            [[8, 8, 0], [2, 2, 2]]
+            [[8, 8, 0], [10, 10, 2]]
         ], dtype=np.float32)
 
         magnet_beams = [f'Q1' for index in range(count)]
@@ -179,7 +179,7 @@ class MagnetSlotsTest(unittest.TestCase):
         # Assert for cutout that goes past the top right far corner
         self.assertRaisesRegex(optid.errors.ValidateMagnetCutoutsOverlapError, '.*', MagnetSlots,
                                magnet_type=magnet_type, magnet_size=magnet_size,
-                               magnet_cutouts=np.array([[[9, 8, 0], [2, 2, 2]]], dtype=np.float32),
+                               magnet_cutouts=np.array([[[9, 8, 0], [11, 10, 2]]], dtype=np.float32),
                                magnet_beams=magnet_beams, magnet_positions=magnet_positions,
                                magnet_direction_matrices=magnet_direction_matrices,
                                magnet_flip_vectors=magnet_flip_vectors)

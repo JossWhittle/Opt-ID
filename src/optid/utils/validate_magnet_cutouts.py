@@ -48,7 +48,27 @@ class ValidateMagnetCutoutsOverlapError(ValidateMagnetCutoutsErrorBase):
 
     def __str__(self):
         return f'cutout extends outside the size of the magnet: magnet_size {self.magnet_size}, ' \
-               f'magnet_cutout position {self.magnet_cutout[0]} size {self.magnet_cutout[1]}'
+               f'magnet_cutout bottom-left-near corner {self.magnet_cutout[0]} ' \
+               f'top-right-far corner {self.magnet_cutout[1]}'
+
+
+class ValidateMagnetCutoutsSizeError(ValidateMagnetCutoutsErrorBase):
+    """
+    Exception to throw when a magnet cutout has an invalid size.
+    """
+
+    def __init__(self, magnet_cutout : npt.NDArray[(2, 3), npt.Float]):
+        super().__init__()
+        self._magnet_cutout = magnet_cutout
+
+    @property
+    def magnet_cutout(self):
+        return self._magnet_cutout
+
+    def __str__(self):
+        return f'cutout shape either has zero or negative size in at least one axis: ' \
+               f'bottom-left-near corner {self.magnet_cutout[0]} ' \
+               f'top-right-far corner {self.magnet_cutout[1]}, size {self.magnet_cutout[1] - self.magnet_cutout[0]}'
 
 
 def validate_magnet_cutouts(magnet_cutouts : npt.NDArray[(typing.Any, 2, 3), npt.Float],
@@ -77,10 +97,10 @@ def validate_magnet_cutouts(magnet_cutouts : npt.NDArray[(typing.Any, 2, 3), npt
     magnet_size = validate_tensor(magnet_size, shape=(3,))
 
     for magnet_cutout in magnet_cutouts:
-        bln_corner = magnet_cutout[0]
-        trf_corner = magnet_cutout[0] + magnet_cutout[1]
+        if np.any(magnet_cutout[0] >= magnet_cutout[1]):
+            raise ValidateMagnetCutoutsSizeError(magnet_cutout=magnet_cutout)
 
-        if np.any(bln_corner < 0) or np.any(trf_corner > magnet_size):
+        if np.any(magnet_cutout[0] < 0) or np.any(magnet_cutout[1] > magnet_size):
             raise ValidateMagnetCutoutsOverlapError(magnet_cutout=magnet_cutout, magnet_size=magnet_size)
 
     # Return the tensor if it is valid
