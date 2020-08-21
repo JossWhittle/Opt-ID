@@ -169,7 +169,7 @@ class MagnetSlotsTest(unittest.TestCase):
                          magnet_direction_matrices, magnet_flip_vectors = self.dummy_magnet_slots_values()
 
         # Assert for cutout that goes past the bottom left near corner
-        self.assertRaisesRegex(optid.errors.ValidateMagnetCutoutsOverlapError, '.*', MagnetSlots,
+        self.assertRaisesRegex(optid.errors.ValidateMagnetCutoutsBoundaryError, '.*', MagnetSlots,
                                magnet_type=magnet_type, magnet_size=magnet_size,
                                magnet_cutouts=np.array([[[-1, 0, 0], [2, 2, 2]]], dtype=np.float32),
                                magnet_beams=magnet_beams, magnet_positions=magnet_positions,
@@ -177,7 +177,7 @@ class MagnetSlotsTest(unittest.TestCase):
                                magnet_flip_vectors=magnet_flip_vectors)
 
         # Assert for cutout that goes past the top right far corner
-        self.assertRaisesRegex(optid.errors.ValidateMagnetCutoutsOverlapError, '.*', MagnetSlots,
+        self.assertRaisesRegex(optid.errors.ValidateMagnetCutoutsBoundaryError, '.*', MagnetSlots,
                                magnet_type=magnet_type, magnet_size=magnet_size,
                                magnet_cutouts=np.array([[[9, 8, 0], [11, 10, 2]]], dtype=np.float32),
                                magnet_beams=magnet_beams, magnet_positions=magnet_positions,

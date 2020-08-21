@@ -21,7 +21,7 @@ from optid.utils.validate_tensor import \
     ValidateTensorTypeError, ValidateTensorShapeError, ValidateTensorElementTypeError
 
 from optid.utils.validate_magnet_cutouts import \
-    ValidateMagnetCutoutsOverlapError, ValidateMagnetCutoutsSizeError
+    ValidateMagnetCutoutsBoundaryError, ValidateMagnetCutoutsSizeError, ValidateMagnetCutoutsOverlapError
 
 from optid.utils.validate_magnet_permutation import \
     ValidateMagnetPermutationDuplicateError, ValidateMagnetPermutationBoundaryError, \

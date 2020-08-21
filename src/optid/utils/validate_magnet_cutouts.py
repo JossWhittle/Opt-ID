@@ -26,7 +26,7 @@ class ValidateMagnetCutoutsErrorBase(Exception):
     """
 
 
-class ValidateMagnetCutoutsOverlapError(ValidateMagnetCutoutsErrorBase):
+class ValidateMagnetCutoutsBoundaryError(ValidateMagnetCutoutsErrorBase):
     """
     Exception to throw when a magnet cutout extends outside the size of the magnet.
     """
@@ -50,6 +50,27 @@ class ValidateMagnetCutoutsOverlapError(ValidateMagnetCutoutsErrorBase):
         return f'cutout extends outside the size of the magnet: magnet_size {self.magnet_size}, ' \
                f'magnet_cutout bottom-left-near corner {self.magnet_cutout[0]} ' \
                f'top-right-far corner {self.magnet_cutout[1]}'
+
+
+class ValidateMagnetCutoutsOverlapError(ValidateMagnetCutoutsErrorBase):
+    """
+    Exception to throw when two magnet cutouts overlap.
+    """
+
+    def __init__(self, magnet_cutouts : npt.NDArray[(2, 2, 3), npt.Float]):
+        super().__init__()
+        self._magnet_cutouts = magnet_cutouts
+
+    @property
+    def magnet_cutouts(self):
+        return self._magnet_cutouts
+
+    def __str__(self):
+        return f'cutouts overlap their areas of influence: ' \
+               f'cutout A bottom-left-near corner {self.magnet_cutouts[0, 0]} ' \
+               f'top-right-far corner {self.magnet_cutouts[0, 1]}, ' \
+               f'cutout B bottom-left-near corner {self.magnet_cutouts[1, 0]} ' \
+               f'top-right-far corner {self.magnet_cutouts[1, 1]}, '
 
 
 class ValidateMagnetCutoutsSizeError(ValidateMagnetCutoutsErrorBase):
@@ -96,12 +117,24 @@ def validate_magnet_cutouts(magnet_cutouts : npt.NDArray[(typing.Any, 2, 3), npt
     magnet_cutouts = validate_tensor(magnet_cutouts, shape=(None, 2, 3))
     magnet_size = validate_tensor(magnet_size, shape=(3,))
 
-    for magnet_cutout in magnet_cutouts:
-        if np.any(magnet_cutout[0] >= magnet_cutout[1]):
-            raise ValidateMagnetCutoutsSizeError(magnet_cutout=magnet_cutout)
+    for a_index, a_cutout in enumerate(magnet_cutouts):
+        if np.any(a_cutout[0] >= a_cutout[1]):
+            raise ValidateMagnetCutoutsSizeError(magnet_cutout=a_cutout)
 
-        if np.any(magnet_cutout[0] < 0) or np.any(magnet_cutout[1] > magnet_size):
-            raise ValidateMagnetCutoutsOverlapError(magnet_cutout=magnet_cutout, magnet_size=magnet_size)
+        if np.any(a_cutout[0] < 0) or np.any(a_cutout[1] > magnet_size):
+            raise ValidateMagnetCutoutsBoundaryError(magnet_cutout=a_cutout, magnet_size=magnet_size)
+
+        a_centre = np.mean(a_cutout, axis=0)
+        a_extent = (a_centre - a_cutout[0])
+
+        for b_index, b_cutout in enumerate(magnet_cutouts[(a_index + 1):]):
+
+            b_centre = np.mean(b_cutout, axis=0)
+            b_extent = (b_centre - b_cutout[0])
+
+            if np.all(np.abs(b_centre - a_centre) < (a_extent + b_extent)):
+                raise ValidateMagnetCutoutsOverlapError(
+                    magnet_cutouts=magnet_cutouts[[a_index, (a_index + 1 + b_index)], ...])
 
     # Return the tensor if it is valid
     return magnet_cutouts

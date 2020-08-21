@@ -96,43 +96,7 @@ class ValidateMagnetCutoutsTest(unittest.TestCase):
         self.assertRaisesRegex(optid.errors.ValidateTensorTypeError, '.*', validate_magnet_cutouts,
                                magnet_cutouts=magnet_cutouts, magnet_size=None)
 
-    def test_overlap(self):
-        """
-        Tests the validate_magnet_cutouts function throws exceptions when cutouts extend outside the magnet size.
-        """
-
-        # Make dummy parameters
-        magnet_size, magnet_cutouts = self.dummy_magnet_cutouts_values()
-
-        validate_magnet_cutouts(magnet_cutouts=magnet_cutouts, magnet_size=magnet_size)
-
-        # Assert for cutout that goes past the bottom left near corner
-        self.assertRaisesRegex(optid.errors.ValidateMagnetCutoutsOverlapError, '.*', validate_magnet_cutouts,
-                               magnet_cutouts=np.array([[[-1, 0, 0], [1, 2, 2]]], dtype=np.float32),
-                               magnet_size=magnet_size)
-
-        self.assertRaisesRegex(optid.errors.ValidateMagnetCutoutsOverlapError, '.*', validate_magnet_cutouts,
-                               magnet_cutouts=np.array([[[0, -1, 0], [2, 1, 2]]], dtype=np.float32),
-                               magnet_size=magnet_size)
-
-        self.assertRaisesRegex(optid.errors.ValidateMagnetCutoutsOverlapError, '.*', validate_magnet_cutouts,
-                               magnet_cutouts=np.array([[[0, 0, -1], [2, 2, 1]]], dtype=np.float32),
-                               magnet_size=magnet_size)
-
-        # Assert for cutout that goes past the top right far corner
-        self.assertRaisesRegex(optid.errors.ValidateMagnetCutoutsOverlapError, '.*', validate_magnet_cutouts,
-                               magnet_cutouts=np.array([[[9, 8, 0], [11, 10, 2]]], dtype=np.float32),
-                               magnet_size=magnet_size)
-
-        self.assertRaisesRegex(optid.errors.ValidateMagnetCutoutsOverlapError, '.*', validate_magnet_cutouts,
-                               magnet_cutouts=np.array([[[8, 9, 0], [10, 11, 2]]], dtype=np.float32),
-                               magnet_size=magnet_size)
-
-        self.assertRaisesRegex(optid.errors.ValidateMagnetCutoutsOverlapError, '.*', validate_magnet_cutouts,
-                               magnet_cutouts=np.array([[[8, 8, 1], [10, 10, 3]]], dtype=np.float32),
-                               magnet_size=magnet_size)
-
-    def test_shape(self):
+    def test_size(self):
         """
         Tests the validate_magnet_cutouts function throws exceptions when cutouts extend outside the magnet size.
         """
@@ -167,3 +131,87 @@ class ValidateMagnetCutoutsTest(unittest.TestCase):
         self.assertRaisesRegex(optid.errors.ValidateMagnetCutoutsSizeError, '.*', validate_magnet_cutouts,
                                magnet_cutouts=np.array([[[0, 0, 2], [2, 2, 0]]], dtype=np.float32),
                                magnet_size=magnet_size)
+
+    def test_cutout_boundary(self):
+        """
+        Tests the validate_magnet_cutouts function throws exceptions when cutouts extend outside the magnet size.
+        """
+
+        # Make dummy parameters
+        magnet_size, magnet_cutouts = self.dummy_magnet_cutouts_values()
+
+        validate_magnet_cutouts(magnet_cutouts=magnet_cutouts, magnet_size=magnet_size)
+
+        # Assert for cutout that goes past the bottom left near corner
+        self.assertRaisesRegex(optid.errors.ValidateMagnetCutoutsBoundaryError, '.*', validate_magnet_cutouts,
+                               magnet_cutouts=np.array([[[-1, 0, 0], [1, 2, 2]]], dtype=np.float32),
+                               magnet_size=magnet_size)
+
+        self.assertRaisesRegex(optid.errors.ValidateMagnetCutoutsBoundaryError, '.*', validate_magnet_cutouts,
+                               magnet_cutouts=np.array([[[0, -1, 0], [2, 1, 2]]], dtype=np.float32),
+                               magnet_size=magnet_size)
+
+        self.assertRaisesRegex(optid.errors.ValidateMagnetCutoutsBoundaryError, '.*', validate_magnet_cutouts,
+                               magnet_cutouts=np.array([[[0, 0, -1], [2, 2, 1]]], dtype=np.float32),
+                               magnet_size=magnet_size)
+
+        # Assert for cutout that goes past the top right far corner
+        self.assertRaisesRegex(optid.errors.ValidateMagnetCutoutsBoundaryError, '.*', validate_magnet_cutouts,
+                               magnet_cutouts=np.array([[[9, 8, 0], [11, 10, 2]]], dtype=np.float32),
+                               magnet_size=magnet_size)
+
+        self.assertRaisesRegex(optid.errors.ValidateMagnetCutoutsBoundaryError, '.*', validate_magnet_cutouts,
+                               magnet_cutouts=np.array([[[8, 9, 0], [10, 11, 2]]], dtype=np.float32),
+                               magnet_size=magnet_size)
+
+        self.assertRaisesRegex(optid.errors.ValidateMagnetCutoutsBoundaryError, '.*', validate_magnet_cutouts,
+                               magnet_cutouts=np.array([[[8, 8, 1], [10, 10, 3]]], dtype=np.float32),
+                               magnet_size=magnet_size)
+
+    def test_cutout_overlap(self):
+        """
+        Tests the validate_magnet_cutouts function throws exceptions when cutouts extend outside the magnet size.
+        """
+
+        # Make dummy parameters
+        magnet_size = np.array([10, 10, 10], dtype=np.float32)
+
+        # 1x1x1 cutout in the centre
+        cutout = np.array([[4.5, 4.5, 4.5], [5.5, 5.5, 5.5]], dtype=np.float32)
+
+        valid_offsets = np.array([
+            [[-1, 0, 0]], [[+1, 0, 0]], [[0, -1, 0]], [[0, +1, 0]], [[0, 0, -1]], [[0, 0, +1]],
+
+            [[-1, -0.5, +0.5]], [[-1, +0.5, +0.5]], [[-1, -0.5, -0.5]], [[-1, +0.5, -0.5]],
+            [[+1, -0.5, +0.5]], [[+1, +0.5, +0.5]], [[+1, -0.5, -0.5]], [[+1, +0.5, -0.5]],
+
+            [[-0.5, -1, +0.5]], [[+0.5, -1, +0.5]], [[-0.5, -1, -0.5]], [[+0.5, -1, -0.5]],
+            [[-0.5, +1, +0.5]], [[+0.5, +1, +0.5]], [[-0.5, +1, -0.5]], [[+0.5, +1, -0.5]],
+
+            [[-0.5, +0.5, -1]], [[+0.5, +0.5, -1]], [[-0.5, -0.5, -1]], [[+0.5, -0.5, -1]],
+            [[-0.5, +0.5, +1]], [[+0.5, +0.5, +1]], [[-0.5, -0.5, +1]], [[+0.5, -0.5, +1]],
+        ], dtype=np.float32)
+
+        for offset in valid_offsets:
+            validate_magnet_cutouts(magnet_cutouts=np.stack([cutout, (cutout + offset)], axis=0),
+                                    magnet_size=magnet_size)
+
+        invalid_offsets = np.array([
+            [[-0.99, 0, 0]], [[+0.99, 0, 0]], [[0, -0.99, 0]], [[0, +0.99, 0]], [[0, 0, -0.99]], [[0, 0, +0.99]],
+
+            [[-0.99, -0.5, +0.5]], [[-0.99, +0.5, +0.5]], [[-0.99, -0.5, -0.5]], [[-0.99, +0.5, -0.5]],
+            [[+0.99, -0.5, +0.5]], [[+0.99, +0.5, +0.5]], [[+0.99, -0.5, -0.5]], [[+0.99, +0.5, -0.5]],
+
+            [[-0.5, -0.99, +0.5]], [[+0.5, -0.99, +0.5]], [[-0.5, -0.99, -0.5]], [[+0.5, -0.99, -0.5]],
+            [[-0.5, +0.99, +0.5]], [[+0.5, +0.99, +0.5]], [[-0.5, +0.99, -0.5]], [[+0.5, +0.99, -0.5]],
+
+            [[-0.5, +0.5, -0.99]], [[+0.5, +0.5, -0.99]], [[-0.5, -0.5, -0.99]], [[+0.5, -0.5, -0.99]],
+            [[-0.5, +0.5, +0.99]], [[+0.5, +0.5, +0.99]], [[-0.5, -0.5, +0.99]], [[+0.5, -0.5, +0.99]],
+        ], dtype=np.float32)
+
+        for offset in invalid_offsets:
+            self.assertRaisesRegex(optid.errors.ValidateMagnetCutoutsOverlapError, '.*', validate_magnet_cutouts,
+                                   magnet_cutouts=np.stack([cutout, (cutout + offset)], axis=0),
+                                   magnet_size=magnet_size)
+
+
