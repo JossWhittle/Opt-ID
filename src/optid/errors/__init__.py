@@ -23,10 +23,6 @@ from optid.utils.validate_tensor import \
 from optid.utils.validate_magnet_cutouts import \
     ValidateMagnetCutoutsBoundaryError, ValidateMagnetCutoutsSizeError, ValidateMagnetCutoutsOverlapError
 
-from optid.utils.validate_magnet_permutation import \
-    ValidateMagnetPermutationDuplicateError, ValidateMagnetPermutationBoundaryError, \
-    ValidateMagnetPermutationFlipError
-
 from optid.utils.validate_string import \
     ValidateStringEmptyError, ValidateStringTypeError
 
@@ -34,6 +30,9 @@ from optid.utils.validate_string_list import \
     ValidateStringListTypeError, ValidateStringListEmptyError, ValidateStringListShapeError, \
     ValidateStringListElementTypeError, ValidateStringListElementEmptyError, \
     ValidateStringListElementUniquenessError
+
+from optid.utils.validate_magnet_permutation import \
+    ValidateMagnetGenomePermutationDuplicateError, ValidateMagnetGenomePermutationBoundaryError
 
 from optid.errors.file_handle_error import \
     FileHandleError
