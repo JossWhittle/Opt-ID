@@ -32,7 +32,7 @@ class ValidateMagnetCutoutsTest(unittest.TestCase):
     """
 
     @staticmethod
-    def dummy_magnet_cutouts_values():
+    def dummy_cutouts_values():
         """
         Creates a set of constant test values used for constructing and comparing MagnetSlots
         instances across test cases.
@@ -42,59 +42,59 @@ class ValidateMagnetCutoutsTest(unittest.TestCase):
         A tuple of the necessary fields.
         """
 
-        magnet_size = np.array([10, 10, 2], dtype=np.float32)
+        size = np.array([10, 10, 2], dtype=np.float32)
 
         # Cutout the 2mm cubed region in the bottom left corner and top right corner
-        magnet_cutouts = np.array([
+        cutouts = np.array([
             [[0, 0, 0], [2, 2, 2]],
             [[8, 8, 0], [10, 10, 2]]
         ], dtype=np.float32)
 
-        return magnet_size, magnet_cutouts
+        return size, cutouts
 
-    def test_parameter_magnet_cutouts(self):
+    def test_parameter_cutouts(self):
         """
         Tests the validate_magnet_cutouts function throws exceptions when constructed with incorrect parameters.
         """
 
         # Make dummy parameters
-        magnet_size, magnet_cutouts = self.dummy_magnet_cutouts_values()
+        size, cutouts = self.dummy_cutouts_values()
 
-        validate_magnet_cutouts(magnet_cutouts=magnet_cutouts, magnet_size=magnet_size)
-
-        self.assertRaisesRegex(optid.errors.ValidateTensorShapeError, '.*', validate_magnet_cutouts,
-                               magnet_cutouts=magnet_cutouts[..., 1:], magnet_size=magnet_size)
+        validate_magnet_cutouts(cutouts=cutouts, size=size)
 
         self.assertRaisesRegex(optid.errors.ValidateTensorShapeError, '.*', validate_magnet_cutouts,
-                               magnet_cutouts=magnet_cutouts[0], magnet_size=magnet_size)
+                               cutouts=cutouts[..., 1:], size=size)
+
+        self.assertRaisesRegex(optid.errors.ValidateTensorShapeError, '.*', validate_magnet_cutouts,
+                               cutouts=cutouts[0], size=size)
 
         self.assertRaisesRegex(optid.errors.ValidateTensorElementTypeError, '.*', validate_magnet_cutouts,
-                               magnet_cutouts=magnet_cutouts.astype(np.int32), magnet_size=magnet_size)
+                               cutouts=cutouts.astype(np.int32), size=size)
 
         self.assertRaisesRegex(optid.errors.ValidateTensorTypeError, '.*', validate_magnet_cutouts,
-                               magnet_cutouts=None, magnet_size=magnet_size)
+                               cutouts=None, size=size)
 
-    def test_parameter_magnet_size(self):
+    def test_parameter_size(self):
         """
         Tests the validate_magnet_cutouts function throws exceptions when constructed with incorrect parameters.
         """
 
         # Make dummy parameters
-        magnet_size, magnet_cutouts = self.dummy_magnet_cutouts_values()
+        size, cutouts = self.dummy_cutouts_values()
 
-        validate_magnet_cutouts(magnet_cutouts=magnet_cutouts, magnet_size=magnet_size)
-
-        self.assertRaisesRegex(optid.errors.ValidateTensorShapeError, '.*', validate_magnet_cutouts,
-                               magnet_cutouts=magnet_cutouts, magnet_size=np.array([10, 10, 2, 1], dtype=np.float32))
+        validate_magnet_cutouts(cutouts=cutouts, size=size)
 
         self.assertRaisesRegex(optid.errors.ValidateTensorShapeError, '.*', validate_magnet_cutouts,
-                               magnet_cutouts=magnet_cutouts, magnet_size=np.array([[10, 10, 2]], dtype=np.float32))
+                               cutouts=cutouts, size=np.array([10, 10, 2, 1], dtype=np.float32))
+
+        self.assertRaisesRegex(optid.errors.ValidateTensorShapeError, '.*', validate_magnet_cutouts,
+                               cutouts=cutouts, size=np.array([[10, 10, 2]], dtype=np.float32))
 
         self.assertRaisesRegex(optid.errors.ValidateTensorElementTypeError, '.*', validate_magnet_cutouts,
-                               magnet_cutouts=magnet_cutouts, magnet_size=magnet_size.astype(np.int32))
+                               cutouts=cutouts, size=size.astype(np.int32))
 
         self.assertRaisesRegex(optid.errors.ValidateTensorTypeError, '.*', validate_magnet_cutouts,
-                               magnet_cutouts=magnet_cutouts, magnet_size=None)
+                               cutouts=cutouts, size=None)
 
     def test_size(self):
         """
@@ -102,35 +102,35 @@ class ValidateMagnetCutoutsTest(unittest.TestCase):
         """
 
         # Make dummy parameters
-        magnet_size, magnet_cutouts = self.dummy_magnet_cutouts_values()
+        size, cutouts = self.dummy_cutouts_values()
 
-        validate_magnet_cutouts(magnet_cutouts=magnet_cutouts, magnet_size=magnet_size)
+        validate_magnet_cutouts(cutouts=cutouts, size=size)
 
         # Assert for cutout that has zero size in an axis
         self.assertRaisesRegex(optid.errors.ValidateMagnetCutoutsSizeError, '.*', validate_magnet_cutouts,
-                               magnet_cutouts=np.array([[[0, 0, 0], [0, 2, 2]]], dtype=np.float32),
-                               magnet_size=magnet_size)
+                               cutouts=np.array([[[0, 0, 0], [0, 2, 2]]], dtype=np.float32),
+                               size=size)
 
         self.assertRaisesRegex(optid.errors.ValidateMagnetCutoutsSizeError, '.*', validate_magnet_cutouts,
-                               magnet_cutouts=np.array([[[0, 0, 0], [2, 0, 2]]], dtype=np.float32),
-                               magnet_size=magnet_size)
+                               cutouts=np.array([[[0, 0, 0], [2, 0, 2]]], dtype=np.float32),
+                               size=size)
 
         self.assertRaisesRegex(optid.errors.ValidateMagnetCutoutsSizeError, '.*', validate_magnet_cutouts,
-                               magnet_cutouts=np.array([[[0, 0, 0], [2, 2, 0]]], dtype=np.float32),
-                               magnet_size=magnet_size)
+                               cutouts=np.array([[[0, 0, 0], [2, 2, 0]]], dtype=np.float32),
+                               size=size)
 
         # Assert for cutout that has negative size in an axis
         self.assertRaisesRegex(optid.errors.ValidateMagnetCutoutsSizeError, '.*', validate_magnet_cutouts,
-                               magnet_cutouts=np.array([[[2, 0, 0], [0, 2, 2]]], dtype=np.float32),
-                               magnet_size=magnet_size)
+                               cutouts=np.array([[[2, 0, 0], [0, 2, 2]]], dtype=np.float32),
+                               size=size)
 
         self.assertRaisesRegex(optid.errors.ValidateMagnetCutoutsSizeError, '.*', validate_magnet_cutouts,
-                               magnet_cutouts=np.array([[[0, 2, 0], [2, 0, 2]]], dtype=np.float32),
-                               magnet_size=magnet_size)
+                               cutouts=np.array([[[0, 2, 0], [2, 0, 2]]], dtype=np.float32),
+                               size=size)
 
         self.assertRaisesRegex(optid.errors.ValidateMagnetCutoutsSizeError, '.*', validate_magnet_cutouts,
-                               magnet_cutouts=np.array([[[0, 0, 2], [2, 2, 0]]], dtype=np.float32),
-                               magnet_size=magnet_size)
+                               cutouts=np.array([[[0, 0, 2], [2, 2, 0]]], dtype=np.float32),
+                               size=size)
 
     def test_cutout_boundary(self):
         """
@@ -138,35 +138,35 @@ class ValidateMagnetCutoutsTest(unittest.TestCase):
         """
 
         # Make dummy parameters
-        magnet_size, magnet_cutouts = self.dummy_magnet_cutouts_values()
+        size, cutouts = self.dummy_cutouts_values()
 
-        validate_magnet_cutouts(magnet_cutouts=magnet_cutouts, magnet_size=magnet_size)
+        validate_magnet_cutouts(cutouts=cutouts, size=size)
 
         # Assert for cutout that goes past the bottom left near corner
         self.assertRaisesRegex(optid.errors.ValidateMagnetCutoutsBoundaryError, '.*', validate_magnet_cutouts,
-                               magnet_cutouts=np.array([[[-1, 0, 0], [1, 2, 2]]], dtype=np.float32),
-                               magnet_size=magnet_size)
+                               cutouts=np.array([[[-1, 0, 0], [1, 2, 2]]], dtype=np.float32),
+                               size=size)
 
         self.assertRaisesRegex(optid.errors.ValidateMagnetCutoutsBoundaryError, '.*', validate_magnet_cutouts,
-                               magnet_cutouts=np.array([[[0, -1, 0], [2, 1, 2]]], dtype=np.float32),
-                               magnet_size=magnet_size)
+                               cutouts=np.array([[[0, -1, 0], [2, 1, 2]]], dtype=np.float32),
+                               size=size)
 
         self.assertRaisesRegex(optid.errors.ValidateMagnetCutoutsBoundaryError, '.*', validate_magnet_cutouts,
-                               magnet_cutouts=np.array([[[0, 0, -1], [2, 2, 1]]], dtype=np.float32),
-                               magnet_size=magnet_size)
+                               cutouts=np.array([[[0, 0, -1], [2, 2, 1]]], dtype=np.float32),
+                               size=size)
 
         # Assert for cutout that goes past the top right far corner
         self.assertRaisesRegex(optid.errors.ValidateMagnetCutoutsBoundaryError, '.*', validate_magnet_cutouts,
-                               magnet_cutouts=np.array([[[9, 8, 0], [11, 10, 2]]], dtype=np.float32),
-                               magnet_size=magnet_size)
+                               cutouts=np.array([[[9, 8, 0], [11, 10, 2]]], dtype=np.float32),
+                               size=size)
 
         self.assertRaisesRegex(optid.errors.ValidateMagnetCutoutsBoundaryError, '.*', validate_magnet_cutouts,
-                               magnet_cutouts=np.array([[[8, 9, 0], [10, 11, 2]]], dtype=np.float32),
-                               magnet_size=magnet_size)
+                               cutouts=np.array([[[8, 9, 0], [10, 11, 2]]], dtype=np.float32),
+                               size=size)
 
         self.assertRaisesRegex(optid.errors.ValidateMagnetCutoutsBoundaryError, '.*', validate_magnet_cutouts,
-                               magnet_cutouts=np.array([[[8, 8, 1], [10, 10, 3]]], dtype=np.float32),
-                               magnet_size=magnet_size)
+                               cutouts=np.array([[[8, 8, 1], [10, 10, 3]]], dtype=np.float32),
+                               size=size)
 
     def test_cutout_overlap(self):
         """
@@ -174,7 +174,7 @@ class ValidateMagnetCutoutsTest(unittest.TestCase):
         """
 
         # Make dummy parameters
-        magnet_size = np.array([10, 10, 10], dtype=np.float32)
+        size = np.array([10, 10, 10], dtype=np.float32)
 
         # 1x1x1 cutout in the centre
         cutout = np.array([[4.5, 4.5, 4.5], [5.5, 5.5, 5.5]], dtype=np.float32)
@@ -193,8 +193,8 @@ class ValidateMagnetCutoutsTest(unittest.TestCase):
         ], dtype=np.float32)
 
         for offset in valid_offsets:
-            validate_magnet_cutouts(magnet_cutouts=np.stack([cutout, (cutout + offset)], axis=0),
-                                    magnet_size=magnet_size)
+            validate_magnet_cutouts(cutouts=np.stack([cutout, (cutout + offset)], axis=0),
+                                    size=size)
 
         invalid_offsets = np.array([
             [[-0.99, 0, 0]], [[+0.99, 0, 0]], [[0, -0.99, 0]], [[0, +0.99, 0]], [[0, 0, -0.99]], [[0, 0, +0.99]],
@@ -211,7 +211,7 @@ class ValidateMagnetCutoutsTest(unittest.TestCase):
 
         for offset in invalid_offsets:
             self.assertRaisesRegex(optid.errors.ValidateMagnetCutoutsOverlapError, '.*', validate_magnet_cutouts,
-                                   magnet_cutouts=np.stack([cutout, (cutout + offset)], axis=0),
-                                   magnet_size=magnet_size)
+                                   cutouts=np.stack([cutout, (cutout + offset)], axis=0),
+                                   size=size)
 
 

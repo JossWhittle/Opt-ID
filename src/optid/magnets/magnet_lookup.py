@@ -22,10 +22,10 @@ import optid
 from optid.utils import Range, validate_tensor, validate_string, validate_range
 from optid.errors import FileHandleError
 
-logger = optid.utils.logging.get_logger('optid.magnets.MagnetSlotsLookup')
+logger = optid.utils.logging.get_logger('optid.magnets.MagnetLookup')
 
 
-class MagnetSlotsLookup:
+class MagnetLookup:
     """
     Represents a B-field contribution lookup table for a set of magnet slots.
     """
@@ -35,7 +35,7 @@ class MagnetSlotsLookup:
                  x_range : Range, z_range : Range, s_range : Range,
                  lookup : npt.NDArray[(typing.Any, typing.Any, typing.Any, typing.Any, 3, 3), npt.Float]):
         """
-        Constructs a MagnetSlotsLookup instance and validates the values are the correct types and consistent sizes.
+        Constructs a MagnetLookup instance and validates the values are the correct types and consistent sizes.
 
         Parameters
         ----------
@@ -45,7 +45,7 @@ class MagnetSlotsLookup:
 
         x_range : Range(min : float, max : float, steps : int)
             A tuple representing the sample range across the x-axis for the lookup table. This is used for validating
-            that multiple MagnetSlotsLookup objects represent lookup tables constructed over the same sampling grid.
+            that multiple MagnetLookup objects represent lookup tables constructed over the same sampling grid.
             The grid is used to construct samples w.r.t an np.linspace(*x_range) == np.linspace(min, max, steps)
 
         z_range : Range(min : float, max : float, steps : int)
@@ -69,7 +69,7 @@ class MagnetSlotsLookup:
                  [Bxs, Bzs, Bss]]
 
             Given a measured magnet strength vector (Mx, Mz, Ms) from a MagnetSet element that is currently placed
-            within a magnet slot modelled by a MagnetSlots and a MagnetSlotsLookup instance, we compute the scaled
+            within a magnet slot modelled by a MagnetSlots and a MagnetLookup instance, we compute the scaled
             magnetic field strength intensities in each axis at each sample location specified by the lookup table
             by matmul'ing the matrix at that location against the measured magnet strength.
                 Fx = (Bxx * Mx) + (Bxz * Mz) + (Bxs * Ms)
@@ -137,7 +137,7 @@ class MagnetSlotsLookup:
 
     def save(self, file : typing.Union[str, typing.BinaryIO]):
         """
-        Saves a MagnetSlotsLookup instance to a .maglookup file.
+        Saves a MagnetLookup instance to a .maglookup file.
 
         Parameters
         ----------
@@ -177,7 +177,7 @@ class MagnetSlotsLookup:
             raise FileHandleError()
 
     @staticmethod
-    def from_file(file : typing.Union[str, typing.BinaryIO]) -> 'MagnetSlotsLookup':
+    def from_file(file : typing.Union[str, typing.BinaryIO]) -> 'MagnetLookup':
         """
         Constructs a MagnetSlots instance from a .maglookup file.
 
@@ -191,7 +191,7 @@ class MagnetSlotsLookup:
         A MagnetSet instance with the desired values loaded from the .maglookup file.
         """
 
-        def read_file(file_handle : typing.BinaryIO) -> 'MagnetSlotsLookup':
+        def read_file(file_handle : typing.BinaryIO) -> 'MagnetLookup':
             """
             Private helper function for reading data from a .maglookup file given an already open file handle.
 
@@ -209,8 +209,8 @@ class MagnetSlotsLookup:
             (magnet_type, x_range, z_range, s_range, lookup) = pickle.load(file_handle)
 
             # Offload object construction and validation to the MagnetSlots constructor
-            magnet_lookup = MagnetSlotsLookup(magnet_type=magnet_type, x_range=x_range,
-                                              z_range=z_range, s_range=s_range, lookup=lookup)
+            magnet_lookup = MagnetLookup(magnet_type=magnet_type, x_range=x_range,
+                                         z_range=z_range, s_range=s_range, lookup=lookup)
 
             logger.info('Loaded magnet lookup [%s] with [%d] slots', magnet_type, magnet_lookup.count)
 

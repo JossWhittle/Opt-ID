@@ -33,8 +33,8 @@ class MagnetSet:
 
     def __init__(self,
                  magnet_type : str,
-                 magnet_names : typing.List[str],
-                 magnet_field_vectors : npt.NDArray[(typing.Any, 3), npt.Float]):
+                 names : typing.List[str],
+                 field_vectors : npt.NDArray[(typing.Any, 3), npt.Float]):
         """
         Constructs a MagnetSet instance and validates the values are the correct types and consistent sizes.
 
@@ -44,11 +44,11 @@ class MagnetSet:
             A non-empty string name for this magnet type that should be unique in the context of the full insertion
             device. Names such as 'HH', 'VV', 'HE', 'VE', 'HT' are common.
 
-        magnet_names : list(str)
+        names : list(str)
             A list of unique non-empty strings representing the named identifier for each physical magnet as
             specified by the manufacturer or build team.
 
-        magnet_field_vectors : float tensor (M, 3)
+        field_vectors : float tensor (M, 3)
             A tensor of M 3-dim float vectors of shape (M, 3) representing the average magnetic field strength
             measurements for each magnet in this set.
         """
@@ -60,20 +60,20 @@ class MagnetSet:
             raise ex
 
         try:
-            self._magnet_names = validate_string_list(magnet_names, assert_non_empty_list=True,
+            self._names = validate_string_list(names, assert_non_empty_list=True,
                                                                     assert_non_empty_strings=True,
                                                                     assert_unique_strings=True)
         except Exception as ex:
-            logger.exception('magnet_names must be a non-empty list of non-empty and unique strings', exc_info=ex)
+            logger.exception('names must be a non-empty list of non-empty and unique strings', exc_info=ex)
             raise ex
 
         # Number of magnets derived from number of names provided. All other inputs must be consistent.
-        self._count = len(self.magnet_names)
+        self._count = len(self.names)
 
         try:
-            self._magnet_field_vectors = validate_tensor(magnet_field_vectors, shape=(self.count, 3))
+            self._field_vectors = validate_tensor(field_vectors, shape=(self.count, 3))
         except Exception as ex:
-            logger.exception('magnet_field_vectors must be a float tensor of shape (M, 3)', exc_info=ex)
+            logger.exception('field_vectors must be a float tensor of shape (M, 3)', exc_info=ex)
             raise ex
 
     @property
@@ -81,12 +81,12 @@ class MagnetSet:
         return self._magnet_type
 
     @property
-    def magnet_names(self):
-        return self._magnet_names
+    def names(self):
+        return self._names
 
     @property
-    def magnet_field_vectors(self):
-        return self._magnet_field_vectors
+    def field_vectors(self):
+        return self._field_vectors
 
     @property
     def count(self):
@@ -114,7 +114,7 @@ class MagnetSet:
             """
 
             # Pack members into .magset file as a single tuple
-            pickle.dump((self.magnet_type, self.magnet_names, self.magnet_field_vectors), file_handle)
+            pickle.dump((self.magnet_type, self.names, self.field_vectors), file_handle)
 
             logger.info('Saved magnet set to .magset file handle')
 
@@ -163,11 +163,11 @@ class MagnetSet:
             """
 
             # Unpack members from .magset file as a single tuple
-            (magnet_type, magnet_names, magnet_field_vectors) = pickle.load(file_handle)
+            (magnet_type, names, field_vectors) = pickle.load(file_handle)
 
             # Offload object construction and validation to the MagnetSet constructor
-            magnet_set = MagnetSet(magnet_type=magnet_type, magnet_names=magnet_names,
-                                   magnet_field_vectors=magnet_field_vectors)
+            magnet_set = MagnetSet(magnet_type=magnet_type, names=names,
+                                   field_vectors=field_vectors)
 
             logger.info('Loaded magnet set [%s] with [%d] magnets', magnet_type, magnet_set.count)
 
@@ -232,8 +232,8 @@ class MagnetSet:
 
             try:
                 # Load the data into python lists
-                magnet_names = []
-                magnet_field_vectors = []
+                names = []
+                field_vectors = []
 
                 for line_index, line in enumerate(file_handle):
                     # Skip this line if it is blank
@@ -245,15 +245,15 @@ class MagnetSet:
 
                     # Unpack and parse values for the current magnet
                     name, field_x, field_z, field_s = line.split()
-                    magnet_names += [name]
-                    magnet_field_vectors += [(float(field_x), float(field_z), float(field_s))]
+                    names += [name]
+                    field_vectors += [(float(field_x), float(field_z), float(field_s))]
 
                 # Convert python list of field vector tuples into numpy array with shape (N, 3)
-                magnet_field_vectors = np.array(magnet_field_vectors, dtype=np.float32)
+                field_vectors = np.array(field_vectors, dtype=np.float32)
 
                 # Offload object construction and validation to the MagnetSet constructor
-                magnet_set = MagnetSet(magnet_type=magnet_type, magnet_names=magnet_names,
-                                       magnet_field_vectors=magnet_field_vectors)
+                magnet_set = MagnetSet(magnet_type=magnet_type, names=names,
+                                       field_vectors=field_vectors)
 
                 logger.info('Loaded magnet set [%s] with [%d] magnets', magnet_type, magnet_set.count)
 

@@ -48,11 +48,11 @@ class MagnetGenomeTest(unittest.TestCase):
 
         count = 4
         magnet_type = 'HH'
-        magnet_permutation = np.arange(count).astype(np.int32)
-        magnet_flips = (np.arange(count) % 2).astype(np.bool)
+        permutation = np.arange(count).astype(np.int32)
+        flips = (np.arange(count) % 2).astype(np.bool)
         rng_states = (np.random.RandomState(seed=1234), np.random.RandomState(seed=12345))
 
-        return count, magnet_type, magnet_permutation, magnet_flips, rng_states
+        return count, magnet_type, permutation, flips, rng_states
 
     @staticmethod
     def compare_rng_states(rng_a, rng_b):
@@ -66,17 +66,17 @@ class MagnetGenomeTest(unittest.TestCase):
         """
 
         # Make dummy parameters
-        count, magnet_type, magnet_permutation, magnet_flips, rng_states = self.dummy_magnet_genome_values()
+        count, magnet_type, permutation, flips, rng_states = self.dummy_magnet_genome_values()
 
         # Construct MagnetGenome instance
-        magnet_genome = MagnetGenome(magnet_type=magnet_type, magnet_permutation=magnet_permutation,
-                                     magnet_flips=magnet_flips, rng_states=rng_states)
+        magnet_genome = MagnetGenome(magnet_type=magnet_type, permutation=permutation,
+                                     flips=flips, rng_states=rng_states)
 
         # Assert object members have been correctly assigned
         self.assertEqual(magnet_genome.count, count)
         self.assertEqual(magnet_genome.magnet_type, magnet_type)
-        self.assertTrue(np.allclose(magnet_genome.magnet_permutation, magnet_permutation))
-        self.assertTrue(np.allclose(magnet_genome.magnet_flips, magnet_flips))
+        self.assertTrue(np.allclose(magnet_genome.permutation, permutation))
+        self.assertTrue(np.allclose(magnet_genome.flips, flips))
         self.assertTrue(self.compare_rng_states(magnet_genome.rng_children, rng_states[0]))
         self.assertTrue(self.compare_rng_states(magnet_genome.rng_mutations, rng_states[1]))
 
@@ -86,76 +86,76 @@ class MagnetGenomeTest(unittest.TestCase):
         """
 
         # Make dummy parameters
-        count, magnet_type, magnet_permutation, magnet_flips, rng_states = self.dummy_magnet_genome_values()
+        count, magnet_type, permutation, flips, rng_states = self.dummy_magnet_genome_values()
 
         # Assert constructor throws error from empty magnet type string
         self.assertRaisesRegex(optid.errors.ValidateStringEmptyError, '.*', MagnetGenome,
-                               magnet_type='', magnet_permutation=magnet_permutation,
-                               magnet_flips=magnet_flips, rng_states=rng_states)
+                               magnet_type='', permutation=permutation,
+                               flips=flips, rng_states=rng_states)
 
         # Assert constructor throws error from magnet type not being a string
         self.assertRaisesRegex(optid.errors.ValidateStringTypeError, '.*', MagnetGenome,
-                               magnet_type=None, magnet_permutation=magnet_permutation,
-                               magnet_flips=magnet_flips, rng_states=rng_states)
+                               magnet_type=None, permutation=permutation,
+                               flips=flips, rng_states=rng_states)
 
-    def test_constructor_raises_on_bad_parameters_magnet_permutation(self):
+    def test_constructor_raises_on_bad_parameters_permutation(self):
         """
         Tests the MagnetGenome class throws exceptions when constructed with incorrect parameters.
         """
 
         # Make dummy parameters
-        count, magnet_type, magnet_permutation, magnet_flips, rng_states = self.dummy_magnet_genome_values()
+        count, magnet_type, permutation, flips, rng_states = self.dummy_magnet_genome_values()
 
         self.assertRaisesRegex(optid.errors.ValidateTensorShapeError, '.*', MagnetGenome,
                                magnet_type=magnet_type,
-                               magnet_permutation=magnet_permutation[..., np.newaxis],
-                               magnet_flips=magnet_flips, rng_states=rng_states)
+                               permutation=permutation[..., np.newaxis],
+                               flips=flips, rng_states=rng_states)
 
         self.assertRaisesRegex(optid.errors.ValidateTensorElementTypeError, '.*', MagnetGenome,
                                magnet_type=magnet_type,
-                               magnet_permutation=magnet_permutation.astype(np.float32),
-                               magnet_flips=magnet_flips, rng_states=rng_states)
+                               permutation=permutation.astype(np.float32),
+                               flips=flips, rng_states=rng_states)
 
         self.assertRaisesRegex(optid.errors.ValidateTensorTypeError, '.*', MagnetGenome,
                                magnet_type=magnet_type,
-                               magnet_permutation=None,
-                               magnet_flips=magnet_flips, rng_states=rng_states)
+                               permutation=None,
+                               flips=flips, rng_states=rng_states)
 
         self.assertRaisesRegex(optid.errors.ValidateMagnetGenomePermutationDuplicateError, '.*', MagnetGenome,
                                magnet_type=magnet_type,
-                               magnet_permutation=np.zeros((count,), dtype=np.int32),
-                               magnet_flips=magnet_flips, rng_states=rng_states)
+                               permutation=np.zeros((count,), dtype=np.int32),
+                               flips=flips, rng_states=rng_states)
 
         self.assertRaisesRegex(optid.errors.ValidateMagnetGenomePermutationBoundaryError, '.*', MagnetGenome,
                                magnet_type=magnet_type,
-                               magnet_permutation=(magnet_permutation - 1),
-                               magnet_flips=magnet_flips, rng_states=rng_states)
+                               permutation=(permutation - 1),
+                               flips=flips, rng_states=rng_states)
 
         self.assertRaisesRegex(optid.errors.ValidateMagnetGenomePermutationBoundaryError, '.*', MagnetGenome,
                                magnet_type=magnet_type,
-                               magnet_permutation=(magnet_permutation + 1),
-                               magnet_flips=magnet_flips, rng_states=rng_states)
+                               permutation=(permutation + 1),
+                               flips=flips, rng_states=rng_states)
 
-    def test_constructor_raises_on_bad_parameters_magnet_flips(self):
+    def test_constructor_raises_on_bad_parameters_flips(self):
         """
         Tests the MagnetGenome class throws exceptions when constructed with incorrect parameters.
         """
 
         # Make dummy parameters
-        count, magnet_type, magnet_permutation, magnet_flips, rng_states = self.dummy_magnet_genome_values()
+        count, magnet_type, permutation, flips, rng_states = self.dummy_magnet_genome_values()
 
         self.assertRaisesRegex(optid.errors.ValidateTensorShapeError, '.*', MagnetGenome,
                                magnet_type=magnet_type,
-                               magnet_permutation=magnet_permutation,
-                               magnet_flips=magnet_flips[..., np.newaxis], rng_states=rng_states)
+                               permutation=permutation,
+                               flips=flips[..., np.newaxis], rng_states=rng_states)
 
         self.assertRaisesRegex(optid.errors.ValidateTensorElementTypeError, '.*', MagnetGenome,
-                               magnet_type=magnet_type, magnet_permutation=magnet_permutation,
-                               magnet_flips=magnet_flips.astype(np.float32), rng_states=rng_states)
+                               magnet_type=magnet_type, permutation=permutation,
+                               flips=flips.astype(np.float32), rng_states=rng_states)
 
         self.assertRaisesRegex(optid.errors.ValidateTensorTypeError, '.*', MagnetGenome,
-                               magnet_type=magnet_type, magnet_permutation=magnet_permutation,
-                               magnet_flips=None, rng_states=rng_states)
+                               magnet_type=magnet_type, permutation=permutation,
+                               flips=None, rng_states=rng_states)
 
     def test_constructor_raises_on_bad_parameters_rng_states(self):
         """
@@ -163,17 +163,17 @@ class MagnetGenomeTest(unittest.TestCase):
         """
 
         # Make dummy parameters
-        count, magnet_type, magnet_permutation, magnet_flips, rng_states = self.dummy_magnet_genome_values()
+        count, magnet_type, permutation, flips, rng_states = self.dummy_magnet_genome_values()
 
         self.assertRaisesRegex(Exception, '.*', MagnetGenome,
                                magnet_type=magnet_type,
-                               magnet_permutation=magnet_permutation,
-                               magnet_flips=magnet_flips, rng_states=None)
+                               permutation=permutation,
+                               flips=flips, rng_states=None)
 
         self.assertRaisesRegex(Exception, '.*', MagnetGenome,
                                magnet_type=magnet_type,
-                               magnet_permutation=magnet_permutation,
-                               magnet_flips=magnet_flips, rng_states=(None, None))
+                               permutation=permutation,
+                               flips=flips, rng_states=(None, None))
 
     def test_from_magnet_set(self):
         """
@@ -183,8 +183,8 @@ class MagnetGenomeTest(unittest.TestCase):
         # Make dummy parameters
         count = 4
         magnet_type = 'HH'
-        magnet_names = [f'{index + 1:03d}' for index in range(count)]
-        magnet_field_vectors = np.array([
+        names = [f'{index + 1:03d}' for index in range(count)]
+        field_vectors = np.array([
             [0.003770334, -0.000352049, 1.339567917],
             [-0.007018214, -0.002714164, 1.344710227],
             [-0.004826321, -0.001714764, 1.342079598],
@@ -192,8 +192,8 @@ class MagnetGenomeTest(unittest.TestCase):
         ], dtype=np.float32)
 
         # Construct MagnetSet instance
-        magnet_set = MagnetSet(magnet_type=magnet_type, magnet_names=magnet_names,
-                               magnet_field_vectors=magnet_field_vectors)
+        magnet_set = MagnetSet(magnet_type=magnet_type, names=names,
+                               field_vectors=field_vectors)
 
         # Construct MagnetGenome instance
         magnet_genome = MagnetGenome.from_magnet_set(magnet_set=magnet_set, seed=1234)
@@ -208,11 +208,11 @@ class MagnetGenomeTest(unittest.TestCase):
         """
 
         # Make dummy parameters
-        count, magnet_type, magnet_permutation, magnet_flips, rng_states = self.dummy_magnet_genome_values()
+        count, magnet_type, permutation, flips, rng_states = self.dummy_magnet_genome_values()
 
         # Construct MagnetGenome instance
-        magnet_genome = MagnetGenome(magnet_type=magnet_type, magnet_permutation=magnet_permutation,
-                                     magnet_flips=magnet_flips, rng_states=rng_states)
+        magnet_genome = MagnetGenome(magnet_type=magnet_type, permutation=permutation,
+                                     flips=flips, rng_states=rng_states)
 
         # Construct MagnetGenome instance from a parent genome
         child_genome = MagnetGenome.from_magnet_genome(magnet_genome=magnet_genome)
@@ -220,8 +220,8 @@ class MagnetGenomeTest(unittest.TestCase):
         # Assert object members have been correctly assigned
         self.assertEqual(magnet_genome.count, child_genome.count)
         self.assertEqual(magnet_genome.magnet_type, child_genome.magnet_type)
-        self.assertTrue(np.allclose(magnet_genome.magnet_permutation, child_genome.magnet_permutation))
-        self.assertTrue(np.allclose(magnet_genome.magnet_flips, magnet_flips))
+        self.assertTrue(np.allclose(magnet_genome.permutation, child_genome.permutation))
+        self.assertTrue(np.allclose(magnet_genome.flips, flips))
         self.assertFalse(self.compare_rng_states(magnet_genome.rng_children, child_genome.rng_children))
         self.assertFalse(self.compare_rng_states(magnet_genome.rng_mutations, child_genome.rng_mutations))
 
@@ -232,15 +232,15 @@ class MagnetGenomeTest(unittest.TestCase):
         """
 
         # Make dummy parameters
-        count, magnet_type, magnet_permutation, magnet_flips, rng_states = self.dummy_magnet_genome_values()
+        count, magnet_type, permutation, flips, rng_states = self.dummy_magnet_genome_values()
 
         # Run the round trip file save + load in a temporary directory
         with tempfile.TemporaryDirectory() as tmp_path:
             tmp_file_path = os.path.join(tmp_path, 'example.maggenome')
 
             # Construct MagnetGenome instance
-            magnet_genome = MagnetGenome(magnet_type=magnet_type, magnet_permutation=magnet_permutation,
-                                         magnet_flips=magnet_flips, rng_states=rng_states)
+            magnet_genome = MagnetGenome(magnet_type=magnet_type, permutation=permutation,
+                                         flips=flips, rng_states=rng_states)
 
             # Save the MagnetGenome to the temporary directory
             magnet_genome.save(file=tmp_file_path)
@@ -254,8 +254,8 @@ class MagnetGenomeTest(unittest.TestCase):
         # Assert object members have been correctly assigned
         self.assertEqual(magnet_genome.count, count)
         self.assertEqual(magnet_genome.magnet_type, magnet_type)
-        self.assertTrue(np.allclose(magnet_genome.magnet_permutation, magnet_permutation))
-        self.assertTrue(np.allclose(magnet_genome.magnet_flips, magnet_flips))
+        self.assertTrue(np.allclose(magnet_genome.permutation, permutation))
+        self.assertTrue(np.allclose(magnet_genome.flips, flips))
         self.assertTrue(self.compare_rng_states(magnet_genome.rng_children, rng_states[0]))
         self.assertTrue(self.compare_rng_states(magnet_genome.rng_mutations, rng_states[1]))
 
@@ -266,15 +266,15 @@ class MagnetGenomeTest(unittest.TestCase):
         """
 
         # Make dummy parameters
-        count, magnet_type, magnet_permutation, magnet_flips, rng_states = self.dummy_magnet_genome_values()
+        count, magnet_type, permutation, flips, rng_states = self.dummy_magnet_genome_values()
 
         # Run the round trip file save + load in a temporary directory
         with tempfile.TemporaryDirectory() as tmp_path:
             tmp_file_path = os.path.join(tmp_path, 'example.maggenome')
 
             # Construct MagnetGenome instance
-            magnet_genome = MagnetGenome(magnet_type=magnet_type, magnet_permutation=magnet_permutation,
-                                         magnet_flips=magnet_flips, rng_states=rng_states)
+            magnet_genome = MagnetGenome(magnet_type=magnet_type, permutation=permutation,
+                                         flips=flips, rng_states=rng_states)
 
             with open(tmp_file_path, 'wb') as tmp_file_handle:
                 # Save the MagnetGenome to the temporary directory
@@ -289,8 +289,8 @@ class MagnetGenomeTest(unittest.TestCase):
         # Assert object members have been correctly assigned
         self.assertEqual(magnet_genome.count, count)
         self.assertEqual(magnet_genome.magnet_type, magnet_type)
-        self.assertTrue(np.allclose(magnet_genome.magnet_permutation, magnet_permutation))
-        self.assertTrue(np.allclose(magnet_genome.magnet_flips, magnet_flips))
+        self.assertTrue(np.allclose(magnet_genome.permutation, permutation))
+        self.assertTrue(np.allclose(magnet_genome.flips, flips))
         self.assertTrue(self.compare_rng_states(magnet_genome.rng_children, rng_states[0]))
         self.assertTrue(self.compare_rng_states(magnet_genome.rng_mutations, rng_states[1]))
 
@@ -301,11 +301,11 @@ class MagnetGenomeTest(unittest.TestCase):
         """
 
         # Make dummy parameters
-        count, magnet_type, magnet_permutation, magnet_flips, rng_states = self.dummy_magnet_genome_values()
+        count, magnet_type, permutation, flips, rng_states = self.dummy_magnet_genome_values()
 
         # Construct MagnetGenome instance
-        magnet_genome = MagnetGenome(magnet_type=magnet_type, magnet_permutation=magnet_permutation,
-                                     magnet_flips=magnet_flips, rng_states=rng_states)
+        magnet_genome = MagnetGenome(magnet_type=magnet_type, permutation=permutation,
+                                     flips=flips, rng_states=rng_states)
 
         # Attempt to save to a bad file parameter
         self.assertRaisesRegex(optid.errors.FileHandleError, '.*', magnet_genome.save, file=None)
@@ -324,7 +324,7 @@ class MagnetGenomeTest(unittest.TestCase):
         inputs_path = os.path.join(data_path, 'inputs')
 
         # Make dummy parameters
-        count, magnet_type, magnet_permutation, magnet_flips, rng_states = self.dummy_magnet_genome_values()
+        count, magnet_type, permutation, flips, rng_states = self.dummy_magnet_genome_values()
 
         # Construct MagnetGenome instance
         magnet_genome = MagnetGenome.from_file(file=os.path.join(inputs_path, 'example.maggenome'))
@@ -332,8 +332,8 @@ class MagnetGenomeTest(unittest.TestCase):
         # Assert object members have been correctly assigned
         self.assertEqual(magnet_genome.count, count)
         self.assertEqual(magnet_genome.magnet_type, magnet_type)
-        self.assertTrue(np.allclose(magnet_genome.magnet_permutation, magnet_permutation))
-        self.assertTrue(np.allclose(magnet_genome.magnet_flips, magnet_flips))
+        self.assertTrue(np.allclose(magnet_genome.permutation, permutation))
+        self.assertTrue(np.allclose(magnet_genome.flips, flips))
         self.assertTrue(self.compare_rng_states(magnet_genome.rng_children, rng_states[0]))
         self.assertTrue(self.compare_rng_states(magnet_genome.rng_mutations, rng_states[1]))
 
@@ -352,7 +352,7 @@ class MagnetGenomeTest(unittest.TestCase):
         inputs_path = os.path.join(data_path, 'inputs')
 
         # Make dummy parameters
-        count, magnet_type, magnet_permutation, magnet_flips, rng_states = self.dummy_magnet_genome_values()
+        count, magnet_type, permutation, flips, rng_states = self.dummy_magnet_genome_values()
 
         with open(os.path.join(inputs_path, 'example.maggenome'), 'rb') as file_handle:
             # Construct MagnetGenome instance
@@ -361,8 +361,8 @@ class MagnetGenomeTest(unittest.TestCase):
         # Assert object members have been correctly assigned
         self.assertEqual(magnet_genome.count, count)
         self.assertEqual(magnet_genome.magnet_type, magnet_type)
-        self.assertTrue(np.allclose(magnet_genome.magnet_permutation, magnet_permutation))
-        self.assertTrue(np.allclose(magnet_genome.magnet_flips, magnet_flips))
+        self.assertTrue(np.allclose(magnet_genome.permutation, permutation))
+        self.assertTrue(np.allclose(magnet_genome.flips, flips))
         self.assertTrue(self.compare_rng_states(magnet_genome.rng_children, rng_states[0]))
         self.assertTrue(self.compare_rng_states(magnet_genome.rng_mutations, rng_states[1]))
 

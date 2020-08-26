@@ -20,7 +20,7 @@ import pickle
 import numpy as np
 
 import optid
-from optid.magnets import MagnetSet
+from optid.magnets import MagnetSet, MagnetSlots, MagnetLookup
 from optid.utils import validate_tensor, validate_string
 from optid.errors import FileHandleError, \
     ValidateMagnetGenomePermutationDuplicateError, \
@@ -31,7 +31,7 @@ logger = optid.utils.logging.get_logger('optid.magnets.MagnetGenome')
 
 class MagnetGenome:
     """
-    Represents a permutation of magnets of the same type w.r.t a MagnetSet, MagnetSlots, and MagnetSlotsLookup
+    Represents a permutation of magnets of the same type w.r.t a MagnetSet, MagnetSlots, and MagnetLookup
     object that are shared between multiple genomes. Instances of MagnetGenome hold an integer permutation tensor
     for magnet ordering and flip state, and hold an np.random.SeedSequence object used to split the RNG key for
     child genomes.
@@ -44,8 +44,8 @@ class MagnetGenome:
 
     def __init__(self,
                  magnet_type : str,
-                 magnet_permutation : npt.NDArray[(typing.Any,), npt.Int],
-                 magnet_flips : npt.NDArray[(typing.Any,), npt.Int],
+                 permutation : npt.NDArray[(typing.Any,), npt.Int],
+                 flips : npt.NDArray[(typing.Any,), npt.Int],
                  rng_states : typing.Tuple[np.random.RandomState, np.random.RandomState]):
         """
         Constructs a MagnetGenome instance and validates the values are the correct types and consistent sizes.
@@ -56,10 +56,10 @@ class MagnetGenome:
             A non-empty string name for this magnet type that should be unique in the context of the full insertion
             device. Names such as 'HH', 'VV', 'HE', 'VE', 'HT' are common.
 
-        magnet_permutation : int tensor (M,)
+        permutation : int tensor (M,)
             A tensor of integer value pairs representing MagnetSet index values of [0, M-1].
 
-        magnet_flips : bool tensor (M,)
+        flips : bool tensor (M,)
             A tensor of integer value pairs representing flip state values of [False, True].
 
         rng_states : tuple of numpy random states
@@ -75,25 +75,25 @@ class MagnetGenome:
             raise ex
 
         try:
-            self._magnet_permutation = validate_tensor(magnet_permutation, shape=(None,), dtype=np.integer)
-            self._count = self.magnet_permutation.shape[0]
+            self._permutation = validate_tensor(permutation, shape=(None,), dtype=np.integer)
+            self._count = self.permutation.shape[0]
 
-            if len(set(self.magnet_permutation.tolist())) != self.count:
+            if len(set(self.permutation.tolist())) != self.count:
                 raise ValidateMagnetGenomePermutationDuplicateError()
 
-            if np.any((self.magnet_permutation < 0) | (self.magnet_permutation >= self.count)):
+            if np.any((self.permutation < 0) | (self.permutation >= self.count)):
                 raise ValidateMagnetGenomePermutationBoundaryError(permutation_size=self.count,
-                                                                   min_index=self.magnet_permutation.min(),
-                                                                   max_index=self.magnet_permutation.max())
+                                                                   min_index=self.permutation.min(),
+                                                                   max_index=self.permutation.max())
         except Exception as ex:
-            logger.exception('magnet_permutation must be an int tensor of shape (M,)', exc_info=ex)
+            logger.exception('permutation must be an int tensor of shape (M,)', exc_info=ex)
             raise ex
 
         try:
             # Use of np.bool_ with trailing underscore is required for correct type checking!
-            self._magnet_flips = validate_tensor(magnet_flips, shape=(self.count,), dtype=np.bool_)
+            self._flips = validate_tensor(flips, shape=(self.count,), dtype=np.bool_)
         except Exception as ex:
-            logger.exception('magnet_flips must be an bool tensor of shape (M,)', exc_info=ex)
+            logger.exception('flips must be an bool tensor of shape (M,)', exc_info=ex)
             raise ex
 
         try:
@@ -109,12 +109,12 @@ class MagnetGenome:
         return self._magnet_type
 
     @property
-    def magnet_permutation(self):
-        return self._magnet_permutation
+    def permutation(self):
+        return self._permutation
 
     @property
-    def magnet_flips(self):
-        return self._magnet_flips
+    def flips(self):
+        return self._flips
 
     @property
     def count(self):
@@ -153,12 +153,12 @@ class MagnetGenome:
         rng_mutations = np.random.RandomState(seed=rng_children.randint(np.iinfo(np.int32).max - 1))
 
         # Use rng_mutations to sample the initial genome permutation and flip states
-        magnet_permutation = rng_mutations.permutation(magnet_set.count)
-        magnet_flips = rng_mutations.randint(low=0, high=2, size=(magnet_set.count,)).astype(np.bool)
+        permutation = rng_mutations.permutation(magnet_set.count)
+        flips = rng_mutations.randint(low=0, high=2, size=(magnet_set.count,)).astype(np.bool)
 
         # Construct and return the randomly initialized genome
-        return MagnetGenome(magnet_type=magnet_set.magnet_type, magnet_permutation=magnet_permutation,
-                            magnet_flips=magnet_flips, rng_states=(rng_children, rng_mutations))
+        return MagnetGenome(magnet_type=magnet_set.magnet_type, permutation=permutation,
+                            flips=flips, rng_states=(rng_children, rng_mutations))
 
     @staticmethod
     def from_magnet_genome(magnet_genome : 'MagnetGenome') -> 'MagnetGenome':
@@ -182,8 +182,8 @@ class MagnetGenome:
         rng_mutations = np.random.RandomState(seed=rng_children.randint(np.iinfo(np.int32).max - 1))
 
         # Construct and return the independent genome
-        return MagnetGenome(magnet_type=magnet_genome.magnet_type, magnet_permutation=magnet_genome.magnet_permutation,
-                            magnet_flips=magnet_genome.magnet_flips, rng_states=(rng_children, rng_mutations))
+        return MagnetGenome(magnet_type=magnet_genome.magnet_type, permutation=magnet_genome.permutation,
+                            flips=magnet_genome.flips, rng_states=(rng_children, rng_mutations))
 
     def save(self, file : typing.Union[str, typing.BinaryIO]):
         """
@@ -207,7 +207,7 @@ class MagnetGenome:
             """
 
             # Pack members into .maggenome file as a single tuple
-            pickle.dump((self.magnet_type, self.magnet_permutation, self.magnet_flips,
+            pickle.dump((self.magnet_type, self.permutation, self.flips,
                          (self.rng_children, self.rng_mutations)), file_handle)
 
             logger.info('Saved magnet set to .maggenome file handle')
@@ -257,11 +257,11 @@ class MagnetGenome:
             """
 
             # Unpack members from .maggenome file as a single tuple
-            (magnet_type, magnet_permutation, magnet_flips, rng_states) = pickle.load(file_handle)
+            (magnet_type, permutation, flips, rng_states) = pickle.load(file_handle)
 
             # Offload object construction and validation to the MagnetGenome constructor
-            magnet_genome = MagnetGenome(magnet_type=magnet_type, magnet_permutation=magnet_permutation,
-                                         magnet_flips=magnet_flips, rng_states=rng_states)
+            magnet_genome = MagnetGenome(magnet_type=magnet_type, permutation=permutation,
+                                         flips=flips, rng_states=rng_states)
 
             logger.info('Loaded magnet genome for type [%s] with [%d] magnets', magnet_type, magnet_genome.count)
 

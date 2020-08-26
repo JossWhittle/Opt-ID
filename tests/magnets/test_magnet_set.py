@@ -48,15 +48,15 @@ class MagnetSetTest(unittest.TestCase):
 
         count = 4
         magnet_type = 'HH'
-        magnet_names = [f'{index + 1:03d}' for index in range(count)]
-        magnet_field_vectors = np.array([
+        names = [f'{index + 1:03d}' for index in range(count)]
+        field_vectors = np.array([
             [0.003770334, -0.000352049, 1.339567917],
             [-0.007018214, -0.002714164, 1.344710227],
             [-0.004826321, -0.001714764, 1.342079598],
             [0.008846784, -0.003088993, 1.344698631],
         ], dtype=np.float32)
 
-        return count, magnet_type, magnet_names, magnet_field_vectors
+        return count, magnet_type, names, field_vectors
 
     def test_constructor(self):
         """
@@ -64,17 +64,17 @@ class MagnetSetTest(unittest.TestCase):
         """
 
         # Make dummy parameters
-        count, magnet_type, magnet_names, magnet_field_vectors = self.dummy_magnet_set_values()
+        count, magnet_type, names, field_vectors = self.dummy_magnet_set_values()
 
         # Construct MagnetSet instance
-        magnet_set = MagnetSet(magnet_type=magnet_type, magnet_names=magnet_names,
-                               magnet_field_vectors=magnet_field_vectors)
+        magnet_set = MagnetSet(magnet_type=magnet_type, names=names,
+                               field_vectors=field_vectors)
 
         # Assert object members have been correctly assigned
         self.assertEqual(magnet_set.count, count)
         self.assertEqual(magnet_set.magnet_type, magnet_type)
-        self.assertEqual(magnet_set.magnet_names, magnet_names)
-        self.assertTrue(np.allclose(magnet_set.magnet_field_vectors, magnet_field_vectors))
+        self.assertEqual(magnet_set.names, names)
+        self.assertTrue(np.allclose(magnet_set.field_vectors, field_vectors))
 
     def test_constructor_raises_on_bad_parameters_magnet_type(self):
         """
@@ -82,85 +82,85 @@ class MagnetSetTest(unittest.TestCase):
         """
 
         # Make dummy parameters
-        count, magnet_type, magnet_names, magnet_field_vectors = self.dummy_magnet_set_values()
+        count, magnet_type, names, field_vectors = self.dummy_magnet_set_values()
 
         # Assert constructor throws error from empty magnet type string
         self.assertRaisesRegex(optid.errors.ValidateStringEmptyError, '.*', MagnetSet,
-                               magnet_type='', magnet_names=magnet_names,
-                               magnet_field_vectors=magnet_field_vectors)
+                               magnet_type='', names=names,
+                               field_vectors=field_vectors)
 
         # Assert constructor throws error from magnet type not being a string
         self.assertRaisesRegex(optid.errors.ValidateStringTypeError, '.*', MagnetSet,
-                               magnet_type=None, magnet_names=magnet_names,
-                               magnet_field_vectors=magnet_field_vectors)
+                               magnet_type=None, names=names,
+                               field_vectors=field_vectors)
 
-    def test_constructor_raises_on_bad_parameters_magnet_names(self):
+    def test_constructor_raises_on_bad_parameters_names(self):
         """
         Tests the MagnetSet class throws exceptions when constructed with incorrect parameters.
         """
 
         # Make dummy parameters
-        count, magnet_type, magnet_names, magnet_field_vectors = self.dummy_magnet_set_values()
+        count, magnet_type, names, field_vectors = self.dummy_magnet_set_values()
 
         # Assert constructor throws error from wrong typed list of name strings for magnet names
         self.assertRaisesRegex(optid.errors.ValidateStringListTypeError, '.*', MagnetSet,
-                               magnet_type=magnet_type, magnet_names=None,
-                               magnet_field_vectors=magnet_field_vectors)
+                               magnet_type=magnet_type, names=None,
+                               field_vectors=field_vectors)
 
         # Assert constructor throws error from empty list of name strings for magnet names
         self.assertRaisesRegex(optid.errors.ValidateStringListEmptyError, '.*', MagnetSet,
-                               magnet_type=magnet_type, magnet_names=[],
-                               magnet_field_vectors=magnet_field_vectors)
+                               magnet_type=magnet_type, names=[],
+                               field_vectors=field_vectors)
 
         # Assert constructor throws error from empty name string in magnet names
         self.assertRaisesRegex(optid.errors.ValidateStringListElementEmptyError, '.*', MagnetSet,
                                magnet_type=magnet_type,
-                               magnet_names=['' if (index == 1) else name
-                                             for index, name in enumerate(magnet_names)],
-                               magnet_field_vectors=magnet_field_vectors)
+                               names=['' if (index == 1) else name
+                                             for index, name in enumerate(names)],
+                               field_vectors=field_vectors)
 
         # Assert constructor throws error from wrong typed string in magnet names
         self.assertRaisesRegex(optid.errors.ValidateStringListElementTypeError, '.*', MagnetSet,
                                magnet_type=magnet_type,
-                               magnet_names=[None if (index == 1) else name
-                                             for index, name in enumerate(magnet_names)],
-                               magnet_field_vectors=magnet_field_vectors)
+                               names=[None if (index == 1) else name
+                                             for index, name in enumerate(names)],
+                               field_vectors=field_vectors)
 
         # Assert constructor throws error from non unique name strings in magnet names
         self.assertRaisesRegex(optid.errors.ValidateStringListElementUniquenessError, '.*', MagnetSet,
                                magnet_type=magnet_type,
-                               magnet_names=['TEST' if (index % 2 == 0) else name
-                                             for index, name in enumerate(magnet_names)],
-                               magnet_field_vectors=magnet_field_vectors)
+                               names=['TEST' if (index % 2 == 0) else name
+                                             for index, name in enumerate(names)],
+                               field_vectors=field_vectors)
 
         # Assert constructor throws error from magnet names and magnet field vectors being different lengths
         self.assertRaisesRegex(optid.errors.ValidateTensorShapeError, '.*', MagnetSet,
                                magnet_type=magnet_type,
-                               magnet_names=magnet_names[:-1],
-                               magnet_field_vectors=magnet_field_vectors)
+                               names=names[:-1],
+                               field_vectors=field_vectors)
 
-    def test_constructor_raises_on_bad_parameters_magnet_field_vectors(self):
+    def test_constructor_raises_on_bad_parameters_field_vectors(self):
         """
         Tests the MagnetSet class throws exceptions when constructed with incorrect parameters.
         """
 
         # Make dummy parameters
-        count, magnet_type, magnet_names, magnet_field_vectors = self.dummy_magnet_set_values()
+        count, magnet_type, names, field_vectors = self.dummy_magnet_set_values()
 
         # Assert constructor throws error from incorrectly shaped magnet field vectors
         self.assertRaisesRegex(optid.errors.ValidateTensorShapeError, '.*', MagnetSet,
-                               magnet_type=magnet_type, magnet_names=magnet_names,
-                               magnet_field_vectors=np.random.uniform(size=(count, 4)))
+                               magnet_type=magnet_type, names=names,
+                               field_vectors=np.random.uniform(size=(count, 4)))
 
         # Assert constructor throws error from incorrectly typed magnet field vectors
         self.assertRaisesRegex(optid.errors.ValidateTensorElementTypeError, '.*', MagnetSet,
-                               magnet_type=magnet_type, magnet_names=magnet_names,
-                               magnet_field_vectors=magnet_field_vectors.astype(np.int32))
+                               magnet_type=magnet_type, names=names,
+                               field_vectors=field_vectors.astype(np.int32))
 
         # Assert constructor throws error from incorrectly typed magnet field vectors
         self.assertRaisesRegex(optid.errors.ValidateTensorTypeError, '.*', MagnetSet,
-                               magnet_type=magnet_type, magnet_names=magnet_names,
-                               magnet_field_vectors=None)
+                               magnet_type=magnet_type, names=names,
+                               field_vectors=None)
 
     def test_save(self):
         """
@@ -169,15 +169,15 @@ class MagnetSetTest(unittest.TestCase):
         """
 
         # Make dummy parameters
-        count, magnet_type, magnet_names, magnet_field_vectors = self.dummy_magnet_set_values()
+        count, magnet_type, names, field_vectors = self.dummy_magnet_set_values()
 
         # Run the round trip file save + load in a temporary directory
         with tempfile.TemporaryDirectory() as tmp_path:
             tmp_file_path = os.path.join(tmp_path, 'example.magset')
 
             # Construct MagnetSet instance
-            magnet_set = MagnetSet(magnet_type=magnet_type, magnet_names=magnet_names,
-                                   magnet_field_vectors=magnet_field_vectors)
+            magnet_set = MagnetSet(magnet_type=magnet_type, names=names,
+                                   field_vectors=field_vectors)
 
             # Save the MagnetSet to the temporary directory
             magnet_set.save(file=tmp_file_path)
@@ -191,8 +191,8 @@ class MagnetSetTest(unittest.TestCase):
         # Assert object members have been correctly assigned
         self.assertEqual(magnet_set.count, count)
         self.assertEqual(magnet_set.magnet_type, magnet_type)
-        self.assertEqual(magnet_set.magnet_names, magnet_names)
-        self.assertTrue(np.allclose(magnet_set.magnet_field_vectors, magnet_field_vectors))
+        self.assertEqual(magnet_set.names, names)
+        self.assertTrue(np.allclose(magnet_set.field_vectors, field_vectors))
 
     def test_save_open_file_handle(self):
         """
@@ -201,15 +201,15 @@ class MagnetSetTest(unittest.TestCase):
         """
 
         # Make dummy parameters
-        count, magnet_type, magnet_names, magnet_field_vectors = self.dummy_magnet_set_values()
+        count, magnet_type, names, field_vectors = self.dummy_magnet_set_values()
 
         # Run the round trip file save + load in a temporary directory
         with tempfile.TemporaryDirectory() as tmp_path:
             tmp_file_path = os.path.join(tmp_path, 'example.magset')
 
             # Construct MagnetSet instance
-            magnet_set = MagnetSet(magnet_type=magnet_type, magnet_names=magnet_names,
-                                   magnet_field_vectors=magnet_field_vectors)
+            magnet_set = MagnetSet(magnet_type=magnet_type, names=names,
+                                   field_vectors=field_vectors)
 
             with open(tmp_file_path, 'wb') as tmp_file_handle:
                 # Save the MagnetSet to the temporary directory
@@ -224,8 +224,8 @@ class MagnetSetTest(unittest.TestCase):
         # Assert object members have been correctly assigned
         self.assertEqual(magnet_set.count, count)
         self.assertEqual(magnet_set.magnet_type, magnet_type)
-        self.assertEqual(magnet_set.magnet_names, magnet_names)
-        self.assertTrue(np.allclose(magnet_set.magnet_field_vectors, magnet_field_vectors))
+        self.assertEqual(magnet_set.names, names)
+        self.assertTrue(np.allclose(magnet_set.field_vectors, field_vectors))
 
     def test_save_raises_on_bad_parameters(self):
         """
@@ -234,11 +234,11 @@ class MagnetSetTest(unittest.TestCase):
         """
 
         # Make dummy parameters
-        count, magnet_type, magnet_names, magnet_field_vectors = self.dummy_magnet_set_values()
+        count, magnet_type, names, field_vectors = self.dummy_magnet_set_values()
 
         # Construct MagnetSet instance
-        magnet_set = MagnetSet(magnet_type=magnet_type, magnet_names=magnet_names,
-                               magnet_field_vectors=magnet_field_vectors)
+        magnet_set = MagnetSet(magnet_type=magnet_type, names=names,
+                               field_vectors=field_vectors)
 
         # Attempt to save to a bad file parameter
         self.assertRaisesRegex(optid.errors.FileHandleError, '.*', magnet_set.save, file=None)
@@ -257,7 +257,7 @@ class MagnetSetTest(unittest.TestCase):
         inputs_path = os.path.join(data_path, 'inputs')
 
         # Make dummy parameters
-        count, magnet_type, magnet_names, magnet_field_vectors = self.dummy_magnet_set_values()
+        count, magnet_type, names, field_vectors = self.dummy_magnet_set_values()
 
         # Construct MagnetSet instance
         magnet_set = MagnetSet.from_file(file=os.path.join(inputs_path, 'example.magset'))
@@ -265,8 +265,8 @@ class MagnetSetTest(unittest.TestCase):
         # Assert object members have been correctly assigned
         self.assertEqual(magnet_set.count, count)
         self.assertEqual(magnet_set.magnet_type, magnet_type)
-        self.assertEqual(magnet_set.magnet_names, magnet_names)
-        self.assertTrue(np.allclose(magnet_set.magnet_field_vectors, magnet_field_vectors))
+        self.assertEqual(magnet_set.names, names)
+        self.assertTrue(np.allclose(magnet_set.field_vectors, field_vectors))
 
     def test_static_from_file_open_file_handle(self):
         """
@@ -283,7 +283,7 @@ class MagnetSetTest(unittest.TestCase):
         inputs_path = os.path.join(data_path, 'inputs')
 
         # Make dummy parameters
-        count, magnet_type, magnet_names, magnet_field_vectors = self.dummy_magnet_set_values()
+        count, magnet_type, names, field_vectors = self.dummy_magnet_set_values()
 
         with open(os.path.join(inputs_path, 'example.magset'), 'rb') as file_handle:
             # Construct MagnetSet instance
@@ -292,8 +292,8 @@ class MagnetSetTest(unittest.TestCase):
         # Assert object members have been correctly assigned
         self.assertEqual(magnet_set.count, count)
         self.assertEqual(magnet_set.magnet_type, magnet_type)
-        self.assertEqual(magnet_set.magnet_names, magnet_names)
-        self.assertTrue(np.allclose(magnet_set.magnet_field_vectors, magnet_field_vectors))
+        self.assertEqual(magnet_set.names, names)
+        self.assertTrue(np.allclose(magnet_set.field_vectors, field_vectors))
 
     def test_static_from_file_raises_on_bad_parameters(self):
         """
@@ -318,7 +318,7 @@ class MagnetSetTest(unittest.TestCase):
         inputs_path = os.path.join(data_path, 'inputs')
 
         # Make dummy parameters
-        count, magnet_type, magnet_names, magnet_field_vectors = self.dummy_magnet_set_values()
+        count, magnet_type, names, field_vectors = self.dummy_magnet_set_values()
 
         # Construct MagnetSet instance
         magnet_set = MagnetSet.from_sim_file(magnet_type=magnet_type, file=os.path.join(inputs_path, 'example.sim'))
@@ -326,8 +326,8 @@ class MagnetSetTest(unittest.TestCase):
         # Assert object members have been correctly assigned
         self.assertEqual(magnet_set.count, count)
         self.assertEqual(magnet_set.magnet_type, magnet_type)
-        self.assertEqual(magnet_set.magnet_names, magnet_names)
-        self.assertTrue(np.allclose(magnet_set.magnet_field_vectors, magnet_field_vectors))
+        self.assertEqual(magnet_set.names, names)
+        self.assertTrue(np.allclose(magnet_set.field_vectors, field_vectors))
 
     def test_static_from_sim_file_open_file_handle(self):
         """
@@ -344,7 +344,7 @@ class MagnetSetTest(unittest.TestCase):
         inputs_path = os.path.join(data_path, 'inputs')
 
         # Make dummy parameters
-        count, magnet_type, magnet_names, magnet_field_vectors = self.dummy_magnet_set_values()
+        count, magnet_type, names, field_vectors = self.dummy_magnet_set_values()
 
         with open(os.path.join(inputs_path, 'example.sim'), 'r') as file_handle:
             # Construct MagnetSet instance
@@ -353,8 +353,8 @@ class MagnetSetTest(unittest.TestCase):
         # Assert object members have been correctly assigned
         self.assertEqual(magnet_set.count, count)
         self.assertEqual(magnet_set.magnet_type, magnet_type)
-        self.assertEqual(magnet_set.magnet_names, magnet_names)
-        self.assertTrue(np.allclose(magnet_set.magnet_field_vectors, magnet_field_vectors))
+        self.assertEqual(magnet_set.names, names)
+        self.assertTrue(np.allclose(magnet_set.field_vectors, field_vectors))
 
     def test_static_from_sim_file_raises_on_bad_parameters(self):
         """
