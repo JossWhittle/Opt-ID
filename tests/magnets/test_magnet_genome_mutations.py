@@ -111,28 +111,72 @@ class MagnetGenomeTest(unittest.TestCase):
             magnet_set, magnet_slots, magnet_lookup, magnet_genome = self.dummy_values()
 
         index = 1
-        flip_old = magnet_genome.flips[index]
+
+        # Current genome state
+        permutation_old = magnet_genome.permutation.copy()
+        flip_old = magnet_genome.flips.copy()[index]
         bfield_old = magnet_genome.calculate_bfield(magnet_set=magnet_set, magnet_slots=magnet_slots,
                                                     magnet_lookup=magnet_lookup)
 
         validate_tensor(bfield_old, shape=(x_range.steps, z_range.steps, s_range.steps, 3), dtype=np.floating)
 
-        bfield_delta = magnet_genome.flip(index, magnet_set=magnet_set, magnet_slots=magnet_slots,
-                                          magnet_lookup=magnet_lookup)
+        # Apply mutation
+        bfield_delta = magnet_genome.flip_mutation(index, magnet_set=magnet_set, magnet_slots=magnet_slots,
+                                                   magnet_lookup=magnet_lookup)
 
         validate_tensor(bfield_delta, shape=(x_range.steps, z_range.steps, s_range.steps, 3), dtype=np.floating)
 
-        flip_new = magnet_genome.flips[index]
+        # New genome state
+        permutation_new = magnet_genome.permutation.copy()
+        flip_new = magnet_genome.flips.copy()[index]
         bfield_new = magnet_genome.calculate_bfield(magnet_set=magnet_set, magnet_slots=magnet_slots,
                                                     magnet_lookup=magnet_lookup)
 
         validate_tensor(bfield_new, shape=(x_range.steps, z_range.steps, s_range.steps, 3), dtype=np.floating)
 
         self.assertTrue((not flip_old) == flip_new)
+        self.assertTrue(np.all(permutation_old == permutation_new))
         self.assertTrue(np.allclose((bfield_old + bfield_delta), bfield_new))
         self.assertFalse(np.allclose(bfield_old, bfield_new))
 
-    def test_swap(self):
+    def test_random_flip(self):
+        """
+        Tests the MagnetGenome class calculate bfield deltas consistently after mutations.
+        """
+
+        count, magnet_type, names, field_vectors, \
+            size, cutouts, beams, positions, direction_matrices, flip_vectors, \
+            x_range, z_range, s_range, lookup, \
+            magnet_set, magnet_slots, magnet_lookup, magnet_genome = self.dummy_values()
+
+        # Current genome state
+        permutation_old = magnet_genome.permutation.copy()
+        flips_old = magnet_genome.flips.copy()
+        bfield_old = magnet_genome.calculate_bfield(magnet_set=magnet_set, magnet_slots=magnet_slots,
+                                                    magnet_lookup=magnet_lookup)
+
+        validate_tensor(bfield_old, shape=(x_range.steps, z_range.steps, s_range.steps, 3), dtype=np.floating)
+
+        # Apply mutation
+        bfield_delta = magnet_genome.random_flip_mutation(magnet_set=magnet_set, magnet_slots=magnet_slots,
+                                                          magnet_lookup=magnet_lookup)
+
+        validate_tensor(bfield_delta, shape=(x_range.steps, z_range.steps, s_range.steps, 3), dtype=np.floating)
+
+        # New genome state
+        permutation_new = magnet_genome.permutation.copy()
+        flips_new = magnet_genome.flips.copy()
+        bfield_new = magnet_genome.calculate_bfield(magnet_set=magnet_set, magnet_slots=magnet_slots,
+                                                    magnet_lookup=magnet_lookup)
+
+        validate_tensor(bfield_new, shape=(x_range.steps, z_range.steps, s_range.steps, 3), dtype=np.floating)
+
+        self.assertEqual(1, np.sum(flips_old != flips_new))
+        self.assertTrue(np.all(permutation_old == permutation_new))
+        self.assertTrue(np.allclose((bfield_old + bfield_delta), bfield_new))
+        self.assertFalse(np.allclose(bfield_old, bfield_new))
+
+    def test_exchange(self):
         """
         Tests the MagnetGenome class calculate bfield deltas consistently after mutations.
         """
@@ -143,20 +187,24 @@ class MagnetGenomeTest(unittest.TestCase):
             magnet_set, magnet_slots, magnet_lookup, magnet_genome = self.dummy_values()
 
         index_a, index_b = 1, 3
-        permutation_old = magnet_genome.permutation[[index_a, index_b]]
-        flips_old = magnet_genome.flips[[index_a, index_b]]
+
+        # Current genome state
+        permutation_old = magnet_genome.permutation.copy()[[index_a, index_b]]
+        flips_old = magnet_genome.flips.copy()[[index_a, index_b]]
         bfield_old = magnet_genome.calculate_bfield(magnet_set=magnet_set, magnet_slots=magnet_slots,
                                                     magnet_lookup=magnet_lookup)
 
         validate_tensor(bfield_old, shape=(x_range.steps, z_range.steps, s_range.steps, 3), dtype=np.floating)
 
-        bfield_delta = magnet_genome.swap(index_a, index_b, magnet_set=magnet_set, magnet_slots=magnet_slots,
-                                          magnet_lookup=magnet_lookup)
+        # Apply mutation
+        bfield_delta = magnet_genome.exchange_mutation(index_a, index_b, magnet_set=magnet_set,
+                                                       magnet_slots=magnet_slots, magnet_lookup=magnet_lookup)
 
         validate_tensor(bfield_delta, shape=(x_range.steps, z_range.steps, s_range.steps, 3), dtype=np.floating)
 
-        permutation_new = magnet_genome.permutation[[index_a, index_b]]
-        flips_new = magnet_genome.flips[[index_a, index_b]]
+        # New genome state
+        permutation_new = magnet_genome.permutation.copy()[[index_a, index_b]]
+        flips_new = magnet_genome.flips.copy()[[index_a, index_b]]
         bfield_new = magnet_genome.calculate_bfield(magnet_set=magnet_set, magnet_slots=magnet_slots,
                                                     magnet_lookup=magnet_lookup)
 
@@ -164,5 +212,76 @@ class MagnetGenomeTest(unittest.TestCase):
 
         self.assertTrue(np.allclose(permutation_old, permutation_new[::-1]))
         self.assertTrue(np.allclose(flips_old, flips_new[::-1]))
+        self.assertTrue(np.allclose((bfield_old + bfield_delta), bfield_new))
+        self.assertFalse(np.allclose(bfield_old, bfield_new))
+
+    def test_random_exchange(self):
+        """
+        Tests the MagnetGenome class calculate bfield deltas consistently after mutations.
+        """
+
+        count, magnet_type, names, field_vectors, \
+            size, cutouts, beams, positions, direction_matrices, flip_vectors, \
+            x_range, z_range, s_range, lookup, \
+            magnet_set, magnet_slots, magnet_lookup, magnet_genome = self.dummy_values()
+
+        # Current genome state
+        permutation_old = magnet_genome.permutation.copy()
+        flips_old = magnet_genome.flips.copy()
+        bfield_old = magnet_genome.calculate_bfield(magnet_set=magnet_set, magnet_slots=magnet_slots,
+                                                    magnet_lookup=magnet_lookup)
+
+        validate_tensor(bfield_old, shape=(x_range.steps, z_range.steps, s_range.steps, 3), dtype=np.floating)
+
+        # Apply mutation
+        bfield_delta = magnet_genome.random_exchange_mutation(magnet_set=magnet_set, magnet_slots=magnet_slots,
+                                                              magnet_lookup=magnet_lookup)
+
+        validate_tensor(bfield_delta, shape=(x_range.steps, z_range.steps, s_range.steps, 3), dtype=np.floating)
+
+        # New genome state
+        permutation_new = magnet_genome.permutation.copy()
+        flips_new = magnet_genome.flips.copy()
+        bfield_new = magnet_genome.calculate_bfield(magnet_set=magnet_set, magnet_slots=magnet_slots,
+                                                    magnet_lookup=magnet_lookup)
+
+        validate_tensor(bfield_new, shape=(x_range.steps, z_range.steps, s_range.steps, 3), dtype=np.floating)
+
+        self.assertEqual(2, np.sum(flips_old != flips_new))
+        self.assertEqual(2, np.sum(permutation_old != permutation_new))
+        self.assertTrue(np.allclose((bfield_old + bfield_delta), bfield_new))
+        self.assertFalse(np.allclose(bfield_old, bfield_new))
+
+    def test_random_mutations(self):
+        """
+        Tests the MagnetGenome class calculate bfield deltas consistently after mutations.
+        """
+
+        count, magnet_type, names, field_vectors, \
+            size, cutouts, beams, positions, direction_matrices, flip_vectors, \
+            x_range, z_range, s_range, lookup, \
+            magnet_set, magnet_slots, magnet_lookup, magnet_genome = self.dummy_values()
+
+        num_mutations = 16
+
+        # Current genome state
+        bfield_old = magnet_genome.calculate_bfield(magnet_set=magnet_set, magnet_slots=magnet_slots,
+                                                    magnet_lookup=magnet_lookup)
+
+        validate_tensor(bfield_old, shape=(x_range.steps, z_range.steps, s_range.steps, 3), dtype=np.floating)
+
+        # Apply mutation
+        bfield_delta = sum(magnet_genome.random_mutation(magnet_set=magnet_set, magnet_slots=magnet_slots,
+                                                         magnet_lookup=magnet_lookup)
+                           for _ in range(num_mutations))
+
+        validate_tensor(bfield_delta, shape=(x_range.steps, z_range.steps, s_range.steps, 3), dtype=np.floating)
+
+        # New genome state
+        bfield_new = magnet_genome.calculate_bfield(magnet_set=magnet_set, magnet_slots=magnet_slots,
+                                                    magnet_lookup=magnet_lookup)
+
+        validate_tensor(bfield_new, shape=(x_range.steps, z_range.steps, s_range.steps, 3), dtype=np.floating)
+
         self.assertTrue(np.allclose((bfield_old + bfield_delta), bfield_new))
         self.assertFalse(np.allclose(bfield_old, bfield_new))
