@@ -22,6 +22,5 @@ from optid.utils.range import Range
 # Validation functions
 from optid.utils.validate_range import validate_range
 from optid.utils.validate_tensor import validate_tensor
-from optid.utils.validate_magnet_cutouts import validate_magnet_cutouts
 from optid.utils.validate_string import validate_string
 from optid.utils.validate_string_list import validate_string_list
