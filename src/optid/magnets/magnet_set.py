@@ -26,6 +26,9 @@ from optid.errors import FileHandleError
 logger = optid.utils.logging.get_logger('optid.magnets.MagnetSet')
 
 
+Field_Vectors_Type = npt.NDArray[(typing.Any, 3), npt.Float]
+
+
 class MagnetSet:
     """
     Represents a set of named candidate magnets of the same type and size with their measured field strength vectors.
@@ -34,7 +37,7 @@ class MagnetSet:
     def __init__(self,
                  magnet_type : str,
                  names : typing.List[str],
-                 field_vectors : npt.NDArray[(typing.Any, 3), npt.Float]):
+                 field_vectors : Field_Vectors_Type):
         """
         Constructs a MagnetSet instance and validates the values are the correct types and consistent sizes.
 
@@ -77,19 +80,19 @@ class MagnetSet:
             raise ex
 
     @property
-    def magnet_type(self):
+    def magnet_type(self) -> str:
         return self._magnet_type
 
     @property
-    def names(self):
+    def names(self) -> typing.List[str]:
         return self._names
 
     @property
-    def field_vectors(self):
+    def field_vectors(self) -> Field_Vectors_Type:
         return self._field_vectors
 
     @property
-    def count(self):
+    def count(self) -> int:
         return self._count
 
     def save(self, file : typing.Union[str, typing.BinaryIO]):

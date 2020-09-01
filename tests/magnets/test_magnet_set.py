@@ -84,15 +84,13 @@ class MagnetSetTest(unittest.TestCase):
         # Make dummy parameters
         count, magnet_type, names, field_vectors = self.dummy_magnet_set_values()
 
-        # Assert constructor throws error from empty magnet type string
-        self.assertRaisesRegex(optid.errors.ValidateStringEmptyError, '.*', MagnetSet,
-                               magnet_type='', names=names,
-                               field_vectors=field_vectors)
+        fixed_params = dict(names=names, field_vectors=field_vectors)
 
-        # Assert constructor throws error from magnet type not being a string
-        self.assertRaisesRegex(optid.errors.ValidateStringTypeError, '.*', MagnetSet,
-                               magnet_type=None, names=names,
-                               field_vectors=field_vectors)
+        self.assertRaisesRegex(optid.errors.ValidateStringEmptyError, '.*', MagnetSet, **fixed_params,
+                               magnet_type='')
+
+        self.assertRaisesRegex(optid.errors.ValidateStringTypeError, '.*', MagnetSet, **fixed_params,
+                               magnet_type=None)
 
     def test_constructor_raises_on_bad_parameters_names(self):
         """
@@ -102,42 +100,25 @@ class MagnetSetTest(unittest.TestCase):
         # Make dummy parameters
         count, magnet_type, names, field_vectors = self.dummy_magnet_set_values()
 
-        # Assert constructor throws error from wrong typed list of name strings for magnet names
-        self.assertRaisesRegex(optid.errors.ValidateStringListTypeError, '.*', MagnetSet,
-                               magnet_type=magnet_type, names=None,
-                               field_vectors=field_vectors)
+        fixed_params = dict(magnet_type=magnet_type, field_vectors=field_vectors)
 
-        # Assert constructor throws error from empty list of name strings for magnet names
-        self.assertRaisesRegex(optid.errors.ValidateStringListEmptyError, '.*', MagnetSet,
-                               magnet_type=magnet_type, names=[],
-                               field_vectors=field_vectors)
+        self.assertRaisesRegex(optid.errors.ValidateStringListTypeError, '.*', MagnetSet, **fixed_params,
+                               names=None)
 
-        # Assert constructor throws error from empty name string in magnet names
-        self.assertRaisesRegex(optid.errors.ValidateStringListElementEmptyError, '.*', MagnetSet,
-                               magnet_type=magnet_type,
-                               names=['' if (index == 1) else name
-                                             for index, name in enumerate(names)],
-                               field_vectors=field_vectors)
+        self.assertRaisesRegex(optid.errors.ValidateStringListEmptyError, '.*', MagnetSet, **fixed_params,
+                               names=[])
 
-        # Assert constructor throws error from wrong typed string in magnet names
-        self.assertRaisesRegex(optid.errors.ValidateStringListElementTypeError, '.*', MagnetSet,
-                               magnet_type=magnet_type,
-                               names=[None if (index == 1) else name
-                                             for index, name in enumerate(names)],
-                               field_vectors=field_vectors)
+        self.assertRaisesRegex(optid.errors.ValidateStringListElementEmptyError, '.*', MagnetSet, **fixed_params,
+                               names=['' if (index == 1) else name for index, name in enumerate(names)])
 
-        # Assert constructor throws error from non unique name strings in magnet names
-        self.assertRaisesRegex(optid.errors.ValidateStringListElementUniquenessError, '.*', MagnetSet,
-                               magnet_type=magnet_type,
-                               names=['TEST' if (index % 2 == 0) else name
-                                             for index, name in enumerate(names)],
-                               field_vectors=field_vectors)
+        self.assertRaisesRegex(optid.errors.ValidateStringListElementTypeError, '.*', MagnetSet, **fixed_params,
+                               names=[None if (index == 1) else name for index, name in enumerate(names)])
 
-        # Assert constructor throws error from magnet names and magnet field vectors being different lengths
-        self.assertRaisesRegex(optid.errors.ValidateTensorShapeError, '.*', MagnetSet,
-                               magnet_type=magnet_type,
-                               names=names[:-1],
-                               field_vectors=field_vectors)
+        self.assertRaisesRegex(optid.errors.ValidateStringListElementUniquenessError, '.*', MagnetSet, **fixed_params,
+                               names=['TEST' if (index % 2 == 0) else name for index, name in enumerate(names)])
+
+        self.assertRaisesRegex(optid.errors.ValidateTensorShapeError, '.*', MagnetSet, **fixed_params,
+                               names=names[:-1])
 
     def test_constructor_raises_on_bad_parameters_field_vectors(self):
         """
@@ -147,19 +128,15 @@ class MagnetSetTest(unittest.TestCase):
         # Make dummy parameters
         count, magnet_type, names, field_vectors = self.dummy_magnet_set_values()
 
-        # Assert constructor throws error from incorrectly shaped magnet field vectors
-        self.assertRaisesRegex(optid.errors.ValidateTensorShapeError, '.*', MagnetSet,
-                               magnet_type=magnet_type, names=names,
+        fixed_params = dict(magnet_type=magnet_type, names=names)
+
+        self.assertRaisesRegex(optid.errors.ValidateTensorShapeError, '.*', MagnetSet, **fixed_params,
                                field_vectors=np.random.uniform(size=(count, 4)))
 
-        # Assert constructor throws error from incorrectly typed magnet field vectors
-        self.assertRaisesRegex(optid.errors.ValidateTensorElementTypeError, '.*', MagnetSet,
-                               magnet_type=magnet_type, names=names,
+        self.assertRaisesRegex(optid.errors.ValidateTensorElementTypeError, '.*', MagnetSet, **fixed_params,
                                field_vectors=field_vectors.astype(np.int32))
 
-        # Assert constructor throws error from incorrectly typed magnet field vectors
-        self.assertRaisesRegex(optid.errors.ValidateTensorTypeError, '.*', MagnetSet,
-                               magnet_type=magnet_type, names=names,
+        self.assertRaisesRegex(optid.errors.ValidateTensorTypeError, '.*', MagnetSet, **fixed_params,
                                field_vectors=None)
 
     def test_save(self):
@@ -385,22 +362,14 @@ class MagnetSetTest(unittest.TestCase):
         # Make dummy parameters
         _, magnet_type, _, _ = self.dummy_magnet_set_values()
 
-        # Assert from_sim_file throws error when sim file has a missing magnet name
-        self.assertRaisesRegex(Exception, '.*', MagnetSet.from_sim_file,
-                               magnet_type=magnet_type,
+        self.assertRaisesRegex(Exception, '.*', MagnetSet.from_sim_file, magnet_type=magnet_type,
                                file=os.path.join(inputs_path, 'example_missing_name.sim'))
 
-        # Assert from_sim_file throws error when sim file has a missing magnet field vector
-        self.assertRaisesRegex(Exception, '.*', MagnetSet.from_sim_file,
-                               magnet_type=magnet_type,
+        self.assertRaisesRegex(Exception, '.*', MagnetSet.from_sim_file, magnet_type=magnet_type,
                                file=os.path.join(inputs_path, 'example_missing_field_vector.sim'))
 
-        # Assert from_sim_file throws error when sim file has an invalid magnet field vector
-        self.assertRaisesRegex(Exception, '.*', MagnetSet.from_sim_file,
-                               magnet_type=magnet_type,
+        self.assertRaisesRegex(Exception, '.*', MagnetSet.from_sim_file, magnet_type=magnet_type,
                                file=os.path.join(inputs_path, 'example_invalid_field_vector.sim'))
 
-        # Assert from_sim_file throws error when sim file has a duplicate magnet name
-        self.assertRaisesRegex(Exception, '.*', MagnetSet.from_sim_file,
-                               magnet_type=magnet_type,
+        self.assertRaisesRegex(Exception, '.*', MagnetSet.from_sim_file, magnet_type=magnet_type,
                                file=os.path.join(inputs_path, 'example_duplicate_name.sim'))

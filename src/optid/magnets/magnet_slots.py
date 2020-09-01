@@ -17,12 +17,16 @@ import io
 import typing
 import nptyping as npt
 import pickle
+import numpy as np
 
 import optid
 from optid.utils import validate_tensor, validate_magnet_cutouts, validate_string, validate_string_list
 from optid.errors import FileHandleError
 
 logger = optid.utils.logging.get_logger('optid.magnets.MagnetSlots')
+
+
+Flip_Matrix_Type = npt.NDArray[(3, 3), npt.Float]
 
 
 class MagnetSlots:
@@ -34,12 +38,9 @@ class MagnetSlots:
 
     def __init__(self,
                  magnet_type : str,
-                 size : npt.NDArray[(3,), npt.Float],
-                 cutouts: npt.NDArray[(typing.Any, 2, 3), npt.Float],
                  beams : typing.List[str],
-                 positions : npt.NDArray[(typing.Any, 3), npt.Float],
-                 direction_matrices : npt.NDArray[(typing.Any, 3, 3), npt.Float],
-                 flip_vectors : npt.NDArray[(typing.Any, 3), npt.Float]):
+                 slots : typing.List[str],
+                 flip_matrix : Flip_Matrix_Type):
         """
         Constructs a MagnetSlots instance and validates the values are the correct types and consistent sizes.
 
@@ -49,33 +50,19 @@ class MagnetSlots:
             A non-empty string name for this magnet type that should be unique in the context of the full insertion
             device. Names such as 'HH', 'VV', 'HE', 'VE', 'HT' are common.
 
-        size : float tensor (3,)
-            A single 3-dim float vector representing the constant size for all magnets in this set.
-
-        cutouts : float tensor (C, 2, 3)
-            A tensor of C pairs of 3-dim float vectors of shape (C, 2, 3) representing the constant position offset
-            and size for all magnet cutout regions. These regions are applied to the magnet in its identity orientation
-            before it is transformed by a MagnetSlots direction matrix.
-
         beams : list(str)
             A list of named identifiers for physical beams in the insertion device that each magnet of this type
             is placed in. Most devices will have two (PPM, CPMU) or four (APPLE) unique beam identifiers reused by
             multiple magnets. Magnets of a given type will most likely be present in all beams due to device symmetries.
 
-        positions : float tensor (S, 3)
-            A tensor of S 3-dim float vectors of shape (S, 3) representing the bottom left hand near corner of each
-            magnet slot of this type.
+        slots : list(str)
+            A list of unique non-empty strings representing the named identifier for each physical magnet slot.
+            Uniqueness of slot names must be guaranteed for slots with matching beam names.
+            i.e. "{beam}:{slot}" must be unique.
 
-        direction_matrices : np.ndarray
-            A tensor of S 3x3 float matrices of shape (S, 3, 3) representing the set of orthogonal rotations that
-            would be applied to a magnets primary coordinate system if its field were aligned w.r.t an X,Z,S
-            coordinate system.
-
-        flip_vectors : np.ndarray
-            A tensor of S 3-dim float vectors of shape (S, 3) representing the set of flips that would be applied
-            to a magnet in this slot in order to swap the direction of its minor axis vectors while keeping its
-            primary (easy) axis vector aligned to the direction for this slow, as specified by the corresponding
-            direction matrix.
+        flip_matrix : np.ndarray
+            A float matrix of shape (3, 3) representing the flips that would be applied to a magnet in order to swap
+            the direction of its minor axis vectors while keeping its major (easy) axis vector.
         """
 
         try:
@@ -85,76 +72,57 @@ class MagnetSlots:
             raise ex
 
         try:
-            self._size = validate_tensor(size, shape=(3,))
-        except Exception as ex:
-            logger.exception('size must be a single 3-dim float vector', exc_info=ex)
-            raise ex
+            self._beams = validate_string_list(beams, assert_non_empty_list=True, assert_non_empty_strings=True)
 
-        try:
-            self._cutouts = validate_magnet_cutouts(cutouts, size=self.size)
-        except Exception as ex:
-            logger.exception('cutouts must be a float tensor of shape (C, 2, 3) where cutout regions'
-                             'do not extend outside the size of the magnet', exc_info=ex)
-            raise ex
-
-        try:
-            self._beams = validate_string_list(beams, assert_non_empty_list=True,
-                                                                   assert_non_empty_strings=True)
+            # Number of magnet slots derived from number of beam names provided. All other inputs must be consistent.
+            self._count = len(self.beams)
         except Exception as ex:
             logger.exception('beams must be a non-empty list of non-empty strings', exc_info=ex)
             raise ex
 
-        # Number of magnet slots derived from number of beam names provided. All other inputs must be consistent.
-        self._count = len(self.beams)
-
         try:
-            self._positions = validate_tensor(positions, shape=(self.count, 3))
+            self._slots = validate_string_list(slots, shape=self.count,
+                                               assert_non_empty_list=True, assert_non_empty_strings=True)
         except Exception as ex:
-            logger.exception('positions must be a float tensor of shape (S, 3)', exc_info=ex)
+            logger.exception('slots must be a non-empty list of non-empty strings', exc_info=ex)
             raise ex
 
         try:
-            self._direction_matrices = validate_tensor(direction_matrices, shape=(self.count, 3, 3))
+            validate_string_list([f'{beam}:{slot}' for beam, slot in zip(beams, slots)], shape=self.count,
+                                 assert_non_empty_list=True, assert_non_empty_strings=True, assert_unique_strings=True)
         except Exception as ex:
-            logger.exception('direction_matrices must be a float tensor of shape (S, 3, 3)', exc_info=ex)
+            logger.exception('"{beam}:{slot}" must be unique for all name pairs in beams and slots', exc_info=ex)
             raise ex
 
         try:
-            self._flip_vectors = validate_tensor(flip_vectors, shape=(self.count, 3))
+            self._flip_matrix = validate_tensor(flip_matrix, shape=(3, 3))
+            self._flippable = not np.allclose(self.flip_matrix, np.eye(3, dtype=np.float32))
         except Exception as ex:
-            logger.exception('flip_vectors must be a float tensor of shape (S, 3)', exc_info=ex)
+            logger.exception('flip_matrix must be a float tensor of shape (3, 3)', exc_info=ex)
             raise ex
 
     @property
-    def magnet_type(self):
+    def magnet_type(self) -> str:
         return self._magnet_type
 
     @property
-    def size(self):
-        return self._size
-
-    @property
-    def cutouts(self):
-        return self._cutouts
-
-    @property
-    def beams(self):
+    def beams(self) -> typing.List[str]:
         return self._beams
 
     @property
-    def positions(self):
-        return self._positions
+    def slots(self) -> typing.List[str]:
+        return self._slots
 
     @property
-    def direction_matrices(self):
-        return self._direction_matrices
+    def flip_matrix(self) -> Flip_Matrix_Type:
+        return self._flip_matrix
 
     @property
-    def flip_vectors(self):
-        return self._flip_vectors
+    def flippable(self) -> bool:
+        return self._flippable
 
     @property
-    def count(self):
+    def count(self) -> int:
         return self._count
 
     def save(self, file : typing.Union[str, typing.BinaryIO]):
@@ -179,10 +147,7 @@ class MagnetSlots:
             """
 
             # Pack members into .magslots file as a single tuple
-            pickle.dump((self.magnet_type, self.size, self.cutouts,
-                         self.beams, self.positions,
-                         self.direction_matrices,
-                         self.flip_vectors), file_handle)
+            pickle.dump((self.magnet_type, self.beams, self.slots, self.flip_matrix), file_handle)
 
             logger.info('Saved magnet slots to .magslots file handle')
 
@@ -231,14 +196,10 @@ class MagnetSlots:
             """
 
             # Unpack members from .magslots file as a single tuple
-            (magnet_type, size, cutouts, beams, positions,
-                direction_matrices, flip_vectors) = pickle.load(file_handle)
+            (magnet_type, beams, slots, flip_matrix) = pickle.load(file_handle)
 
             # Offload object construction and validation to the MagnetSlots constructor
-            magnet_slots = MagnetSlots(magnet_type=magnet_type, size=size, cutouts=cutouts,
-                                       beams=beams, positions=positions,
-                                       direction_matrices=direction_matrices,
-                                       flip_vectors=flip_vectors)
+            magnet_slots = MagnetSlots(magnet_type=magnet_type, beams=beams, slots=slots, flip_matrix=flip_matrix)
 
             logger.info('Loaded magnet slots [%s] with [%d] slots', magnet_type, magnet_slots.count)
 

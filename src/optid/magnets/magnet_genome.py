@@ -30,6 +30,11 @@ import logging
 logger = optid.utils.logging.get_logger('optid.magnets.MagnetGenome')
 
 
+Permutation_Type = npt.NDArray[(typing.Any,), npt.Int]
+Flips_Type       = npt.NDArray[(typing.Any,), npt.Bool]
+Bfield_Type      = npt.NDArray[(typing.Any, typing.Any, typing.Any, 3), npt.Float]
+
+
 class MagnetGenome:
     """
     Represents a permutation of magnets of the same type w.r.t a MagnetSet, MagnetSlots, and MagnetLookup
@@ -45,9 +50,12 @@ class MagnetGenome:
 
     def __init__(self,
                  magnet_type : str,
-                 permutation : npt.NDArray[(typing.Any,), npt.Int],
-                 flips : npt.NDArray[(typing.Any,), npt.Int],
-                 rng_states : typing.Tuple[np.random.RandomState, np.random.RandomState]):
+                 permutation : Permutation_Type,
+                 flips : Flips_Type,
+                 rng_states : typing.Tuple[np.random.RandomState, np.random.RandomState],
+                 magnet_set : MagnetSet,
+                 magnet_slots : MagnetSlots,
+                 magnet_lookup : MagnetLookup):
         """
         Constructs a MagnetGenome instance and validates the values are the correct types and consistent sizes.
 
@@ -67,6 +75,15 @@ class MagnetGenome:
             A pair of rng states used to initialize two independent numpy random generators. One rng is used for
             spawning child genomes, the other is used exclusively for mutating this genome.
             This makes rng seeding safe for parallel execution.
+
+        magnet_set : MagnetSet
+            The set of real magnet values used to gather field vectors.
+
+        magnet_slots : MagnetSlots
+            The configuration of magnet slots used to gather the flip matrix.
+
+        magnet_lookup : MagnetLookup
+            The lookup table used for the magnet slots to compute the bfields from.
         """
 
         try:
@@ -76,8 +93,38 @@ class MagnetGenome:
             raise ex
 
         try:
-            self._permutation = validate_tensor(permutation, shape=(None,), dtype=np.integer)
-            self._count = self.permutation.shape[0]
+            self._magnet_set = magnet_set
+            assert isinstance(self.magnet_set, MagnetSet)
+            assert self.magnet_type == self.magnet_set.magnet_type
+
+            self._count = self.magnet_set.count
+        except Exception as ex:
+            logger.exception('magnet_set must be a MagnetSet instance', exc_info=ex)
+            raise ex
+
+        try:
+            self._magnet_slots = magnet_slots
+            assert isinstance(self.magnet_slots, MagnetSlots)
+            assert self.magnet_type == self.magnet_slots.magnet_type
+            assert self.count >= self.magnet_slots.count
+
+        except Exception as ex:
+            logger.exception('magnet_slots must be a MagnetSlots instance', exc_info=ex)
+            raise ex
+
+        try:
+            self._magnet_lookup = magnet_lookup
+            assert isinstance(self.magnet_lookup, MagnetLookup)
+            assert self.magnet_type == self.magnet_lookup.magnet_type
+            assert self.count >= self.magnet_lookup.count
+            assert self.magnet_slots.count == self.magnet_lookup.count
+
+        except Exception as ex:
+            logger.exception('magnet_lookup must be a MagnetLookup instance', exc_info=ex)
+            raise ex
+
+        try:
+            self._permutation = validate_tensor(permutation, shape=(self.count,), dtype=np.integer)
 
             if len(set(self.permutation.tolist())) != self.count:
                 raise ValidateMagnetGenomePermutationDuplicateError()
@@ -93,6 +140,7 @@ class MagnetGenome:
         try:
             # Use of np.bool_ with trailing underscore is required for correct type checking!
             self._flips = validate_tensor(flips, shape=(self.count,), dtype=np.bool_)
+
         except Exception as ex:
             logger.exception('flips must be an bool tensor of shape (M,)', exc_info=ex)
             raise ex
@@ -106,34 +154,42 @@ class MagnetGenome:
             raise ex
 
     @property
-    def magnet_type(self):
+    def magnet_type(self) -> str:
         return self._magnet_type
 
     @property
-    def permutation(self):
+    def permutation(self) -> Permutation_Type:
         return self._permutation
 
     @property
-    def flips(self):
+    def flips(self) -> Flips_Type:
         return self._flips
 
     @property
-    def count(self):
+    def count(self) -> int:
         return self._count
 
     @property
-    def rng_children(self):
+    def rng_children(self) -> np.random.RandomState:
         return self._rng_children
 
     @property
-    def rng_mutations(self):
+    def rng_mutations(self) -> np.random.RandomState:
         return self._rng_mutations
 
-    def calculate_slot_bfield(self,
-                              index : int,
-                              magnet_set : MagnetSet,
-                              magnet_slots : MagnetSlots,
-                              magnet_lookup : MagnetLookup):
+    @property
+    def magnet_set(self) -> MagnetSet:
+        return self._magnet_set
+
+    @property
+    def magnet_slots(self) -> MagnetSlots:
+        return self._magnet_slots
+
+    @property
+    def magnet_lookup(self) -> MagnetLookup:
+        return self._magnet_lookup
+
+    def calculate_slot_bfield(self, index : int) -> Bfield_Type:
         """
         Computes the bfield for the magnet from the magnet set used by the genome to fill the selected magnet slot.
 
@@ -142,15 +198,6 @@ class MagnetGenome:
         index : int
             The magnet slot to compute the bfield for.
 
-        magnet_set : MagnetSet
-            The set of real magnet values used to gather field vectors.
-
-        magnet_slots : MagnetSlots
-            The configuration of magnet slots used to gather flip vectors.
-
-        magnet_lookup : MagnetLookup
-            The lookup table used for the magnet slots to compute the bfields from.
-
         Returns
         -------
         The bfield computed from the given magnet slot.
@@ -158,43 +205,22 @@ class MagnetGenome:
 
         # Get the set index and flip state for the magnet in the Nth slot of the genome
         set_index  = self.permutation[index]
-        flip_state = self.flips[index]
 
         # Get the field strength vector (before potential flipping) for the real magnet currently in the desired slot
-        field_vector = magnet_set.field_vectors[set_index]
+        field_vector = self.magnet_set.field_vectors[set_index]
 
-        if flip_state:
-            # Get the flip vector for the magnet slot we are considering
-            flip_vector = magnet_slots.flip_vectors[index]
-
-            # Flip the field vector by the flip vector if the genome says this slot is currently flipped
-            field_vector = (field_vector * flip_vector)
-
-        # Extract the bfield lookup table for the magnet slot we are considering
-        lookup = magnet_lookup.lookup[index]
+        if self.magnet_slots.flippable and self.flips[index]:
+            # Flip the field vector by the flip matrix if the genome says this slot is currently flipped
+            field_vector = np.dot(self.magnet_slots.flip_matrix, field_vector)
 
         # Scale the lookup w.r.t the (potentially flipped) field vector for the magnet under consideration
-        bfield = np.dot(lookup, field_vector)
+        bfield = np.dot(self.magnet_lookup.lookup[index], field_vector)
 
         return bfield
 
-    def calculate_bfield(self,
-                         magnet_set : MagnetSet,
-                         magnet_slots : MagnetSlots,
-                         magnet_lookup : MagnetLookup):
+    def calculate_bfield(self) -> Bfield_Type:
         """
         Computes the full bfield for the genome.
-
-        Parameters
-        ----------
-        magnet_set : MagnetSet
-            The set of real magnet values used to gather field vectors.
-
-        magnet_slots : MagnetSlots
-            The configuration of magnet slots used to gather flip vectors.
-
-        magnet_lookup : MagnetLookup
-            The lookup table used for the magnet slots to compute the bfields from.
 
         Returns
         -------
@@ -202,15 +228,10 @@ class MagnetGenome:
         """
 
         # Compute the sum of the individual bfield contributions for each magnet slot
-        return sum(self.calculate_slot_bfield(index=index, magnet_set=magnet_set,
-                                              magnet_slots=magnet_slots, magnet_lookup=magnet_lookup)
-                   for index in range(magnet_slots.count))
+        return sum(self.calculate_slot_bfield(index=index)
+                   for index in range(self.magnet_slots.count))
 
-    def flip_mutation(self,
-                      index : int,
-                      magnet_set : MagnetSet,
-                      magnet_slots : MagnetSlots,
-                      magnet_lookup : MagnetLookup):
+    def flip_mutation(self, index : int) -> Bfield_Type:
         """
         Performs a flip mutation at the selected magnet slot and returns the bfield delta from performing the mutation.
 
@@ -219,57 +240,35 @@ class MagnetGenome:
         index : int
             The magnet slot to flip.
 
-        magnet_set : MagnetSet
-            The set of real magnet values used to gather field vectors.
-
-        magnet_slots : MagnetSlots
-            The configuration of magnet slots used to gather flip vectors.
-
-        magnet_lookup : MagnetLookup
-            The lookup table used for the magnet slots to compute the bfields from.
-
         Returns
         -------
         The bfield delta computed from the mutation.
         """
 
+        # Can only apply flip mutations if this genome is flippable (non-identity flip matrix on magnet slots)
+        assert self.magnet_slots.flippable
+
         # Index needs to be valid within the magnet_slots which may be fewer than the full magnet_genome and magnet_set
         # Flipping a magnet within the genome but not currently in an active slot would be a waste of computation
-        assert 0 <= index < magnet_slots.count
+        assert 0 <= index < self.magnet_slots.count
 
         # Compute the bfield contribution of this magnet before the mutation
-        bfield_old = self.calculate_slot_bfield(index=index, magnet_set=magnet_set,
-                                                magnet_slots=magnet_slots, magnet_lookup=magnet_lookup)
+        bfield_old = self.calculate_slot_bfield(index=index)
 
         # Apply the mutation
         self.flips[index] = ~self.flips[index]
 
         # Compute the bfield contribution of this magnet after the mutation
-        bfield_new = self.calculate_slot_bfield(index=index, magnet_set=magnet_set,
-                                                magnet_slots=magnet_slots, magnet_lookup=magnet_lookup)
+        bfield_new = self.calculate_slot_bfield(index=index)
 
         # Compute the additive delta to the bfield that this full mutation (removal+flip+insertion) would produce
         bfield_delta = (bfield_new - bfield_old)
 
         return bfield_delta
 
-    def random_flip_mutation(self,
-                             magnet_set : MagnetSet,
-                             magnet_slots : MagnetSlots,
-                             magnet_lookup : MagnetLookup):
+    def random_flip_mutation(self) -> Bfield_Type:
         """
         Performs a flip mutation at a random magnet slot and returns the bfield delta from performing the mutation.
-
-        Parameters
-        ----------
-        magnet_set : MagnetSet
-            The set of real magnet values used to gather field vectors.
-
-        magnet_slots : MagnetSlots
-            The configuration of magnet slots used to gather flip vectors.
-
-        magnet_lookup : MagnetLookup
-            The lookup table used for the magnet slots to compute the bfields from.
 
         Returns
         -------
@@ -277,22 +276,16 @@ class MagnetGenome:
         """
 
         # Sample index in the range of used slots
-        index = self.rng_mutations.randint(low=0, high=magnet_slots.count)
+        index = self.rng_mutations.randint(low=0, high=self.magnet_slots.count)
 
         if logger.isEnabledFor(logging.DEBUG):
             logger.debug('Applying random flip mutation to slot [%d] of [%s] genome...',
                          index, self.magnet_type)
 
         # Perform the selected flip mutation
-        return self.flip_mutation(index=index, magnet_set=magnet_set,
-                                  magnet_slots=magnet_slots, magnet_lookup=magnet_lookup)
+        return self.flip_mutation(index=index)
 
-    def exchange_mutation(self,
-                          index_a : int,
-                          index_b : int,
-                          magnet_set : MagnetSet,
-                          magnet_slots : MagnetSlots,
-                          magnet_lookup : MagnetLookup):
+    def exchange_mutation(self, index_a : int, index_b : int) -> Bfield_Type:
         """
         Performs a swap mutation between the selected magnet slots and returns the bfield delta from performing the
         mutation.
@@ -305,15 +298,6 @@ class MagnetGenome:
         index_b : int
             The second magnet slot to swap.
 
-        magnet_set : MagnetSet
-            The set of real magnet values used to gather field vectors.
-
-        magnet_slots : MagnetSlots
-            The configuration of magnet slots used to gather flip vectors.
-
-        magnet_lookup : MagnetLookup
-            The lookup table used for the magnet slots to compute the bfields from.
-
         Returns
         -------
         The bfield delta computed from the mutation.
@@ -321,17 +305,18 @@ class MagnetGenome:
 
         # At least one of the indices being swapped must be for a magnet currently being used in a magnet slot
         # Swapping two magnets within the genome but not currently in active slots would be a waste of computation
-        assert (0 <= index_a < magnet_slots.count) or (0 <= index_b < magnet_slots.count)
-        assert (0 <= index_a < magnet_set.count) and (0 <= index_b < magnet_set.count) and (index_a != index_b)
+        assert (0 <= index_a < self.magnet_slots.count) or \
+               (0 <= index_b < self.magnet_slots.count)
+        assert (0 <= index_a < self.magnet_set.count) and \
+               (0 <= index_b < self.magnet_set.count) and \
+               (index_a != index_b)
 
         # Compute the bfield contribution before the mutation
         bfield_old = []
-        if index_a < magnet_slots.count:
-            bfield_old += [self.calculate_slot_bfield(index=index_a, magnet_set=magnet_set,
-                                                      magnet_slots=magnet_slots, magnet_lookup=magnet_lookup)]
-        if index_b < magnet_slots.count:
-            bfield_old += [self.calculate_slot_bfield(index=index_b, magnet_set=magnet_set,
-                                                      magnet_slots=magnet_slots, magnet_lookup=magnet_lookup)]
+        if index_a < self.magnet_slots.count:
+            bfield_old += [self.calculate_slot_bfield(index=index_a)]
+        if index_b < self.magnet_slots.count:
+            bfield_old += [self.calculate_slot_bfield(index=index_b)]
 
         # Apply the mutation
         self.permutation[[index_a, index_b]] = self.permutation[[index_b, index_a]]
@@ -339,35 +324,19 @@ class MagnetGenome:
 
         # Compute the bfield contribution after the mutation
         bfield_new = []
-        if index_a < magnet_slots.count:
-            bfield_new += [self.calculate_slot_bfield(index=index_a, magnet_set=magnet_set,
-                                                      magnet_slots=magnet_slots, magnet_lookup=magnet_lookup)]
-        if index_b < magnet_slots.count:
-            bfield_new += [self.calculate_slot_bfield(index=index_b, magnet_set=magnet_set,
-                                                      magnet_slots=magnet_slots, magnet_lookup=magnet_lookup)]
+        if index_a < self.magnet_slots.count:
+            bfield_new += [self.calculate_slot_bfield(index=index_a)]
+        if index_b < self.magnet_slots.count:
+            bfield_new += [self.calculate_slot_bfield(index=index_b)]
 
         # Compute the additive delta to the bfield that this full mutation (removal+swap+insertion) would produce
         bfield_delta = (sum(bfield_new) - sum(bfield_old))
 
         return bfield_delta
 
-    def random_exchange_mutation(self,
-                                 magnet_set : MagnetSet,
-                                 magnet_slots : MagnetSlots,
-                                 magnet_lookup : MagnetLookup):
+    def random_exchange_mutation(self) -> Bfield_Type:
         """
         Performs a exchange mutation at a random magnet slot and returns the bfield delta from performing the mutation.
-
-        Parameters
-        ----------
-        magnet_set : MagnetSet
-            The set of real magnet values used to gather field vectors.
-
-        magnet_slots : MagnetSlots
-            The configuration of magnet slots used to gather flip vectors.
-
-        magnet_lookup : MagnetLookup
-            The lookup table used for the magnet slots to compute the bfields from.
 
         Returns
         -------
@@ -375,11 +344,11 @@ class MagnetGenome:
         """
 
         # Sample first index in the range of used slots
-        index_a = self.rng_mutations.randint(low=0, high=magnet_slots.count)
+        index_a = self.rng_mutations.randint(low=0, high=self.magnet_slots.count)
 
         # Sample second index in the full range including currently unused magnets
         # Specifically the range is one fewer than the full set to avoid collisions between the two indices
-        index_b = self.rng_mutations.randint(low=0, high=(magnet_set.count - 1))
+        index_b = self.rng_mutations.randint(low=0, high=(self.magnet_set.count - 1))
 
         # If the second index is equal to the first or is larger than it, then shift it by +1 to uniformly sample
         # over the other indices
@@ -391,34 +360,11 @@ class MagnetGenome:
                          index_a, index_b, self.magnet_type)
 
         # Perform the selected exchange mutation
-        return self.exchange_mutation(index_a=index_a, index_b=index_b, magnet_set=magnet_set,
-                                      magnet_slots=magnet_slots, magnet_lookup=magnet_lookup)
+        return self.exchange_mutation(index_a=index_a, index_b=index_b)
 
-    def random_mutation(self,
-                        magnet_set : MagnetSet,
-                        magnet_slots : MagnetSlots,
-                        magnet_lookup : MagnetLookup,
-                        exchange_prob : float = 0.5,
-                        flip_prob : float = 0.5):
+    def random_mutation(self) -> Bfield_Type:
         """
         Performs a random mutation at a random magnet slot and returns the bfield delta from performing the mutation.
-
-        Parameters
-        ----------
-        magnet_set : MagnetSet
-            The set of real magnet values used to gather field vectors.
-
-        magnet_slots : MagnetSlots
-            The configuration of magnet slots used to gather flip vectors.
-
-        magnet_lookup : MagnetLookup
-            The lookup table used for the magnet slots to compute the bfields from.
-
-        exchange_prob : float
-            The probability of performing a random exchange mutation. Probabilities will be normalized to sum to 1.
-
-        flip_prob : float
-            The probability of performing a random flip mutation. Probabilities will be normalized to sum to 1.
 
         Returns
         -------
@@ -429,7 +375,7 @@ class MagnetGenome:
         mutation_fns = [self.random_exchange_mutation, self.random_flip_mutation]
 
         # Normalize the probabilities for each type of mutation so they sum to 1
-        probabilities  = np.array([exchange_prob, flip_prob])
+        probabilities  = np.array([True, self.magnet_slots.flippable]).astype(np.float32)
         probabilities /= np.sum(probabilities)
 
         # Sample a single mutation index using the above normalized probabilities
@@ -440,27 +386,39 @@ class MagnetGenome:
                          ['exchange', 'flip'][mutation], self.magnet_type)
 
         # Apply the selected mutation, return the bfield delta
-        return mutation_fns[mutation](magnet_set=magnet_set, magnet_slots=magnet_slots, magnet_lookup=magnet_lookup)
+        return mutation_fns[mutation]()
 
     @staticmethod
-    def from_magnet_set(magnet_set : MagnetSet, seed : int) -> 'MagnetGenome':
+    def from_random(seed : int,
+                    magnet_set : MagnetSet,
+                    magnet_slots : MagnetSlots,
+                    magnet_lookup : MagnetLookup) -> 'MagnetGenome':
         """
-        Creates a randomly initialized genome using a MagnetSet for size information, and an integer seed to initialize
-        RNGs for this genome instance.
+        Creates a randomly initialized genome using a MagnetSet for size information, a MagnetSlots for flip masking,
+        and an integer seed to initialize RNGs for this genome instance.
 
         Parameters
         ----------
-        magnet_set : MagnetSet
-            A MagnetSet class instance to use to determine the size of the genome and the magnet type string.
-
         seed : int
             An integer seed to produce initialize the RNGs for this genome and sample the initial permutation and
             flip states.
+
+        magnet_set : MagnetSet
+            A MagnetSet class instance to use to determine the size of the genome and the magnet type string.
+
+        magnet_slots : MagnetSlots
+            A MagnetSlots class instance to use to determine the whether elements are flippable. Magnet type must be
+            consistent.
+
+        magnet_lookup : MagnetLookup
+            The lookup table used for the magnet slots to compute the bfields from.
 
         Returns
         -------
         A randomly initialized MagnetGenome for the given MagnetSet instance.
         """
+
+        assert magnet_set.magnet_type == magnet_slots.magnet_type
 
         # Seed one RNG and use it to seed a second independent RNG
         max_rand_int  = (np.iinfo(np.int32).max - 1)
@@ -469,11 +427,16 @@ class MagnetGenome:
 
         # Use rng_mutations to sample the initial genome permutation and flip states
         permutation = rng_mutations.permutation(magnet_set.count)
-        flips = rng_mutations.randint(low=0, high=2, size=(magnet_set.count,)).astype(np.bool)
+
+        if magnet_slots.flippable:
+            flips = rng_mutations.randint(low=0, high=2, size=(magnet_set.count,)).astype(np.bool)
+        else:
+            flips = np.zeros((magnet_set.count,), dtype=np.bool)
 
         # Construct and return the randomly initialized genome
-        return MagnetGenome(magnet_type=magnet_set.magnet_type, permutation=permutation,
-                            flips=flips, rng_states=(rng_children, rng_mutations))
+        return MagnetGenome(magnet_type=str(magnet_set.magnet_type),
+                            permutation=permutation, flips=flips, rng_states=(rng_children, rng_mutations),
+                            magnet_set=magnet_set, magnet_slots=magnet_slots, magnet_lookup=magnet_lookup)
 
     @staticmethod
     def from_magnet_genome(magnet_genome : 'MagnetGenome') -> 'MagnetGenome':
@@ -498,8 +461,11 @@ class MagnetGenome:
         rng_mutations = np.random.RandomState(seed=rng_children.randint(low=0, high=max_rand_int))
 
         # Construct and return the independent genome
-        return MagnetGenome(magnet_type=magnet_genome.magnet_type, permutation=magnet_genome.permutation,
-                            flips=magnet_genome.flips, rng_states=(rng_children, rng_mutations))
+        return MagnetGenome(magnet_type=str(magnet_genome.magnet_type), permutation=magnet_genome.permutation.copy(),
+                            flips=magnet_genome.flips.copy(), rng_states=(rng_children, rng_mutations),
+                            magnet_set=magnet_genome.magnet_set,
+                            magnet_slots=magnet_genome.magnet_slots,
+                            magnet_lookup=magnet_genome.magnet_lookup)
 
     def save(self, file : typing.Union[str, typing.BinaryIO]):
         """
@@ -544,7 +510,10 @@ class MagnetGenome:
             raise FileHandleError()
 
     @staticmethod
-    def from_file(file : typing.Union[str, typing.BinaryIO]) -> 'MagnetGenome':
+    def from_file(file : typing.Union[str, typing.BinaryIO],
+                  magnet_set : MagnetSet,
+                  magnet_slots : MagnetSlots,
+                  magnet_lookup : MagnetLookup) -> 'MagnetGenome':
         """
         Constructs a MagnetGenome instance from a .maggenome file.
 
@@ -553,12 +522,25 @@ class MagnetGenome:
         file : str or open file handle
             A path to a .maggenome file or an open file handle to a .maggenome file.
 
+        magnet_set : MagnetSet
+            A MagnetSet class instance to use to determine the size of the genome and the magnet type string.
+
+        magnet_slots : MagnetSlots
+            A MagnetSlots class instance to use to determine the whether elements are flippable. Magnet type must be
+            consistent.
+
+        magnet_lookup : MagnetLookup
+            The lookup table used for the magnet slots to compute the bfields from.
+
         Returns
         -------
         A MagnetGenome instance with the desired values loaded from the .maggenome file.
         """
 
-        def read_file(file_handle : typing.BinaryIO) -> 'MagnetGenome':
+        def read_file(file_handle : typing.BinaryIO,
+                      magnet_set : MagnetSet,
+                      magnet_slots : MagnetSlots,
+                      magnet_lookup : MagnetLookup) -> 'MagnetGenome':
             """
             Private helper function for reading data from a .maggenome file given an already open file handle.
 
@@ -566,6 +548,16 @@ class MagnetGenome:
             ----------
             file_handle : open file handle
                 An open file handle to a .maggenome file.
+
+            magnet_set : MagnetSet
+            A MagnetSet class instance to use to determine the size of the genome and the magnet type string.
+
+            magnet_slots : MagnetSlots
+                A MagnetSlots class instance to use to determine the whether elements are flippable. Magnet type must be
+                consistent.
+
+            magnet_lookup : MagnetLookup
+                The lookup table used for the magnet slots to compute the bfields from.
 
             Returns
             -------
@@ -576,8 +568,9 @@ class MagnetGenome:
             (magnet_type, permutation, flips, rng_states) = pickle.load(file_handle)
 
             # Offload object construction and validation to the MagnetGenome constructor
-            magnet_genome = MagnetGenome(magnet_type=magnet_type, permutation=permutation,
-                                         flips=flips, rng_states=rng_states)
+            magnet_genome = MagnetGenome(magnet_type=magnet_type, permutation=permutation, flips=flips,
+                                         rng_states=rng_states, magnet_set=magnet_set,
+                                         magnet_slots=magnet_slots, magnet_lookup=magnet_lookup)
 
             logger.info('Loaded magnet genome for type [%s] with [%d] magnets', magnet_type, magnet_genome.count)
 
@@ -586,13 +579,15 @@ class MagnetGenome:
         if isinstance(file, (io.RawIOBase, io.BufferedIOBase, typing.BinaryIO)):
             # Load directly from the already open file handle
             logger.info('Loading magnet set from .maggenome file handle')
-            return read_file(file_handle=file)
+            return read_file(file_handle=file, magnet_set=magnet_set,
+                             magnet_slots=magnet_slots, magnet_lookup=magnet_lookup)
 
         elif isinstance(file, str):
             # Open the .maggenome file in a closure to ensure it gets closed on error
             with open(file, 'rb') as file_handle:
                 logger.info('Loading magnet set from .maggenome file [%s]', file)
-                return read_file(file_handle=file_handle)
+                return read_file(file_handle=file_handle, magnet_set=magnet_set,
+                                 magnet_slots=magnet_slots, magnet_lookup=magnet_lookup)
 
         else:
             # Assert that the file object provided is an open file handle or can be used to open one

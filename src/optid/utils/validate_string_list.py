@@ -36,7 +36,7 @@ class ValidateStringListTypeError(ValidateStringListErrorBase):
         return self._dtype
 
     def __str__(self):
-        return f'string list is not a list: expected {list}, observed {type(self.dtype)}'
+        return f'string list is not a list: expected {list}, observed {self.dtype}'
 
 
 class ValidateStringListEmptyError(ValidateStringListErrorBase):

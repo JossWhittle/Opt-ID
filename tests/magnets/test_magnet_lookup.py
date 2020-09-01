@@ -85,13 +85,13 @@ class MagnetLookupTest(unittest.TestCase):
         # Make dummy parameters
         count, magnet_type, x_range, z_range, s_range, lookup = self.dummy_magnet_lookup_values()
 
-        # Assert constructor throws error from empty magnet type string
-        self.assertRaises(optid.errors.ValidateStringEmptyError, MagnetLookup,
-                          magnet_type='', x_range=x_range, z_range=z_range, s_range=s_range, lookup=lookup)
+        fixed_params = dict(x_range=x_range, z_range=z_range, s_range=s_range, lookup=lookup)
 
-        # Assert constructor throws error from wrong typed magnet type string
-        self.assertRaises(optid.errors.ValidateStringTypeError, MagnetLookup,
-                          magnet_type=None, x_range=x_range, z_range=z_range, s_range=s_range, lookup=lookup)
+        self.assertRaises(optid.errors.ValidateStringEmptyError, MagnetLookup, **fixed_params,
+                          magnet_type='')
+
+        self.assertRaises(optid.errors.ValidateStringTypeError, MagnetLookup, **fixed_params,
+                          magnet_type=None)
 
     def test_constructor_raises_on_bad_parameters_range(self):
         """
@@ -121,18 +121,18 @@ class MagnetLookupTest(unittest.TestCase):
         # Make dummy parameters
         count, magnet_type, x_range, z_range, s_range, lookup = self.dummy_magnet_lookup_values()
 
+        fixed_params = dict(magnet_type=magnet_type, x_range=x_range, z_range=z_range, s_range=s_range)
+
         # Assert constructor throws error from incorrectly shaped lookup
-        self.assertRaises(optid.errors.ValidateTensorShapeError, MagnetLookup,
-                          magnet_type=magnet_type, x_range=x_range, z_range=z_range, s_range=s_range, lookup=lookup[0])
+        self.assertRaises(optid.errors.ValidateTensorShapeError, MagnetLookup, **fixed_params,
+                          lookup=lookup[0])
 
         # Assert constructor throws error from incorrectly typed lookup
-        self.assertRaises(optid.errors.ValidateTensorElementTypeError, MagnetLookup,
-                          magnet_type=magnet_type, x_range=x_range, z_range=z_range, s_range=s_range,
+        self.assertRaises(optid.errors.ValidateTensorElementTypeError, MagnetLookup, **fixed_params,
                           lookup=lookup.astype(np.int32))
 
         # Assert constructor throws error from incorrectly typed lookup
-        self.assertRaises(optid.errors.ValidateTensorTypeError, MagnetLookup,
-                          magnet_type=magnet_type, x_range=x_range, z_range=z_range, s_range=s_range,
+        self.assertRaises(optid.errors.ValidateTensorTypeError, MagnetLookup, **fixed_params,
                           lookup=None)
 
     def test_save(self):

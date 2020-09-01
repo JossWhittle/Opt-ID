@@ -25,6 +25,9 @@ from optid.errors import FileHandleError
 logger = optid.utils.logging.get_logger('optid.magnets.MagnetLookup')
 
 
+Lookup_Type = npt.NDArray[(typing.Any, typing.Any, typing.Any, typing.Any, 3, 3), npt.Float]
+
+
 class MagnetLookup:
     """
     Represents a B-field contribution lookup table for a set of magnet slots.
@@ -33,7 +36,7 @@ class MagnetLookup:
     def __init__(self,
                  magnet_type : str,
                  x_range : Range, z_range : Range, s_range : Range,
-                 lookup : npt.NDArray[(typing.Any, typing.Any, typing.Any, typing.Any, 3, 3), npt.Float]):
+                 lookup : Lookup_Type):
         """
         Constructs a MagnetLookup instance and validates the values are the correct types and consistent sizes.
 
@@ -112,27 +115,27 @@ class MagnetLookup:
         self._count = self.lookup.shape[0]
 
     @property
-    def magnet_type(self):
+    def magnet_type(self) -> str:
         return self._magnet_type
 
     @property
-    def x_range(self):
+    def x_range(self) -> Range:
         return self._x_range
 
     @property
-    def z_range(self):
+    def z_range(self) -> Range:
         return self._z_range
 
     @property
-    def s_range(self):
+    def s_range(self) -> Range:
         return self._s_range
 
     @property
-    def lookup(self):
+    def lookup(self) -> Lookup_Type:
         return self._lookup
 
     @property
-    def count(self):
+    def count(self) -> int:
         return self._count
 
     def save(self, file : typing.Union[str, typing.BinaryIO]):
