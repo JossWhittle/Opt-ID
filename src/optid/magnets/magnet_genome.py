@@ -153,6 +153,12 @@ class MagnetGenome:
             logger.exception('rng_states must be a tuple of valid numpy random states', exc_info=ex)
             raise ex
 
+        # The set of mutation functions we can choose between
+        mutation_fns = [self.random_exchange_mutation]
+        if self.magnet_slots.flippable:
+            mutation_fns += [self.random_flip_mutation]
+        self._mutation_fns = mutation_fns
+
     @property
     def magnet_type(self) -> str:
         return self._magnet_type
@@ -176,6 +182,10 @@ class MagnetGenome:
     @property
     def rng_mutations(self) -> np.random.RandomState:
         return self._rng_mutations
+
+    @property
+    def mutation_fns(self) -> typing.List[typing.Callable]:
+        return self._mutation_fns
 
     @property
     def magnet_set(self) -> MagnetSet:
@@ -371,22 +381,7 @@ class MagnetGenome:
         The bfield delta computed from the mutation.
         """
 
-        # The set of mutation functions we can choose between
-        mutation_fns = [self.random_exchange_mutation, self.random_flip_mutation]
-
-        # Normalize the probabilities for each type of mutation so they sum to 1
-        probabilities  = np.array([True, self.magnet_slots.flippable]).astype(np.float32)
-        probabilities /= np.sum(probabilities)
-
-        # Sample a single mutation index using the above normalized probabilities
-        mutation = self.rng_mutations.choice(probabilities.shape[0], p=probabilities)
-
-        if logger.isEnabledFor(logging.DEBUG):
-            logger.debug('Applying random mutation [%s] to [%s] genome...',
-                         ['exchange', 'flip'][mutation], self.magnet_type)
-
-        # Apply the selected mutation, return the bfield delta
-        return mutation_fns[mutation]()
+        return self.mutation_fns[self.rng_mutations.choice(len(self.mutation_fns))]()
 
     @staticmethod
     def from_random(seed : int,
