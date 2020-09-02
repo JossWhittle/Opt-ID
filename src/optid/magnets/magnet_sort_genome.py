@@ -20,14 +20,12 @@ import pickle
 import numpy as np
 
 import optid
-from optid.magnets import MagnetSet, MagnetSlots, MagnetLookup
+from optid.magnets import MagnetSet, MagnetSlots, MagnetSortLookup
 from optid.utils import validate_tensor, validate_string
-from optid.errors import FileHandleError, \
-    ValidateMagnetGenomePermutationDuplicateError, \
-    ValidateMagnetGenomePermutationBoundaryError
+from optid.errors import FileHandleError
 
 import logging
-logger = optid.utils.logging.get_logger('optid.magnets.MagnetGenome')
+logger = optid.utils.logging.get_logger('optid.magnets.MagnetSortGenome')
 
 
 #                               Magnets,   Scalar
@@ -38,10 +36,10 @@ Flips_Type       = npt.NDArray[(typing.Any,), npt.Bool]
 Bfield_Type      = npt.NDArray[(typing.Any, typing.Any, typing.Any, 3), npt.Float]
 
 
-class MagnetGenome:
+class MagnetSortGenome:
     """
-    Represents a permutation of magnets of the same type w.r.t a MagnetSet, MagnetSlots, and MagnetLookup
-    object that are shared between multiple genomes. Instances of MagnetGenome hold an integer permutation tensor
+    Represents a permutation of magnets of the same type w.r.t a MagnetSet, MagnetSlots, and MagnetSortLookup
+    object that are shared between multiple genomes. Instances of MagnetSortGenome hold an integer permutation tensor
     for magnet ordering and flip state, and hold an np.random.SeedSequence object used to split the RNG key for
     child genomes.
 
@@ -58,9 +56,9 @@ class MagnetGenome:
                  rng_states : typing.Tuple[np.random.RandomState, np.random.RandomState],
                  magnet_set : MagnetSet,
                  magnet_slots : MagnetSlots,
-                 magnet_lookup : MagnetLookup):
+                 magnet_lookup : MagnetSortLookup):
         """
-        Constructs a MagnetGenome instance and validates the values are the correct types and consistent sizes.
+        Constructs a MagnetSortGenome instance and validates the values are the correct types and consistent sizes.
 
         Parameters
         ----------
@@ -85,7 +83,7 @@ class MagnetGenome:
         magnet_slots : MagnetSlots
             The configuration of magnet slots used to gather the flip matrix.
 
-        magnet_lookup : MagnetLookup
+        magnet_lookup : MagnetSortLookup
             The lookup table used for the magnet slots to compute the bfields from.
         """
 
@@ -118,25 +116,20 @@ class MagnetGenome:
 
         try:
             self._magnet_lookup = magnet_lookup
-            assert isinstance(self.magnet_lookup, MagnetLookup)
+            assert isinstance(self.magnet_lookup, MagnetSortLookup)
             assert self.magnet_type == self.magnet_lookup.magnet_type
             assert self.set_count >= self.magnet_lookup.count
             assert self.magnet_slots.count == self.magnet_lookup.count
 
         except Exception as ex:
-            logger.exception('magnet_lookup must be a MagnetLookup instance', exc_info=ex)
+            logger.exception('magnet_lookup must be a MagnetSortLookup instance', exc_info=ex)
             raise ex
 
         try:
             self._permutation = validate_tensor(permutation, shape=(self.set_count,), dtype=np.integer)
+            assert len(set(self.permutation.tolist())) == self.set_count
+            assert not np.any((self.permutation < 0) | (self.permutation >= self.set_count))
 
-            if len(set(self.permutation.tolist())) != self.set_count:
-                raise ValidateMagnetGenomePermutationDuplicateError()
-
-            if np.any((self.permutation < 0) | (self.permutation >= self.set_count)):
-                raise ValidateMagnetGenomePermutationBoundaryError(permutation_size=self.set_count,
-                                                                   min_index=self.permutation.min(),
-                                                                   max_index=self.permutation.max())
         except Exception as ex:
             logger.exception('permutation must be an int tensor of shape (M,)', exc_info=ex)
             raise ex
@@ -202,7 +195,7 @@ class MagnetGenome:
         return self._magnet_slots
 
     @property
-    def magnet_lookup(self) -> MagnetLookup:
+    def magnet_lookup(self) -> MagnetSortLookup:
         return self._magnet_lookup
 
     def calculate_slot_bfield(self, slot_index : int) -> Bfield_Type:
@@ -244,8 +237,7 @@ class MagnetGenome:
         """
 
         # Compute the sum of the individual bfield contributions for each magnet slot
-        return sum(self.calculate_slot_bfield(slot_index=index)
-                   for index in range(self.magnet_slots.count))
+        return sum(self.calculate_slot_bfield(slot_index=index) for index in range(self.magnet_slots.count))
 
     def flip_mutation(self, index : int) -> Bfield_Type:
         """
@@ -393,7 +385,7 @@ class MagnetGenome:
     def from_random(seed : int,
                     magnet_set : MagnetSet,
                     magnet_slots : MagnetSlots,
-                    magnet_lookup : MagnetLookup) -> 'MagnetGenome':
+                    magnet_lookup : MagnetSortLookup) -> 'MagnetSortGenome':
         """
         Creates a randomly initialized genome using a MagnetSet for size information, a MagnetSlots for flip masking,
         and an integer seed to initialize RNGs for this genome instance.
@@ -411,12 +403,12 @@ class MagnetGenome:
             A MagnetSlots class instance to use to determine the whether elements are flippable. Magnet type must be
             consistent.
 
-        magnet_lookup : MagnetLookup
+        magnet_lookup : MagnetSortLookup
             The lookup table used for the magnet slots to compute the bfields from.
 
         Returns
         -------
-        A randomly initialized MagnetGenome for the given MagnetSet instance.
+        A randomly initialized MagnetSortGenome for the given MagnetSet instance.
         """
 
         assert magnet_set.magnet_type == magnet_slots.magnet_type
@@ -435,19 +427,19 @@ class MagnetGenome:
             flips = np.zeros((magnet_set.count,), dtype=np.bool)
 
         # Construct and return the randomly initialized genome
-        return MagnetGenome(magnet_type=str(magnet_set.magnet_type),
-                            permutation=permutation, flips=flips, rng_states=(rng_children, rng_mutations),
-                            magnet_set=magnet_set, magnet_slots=magnet_slots, magnet_lookup=magnet_lookup)
+        return MagnetSortGenome(magnet_type=str(magnet_set.magnet_type),
+                                permutation=permutation, flips=flips, rng_states=(rng_children, rng_mutations),
+                                magnet_set=magnet_set, magnet_slots=magnet_slots, magnet_lookup=magnet_lookup)
 
     @staticmethod
-    def from_magnet_genome(magnet_genome : 'MagnetGenome') -> 'MagnetGenome':
+    def from_magnet_genome(magnet_genome : 'MagnetSortGenome') -> 'MagnetSortGenome':
         """
         Creates an independent genome instance from an existing one. The child genome will have the same initial
         permutation and flip state as the parent but will have independent RNG states.
 
         Parameters
         ----------
-        magnet_genome : MagnetGenome
+        magnet_genome : MagnetSortGenome
             The existing genome instance to initialize from. The parents rng_children will be used to seed the RNGs
             in the new genome, modifying its state.
 
@@ -462,48 +454,47 @@ class MagnetGenome:
         rng_mutations = np.random.RandomState(seed=rng_children.randint(low=0, high=max_rand_int))
 
         # Construct and return the independent genome
-        return MagnetGenome(magnet_type=str(magnet_genome.magnet_type), permutation=magnet_genome.permutation.copy(),
-                            flips=magnet_genome.flips.copy(), rng_states=(rng_children, rng_mutations),
-                            magnet_set=magnet_genome.magnet_set,
-                            magnet_slots=magnet_genome.magnet_slots,
-                            magnet_lookup=magnet_genome.magnet_lookup)
+        return MagnetSortGenome(magnet_type=str(magnet_genome.magnet_type), permutation=magnet_genome.permutation.copy(),
+                                flips=magnet_genome.flips.copy(), rng_states=(rng_children, rng_mutations),
+                                magnet_set=magnet_genome.magnet_set, magnet_slots=magnet_genome.magnet_slots,
+                                magnet_lookup=magnet_genome.magnet_lookup)
 
     def save(self, file : typing.Union[str, typing.BinaryIO]):
         """
-        Saves a MagnetGenome instance to a .maggenome file.
+        Saves a MagnetSortGenome instance to a .magsortgenome file.
 
         Parameters
         ----------
         file : str or open writable file handle
-            A path to where a .maggenome file should be created or overwritten, or an open writable file handle to
-            a .maggenome file.
+            A path to where a .magsortgenome file should be created or overwritten, or an open writable file handle to
+            a .magsortgenome file.
         """
 
         def write_file(file_handle : typing.BinaryIO):
             """
-            Private helper function for writing data to a .maggenome file given an already open file handle.
+            Private helper function for writing data to a .magsortgenome file given an already open file handle.
 
             Parameters
             ----------
             file_handle : open writable file handle
-                An open writable file handle to a .maggenome file.
+                An open writable file handle to a .magsortgenome file.
             """
 
-            # Pack members into .maggenome file as a single tuple
+            # Pack members into .magsortgenome file as a single tuple
             pickle.dump((self.magnet_type, self.permutation, self.flips,
                          (self.rng_children, self.rng_mutations)), file_handle)
 
-            logger.info('Saved magnet set to .maggenome file handle')
+            logger.info('Saved magnet set to .magsortgenome file handle')
 
         if isinstance(file, (io.RawIOBase, io.BufferedIOBase, typing.BinaryIO)):
             # Load directly from the already open file handle
-            logger.info('Saving magnet set to .maggenome file handle')
+            logger.info('Saving magnet set to .magsortgenome file handle')
             write_file(file_handle=file)
 
         elif isinstance(file, str):
-            # Open the .maggenome file in a closure to ensure it gets closed on error
+            # Open the .magsortgenome file in a closure to ensure it gets closed on error
             with open(file, 'wb') as file_handle:
-                logger.info('Saving magnet set to .maggenome file [%s]', file)
+                logger.info('Saving magnet set to .magsortgenome file [%s]', file)
                 write_file(file_handle=file_handle)
 
         else:
@@ -514,14 +505,14 @@ class MagnetGenome:
     def from_file(file : typing.Union[str, typing.BinaryIO],
                   magnet_set : MagnetSet,
                   magnet_slots : MagnetSlots,
-                  magnet_lookup : MagnetLookup) -> 'MagnetGenome':
+                  magnet_lookup : MagnetSortLookup) -> 'MagnetSortGenome':
         """
-        Constructs a MagnetGenome instance from a .maggenome file.
+        Constructs a MagnetSortGenome instance from a .magsortgenome file.
 
         Parameters
         ----------
         file : str or open file handle
-            A path to a .maggenome file or an open file handle to a .maggenome file.
+            A path to a .magsortgenome file or an open file handle to a .magsortgenome file.
 
         magnet_set : MagnetSet
             A MagnetSet class instance to use to determine the size of the genome and the magnet type string.
@@ -530,25 +521,25 @@ class MagnetGenome:
             A MagnetSlots class instance to use to determine the whether elements are flippable. Magnet type must be
             consistent.
 
-        magnet_lookup : MagnetLookup
+        magnet_lookup : MagnetSortLookup
             The lookup table used for the magnet slots to compute the bfields from.
 
         Returns
         -------
-        A MagnetGenome instance with the desired values loaded from the .maggenome file.
+        A MagnetSortGenome instance with the desired values loaded from the .magsortgenome file.
         """
 
         def read_file(file_handle : typing.BinaryIO,
                       magnet_set : MagnetSet,
                       magnet_slots : MagnetSlots,
-                      magnet_lookup : MagnetLookup) -> 'MagnetGenome':
+                      magnet_lookup : MagnetSortLookup) -> 'MagnetSortGenome':
             """
-            Private helper function for reading data from a .maggenome file given an already open file handle.
+            Private helper function for reading data from a .magsortgenome file given an already open file handle.
 
             Parameters
             ----------
             file_handle : open file handle
-                An open file handle to a .maggenome file.
+                An open file handle to a .magsortgenome file.
 
             magnet_set : MagnetSet
             A MagnetSet class instance to use to determine the size of the genome and the magnet type string.
@@ -557,21 +548,21 @@ class MagnetGenome:
                 A MagnetSlots class instance to use to determine the whether elements are flippable. Magnet type must be
                 consistent.
 
-            magnet_lookup : MagnetLookup
+            magnet_lookup : MagnetSortLookup
                 The lookup table used for the magnet slots to compute the bfields from.
 
             Returns
             -------
-            A MagnetGenome instance with the desired values loaded from the .maggenome file.
+            A MagnetSortGenome instance with the desired values loaded from the .magsortgenome file.
             """
 
-            # Unpack members from .maggenome file as a single tuple
+            # Unpack members from .magsortgenome file as a single tuple
             (magnet_type, permutation, flips, rng_states) = pickle.load(file_handle)
 
-            # Offload object construction and validation to the MagnetGenome constructor
-            magnet_genome = MagnetGenome(magnet_type=magnet_type, permutation=permutation, flips=flips,
-                                         rng_states=rng_states, magnet_set=magnet_set,
-                                         magnet_slots=magnet_slots, magnet_lookup=magnet_lookup)
+            # Offload object construction and validation to the MagnetSortGenome constructor
+            magnet_genome = MagnetSortGenome(magnet_type=magnet_type, permutation=permutation, flips=flips,
+                                             rng_states=rng_states, magnet_set=magnet_set,
+                                             magnet_slots=magnet_slots, magnet_lookup=magnet_lookup)
 
             logger.info('Loaded magnet genome for type [%s] with [%d] magnets', magnet_type, magnet_genome.set_count)
 
@@ -579,14 +570,14 @@ class MagnetGenome:
 
         if isinstance(file, (io.RawIOBase, io.BufferedIOBase, typing.BinaryIO)):
             # Load directly from the already open file handle
-            logger.info('Loading magnet set from .maggenome file handle')
+            logger.info('Loading magnet set from .magsortgenome file handle')
             return read_file(file_handle=file, magnet_set=magnet_set,
                              magnet_slots=magnet_slots, magnet_lookup=magnet_lookup)
 
         elif isinstance(file, str):
-            # Open the .maggenome file in a closure to ensure it gets closed on error
+            # Open the .magsortgenome file in a closure to ensure it gets closed on error
             with open(file, 'rb') as file_handle:
-                logger.info('Loading magnet set from .maggenome file [%s]', file)
+                logger.info('Loading magnet set from .magsortgenome file [%s]', file)
                 return read_file(file_handle=file_handle, magnet_set=magnet_set,
                                  magnet_slots=magnet_slots, magnet_lookup=magnet_lookup)
 

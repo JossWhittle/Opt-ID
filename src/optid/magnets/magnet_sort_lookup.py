@@ -22,14 +22,14 @@ import optid
 from optid.utils import Range, validate_tensor, validate_string, validate_range
 from optid.errors import FileHandleError
 
-logger = optid.utils.logging.get_logger('optid.magnets.MagnetLookup')
+logger = optid.utils.logging.get_logger('optid.magnets.MagnetSortLookup')
 
 
 #                          Magnets,    X-Steps,    Z-Steps,    S-Steps,    Matrix
 Lookup_Type = npt.NDArray[(typing.Any, typing.Any, typing.Any, typing.Any, 3, 3), npt.Float]
 
 
-class MagnetLookup:
+class MagnetSortLookup:
     """
     Represents a B-field contribution lookup table for a set of magnet slots.
     """
@@ -39,7 +39,7 @@ class MagnetLookup:
                  x_range : Range, z_range : Range, s_range : Range,
                  lookup : Lookup_Type):
         """
-        Constructs a MagnetLookup instance and validates the values are the correct types and consistent sizes.
+        Constructs a MagnetSortLookup instance and validates the values are the correct types and consistent sizes.
 
         Parameters
         ----------
@@ -49,7 +49,7 @@ class MagnetLookup:
 
         x_range : Range(min : float, max : float, steps : int)
             A tuple representing the sample range across the x-axis for the lookup table. This is used for validating
-            that multiple MagnetLookup objects represent lookup tables constructed over the same sampling grid.
+            that multiple MagnetSortLookup objects represent lookup tables constructed over the same sampling grid.
             The grid is used to construct samples w.r.t an np.linspace(*x_range) == np.linspace(min, max, steps)
 
         z_range : Range(min : float, max : float, steps : int)
@@ -73,7 +73,7 @@ class MagnetLookup:
                  [Bxs, Bzs, Bss]]
 
             Given a measured magnet strength vector (Mx, Mz, Ms) from a MagnetSet element that is currently placed
-            within a magnet slot modelled by a MagnetSlots and a MagnetLookup instance, we compute the scaled
+            within a magnet slot modelled by a MagnetSlots and a MagnetSortLookup instance, we compute the scaled
             magnetic field strength intensities in each axis at each sample location specified by the lookup table
             by matmul'ing the matrix at that location against the measured magnet strength.
                 Fx = (Bxx * Mx) + (Bxz * Mz) + (Bxs * Ms)
@@ -143,39 +143,39 @@ class MagnetLookup:
 
     def save(self, file : typing.Union[str, typing.BinaryIO]):
         """
-        Saves a MagnetLookup instance to a .maglookup file.
+        Saves a MagnetSortLookup instance to a .magsortlookup file.
 
         Parameters
         ----------
         file : str or open writable file handle
-            A path to where a .maglookup file should be created or overwritten, or an open writable file handle to
-            a .maglookup file.
+            A path to where a .magsortlookup file should be created or overwritten, or an open writable file handle to
+            a .magsortlookup file.
         """
 
         def write_file(file_handle : typing.BinaryIO):
             """
-            Private helper function for writing data to a .maglookup file given an already open file handle.
+            Private helper function for writing data to a .magsortlookup file given an already open file handle.
 
             Parameters
             ----------
             file_handle : open writable file handle
-                An open writable file handle to a .maglookup file.
+                An open writable file handle to a .magsortlookup file.
             """
 
-            # Pack members into .maglookup file as a single tuple
+            # Pack members into .magsortlookup file as a single tuple
             pickle.dump((self.magnet_type, self.x_range, self.z_range, self.s_range, self.lookup), file_handle)
 
-            logger.info('Saved magnet lookup to .maglookup file handle')
+            logger.info('Saved magnet lookup to .magsortlookup file handle')
 
         if isinstance(file, (io.RawIOBase, io.BufferedIOBase, typing.BinaryIO)):
             # Load directly from the already open file handle
-            logger.info('Saving magnet slots to .maglookup file handle')
+            logger.info('Saving magnet slots to .magsortlookup file handle')
             write_file(file_handle=file)
 
         elif isinstance(file, str):
-            # Open the .maglookup file in a closure to ensure it gets closed on error
+            # Open the .magsortlookup file in a closure to ensure it gets closed on error
             with open(file, 'wb') as file_handle:
-                logger.info('Saving magnet slots to .maglookup file [%s]', file)
+                logger.info('Saving magnet slots to .magsortlookup file [%s]', file)
                 write_file(file_handle=file_handle)
 
         else:
@@ -183,40 +183,40 @@ class MagnetLookup:
             raise FileHandleError()
 
     @staticmethod
-    def from_file(file : typing.Union[str, typing.BinaryIO]) -> 'MagnetLookup':
+    def from_file(file : typing.Union[str, typing.BinaryIO]) -> 'MagnetSortLookup':
         """
-        Constructs a MagnetSlots instance from a .maglookup file.
+        Constructs a MagnetSlots instance from a .magsortlookup file.
 
         Parameters
         ----------
         file : str or open file handle
-            A path to a .maglookup file or an open file handle to a .maglookup file.
+            A path to a .magsortlookup file or an open file handle to a .magsortlookup file.
 
         Returns
         -------
-        A MagnetSet instance with the desired values loaded from the .maglookup file.
+        A MagnetSet instance with the desired values loaded from the .magsortlookup file.
         """
 
-        def read_file(file_handle : typing.BinaryIO) -> 'MagnetLookup':
+        def read_file(file_handle : typing.BinaryIO) -> 'MagnetSortLookup':
             """
-            Private helper function for reading data from a .maglookup file given an already open file handle.
+            Private helper function for reading data from a .magsortlookup file given an already open file handle.
 
             Parameters
             ----------
             file_handle : open file handle
-                An open file handle to a .maglookup file.
+                An open file handle to a .magsortlookup file.
 
             Returns
             -------
-            A MagnetSet instance with the desired values loaded from the .maglookup file.
+            A MagnetSet instance with the desired values loaded from the .magsortlookup file.
             """
 
-            # Unpack members from .maglookup file as a single tuple
+            # Unpack members from .magsortlookup file as a single tuple
             (magnet_type, x_range, z_range, s_range, lookup) = pickle.load(file_handle)
 
             # Offload object construction and validation to the MagnetSlots constructor
-            magnet_lookup = MagnetLookup(magnet_type=magnet_type, x_range=x_range,
-                                         z_range=z_range, s_range=s_range, lookup=lookup)
+            magnet_lookup = MagnetSortLookup(magnet_type=magnet_type, x_range=x_range,
+                                             z_range=z_range, s_range=s_range, lookup=lookup)
 
             logger.info('Loaded magnet lookup [%s] with [%d] slots', magnet_type, magnet_lookup.count)
 
@@ -224,13 +224,13 @@ class MagnetLookup:
 
         if isinstance(file, (io.RawIOBase, io.BufferedIOBase, typing.BinaryIO)):
             # Load directly from the already open file handle
-            logger.info('Loading magnet set from .maglookup file handle')
+            logger.info('Loading magnet set from .magsortlookup file handle')
             return read_file(file_handle=file)
 
         elif isinstance(file, str):
-            # Open the .maglookup file in a closure to ensure it gets closed on error
+            # Open the .magsortlookup file in a closure to ensure it gets closed on error
             with open(file, 'rb') as file_handle:
-                logger.info('Loading magnet set from .maglookup file [%s]', file)
+                logger.info('Loading magnet set from .magsortlookup file [%s]', file)
                 return read_file(file_handle=file_handle)
 
         else:

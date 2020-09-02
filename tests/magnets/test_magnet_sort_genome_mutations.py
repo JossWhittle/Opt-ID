@@ -14,16 +14,11 @@
 
 
 # Utility imports
-import os
 import unittest
-import tempfile
-import shutil
-import inspect
 import numpy as np
 
 # Test imports
-import optid
-from optid.magnets import MagnetGenome, MagnetSet, MagnetSlots, MagnetLookup
+from optid.magnets import MagnetSortGenome, MagnetSet, MagnetSlots, MagnetSortLookup
 from optid.utils import Range, validate_tensor
 
 # Configure debug logging
@@ -31,15 +26,15 @@ from optid.utils.logging import attach_console_logger
 attach_console_logger(remove_existing=True)
 
 
-class MagnetGenomeMutationTest(unittest.TestCase):
+class MagnetSortGenomeMutationTest(unittest.TestCase):
     """
-    Tests the MagnetGenome class can be imported and used correctly.
+    Tests the MagnetSortGenome class can be imported and used correctly.
     """
 
     @staticmethod
     def dummy_values():
         """
-        Creates a set of constant test values used for constructing and comparing MagnetGenome
+        Creates a set of constant test values used for constructing and comparing MagnetSortGenome
         instances across test cases.
 
         Returns
@@ -64,21 +59,26 @@ class MagnetGenomeMutationTest(unittest.TestCase):
         # MagnetSlots
         beams = [f'B{((index % 2) + 1):d}' for index in range(count)]
         slots = [f'S{(((index - (index % 2)) // 2) + 1):03d}' for index in range(count)]
+        positions = np.zeros((count, 3), dtype=np.float32)
+        direction_matrices = np.zeros((count, 3, 3), dtype=np.float32)
+        direction_matrices[:, ...] = np.eye(3, dtype=np.float32)[np.newaxis, ...]
+        size = np.ones((3,), dtype=np.float32)
         flip_matrix = np.ones((3, 3), dtype=np.float32)
         flippable = True
 
-        magnet_slots = MagnetSlots(magnet_type=magnet_type, beams=beams, slots=slots, flip_matrix=flip_matrix)
+        magnet_slots = MagnetSlots(magnet_type=magnet_type, beams=beams, slots=slots, positions=positions,
+                                   direction_matrices=direction_matrices, size=size, flip_matrix=flip_matrix)
 
-        # MagnetLookup
+        # MagnetSortLookup
         x_range = Range(-1, 1, 5)
         z_range = Range(-1, 1, 5)
         s_range = Range(-1, 1, 5)
         lookup = np.random.uniform(size=(count, x_range.steps, z_range.steps, s_range.steps, 3, 3))
 
-        magnet_lookup = MagnetLookup(magnet_type=magnet_type, x_range=x_range,
+        magnet_lookup = MagnetSortLookup(magnet_type=magnet_type, x_range=x_range,
                                      z_range=z_range, s_range=s_range, lookup=lookup)
 
-        magnet_genome = MagnetGenome.from_random(seed=1234, magnet_set=magnet_set,
+        magnet_genome = MagnetSortGenome.from_random(seed=1234, magnet_set=magnet_set,
                                                  magnet_slots=magnet_slots, magnet_lookup=magnet_lookup)
 
         return count, magnet_type, names, field_vectors, \
@@ -88,7 +88,7 @@ class MagnetGenomeMutationTest(unittest.TestCase):
 
     def test_flip(self):
         """
-        Tests the MagnetGenome class calculate bfield deltas consistently after mutations.
+        Tests the MagnetSortGenome class calculate bfield deltas consistently after mutations.
         """
 
         count, magnet_type, names, field_vectors, \
@@ -124,7 +124,7 @@ class MagnetGenomeMutationTest(unittest.TestCase):
 
     def test_random_flip(self):
         """
-        Tests the MagnetGenome class calculate bfield deltas consistently after mutations.
+        Tests the MagnetSortGenome class calculate bfield deltas consistently after mutations.
         """
 
         count, magnet_type, names, field_vectors, \
@@ -158,7 +158,7 @@ class MagnetGenomeMutationTest(unittest.TestCase):
 
     def test_exchange(self):
         """
-        Tests the MagnetGenome class calculate bfield deltas consistently after mutations.
+        Tests the MagnetSortGenome class calculate bfield deltas consistently after mutations.
         """
 
         count, magnet_type, names, field_vectors, \
@@ -194,7 +194,7 @@ class MagnetGenomeMutationTest(unittest.TestCase):
 
     def test_random_exchange(self):
         """
-        Tests the MagnetGenome class calculate bfield deltas consistently after mutations.
+        Tests the MagnetSortGenome class calculate bfield deltas consistently after mutations.
         """
 
         count, magnet_type, names, field_vectors, \
@@ -228,7 +228,7 @@ class MagnetGenomeMutationTest(unittest.TestCase):
 
     def test_random_mutations(self):
         """
-        Tests the MagnetGenome class calculate bfield deltas consistently after mutations.
+        Tests the MagnetSortGenome class calculate bfield deltas consistently after mutations.
         """
 
         count, magnet_type, names, field_vectors, \
@@ -258,7 +258,7 @@ class MagnetGenomeMutationTest(unittest.TestCase):
 
     def test_random_mutations_non_flippable(self):
         """
-        Tests the MagnetGenome class calculate bfield deltas consistently after mutations.
+        Tests the MagnetSortGenome class calculate bfield deltas consistently after mutations.
         """
 
         count, magnet_type, names, field_vectors, \
@@ -269,11 +269,16 @@ class MagnetGenomeMutationTest(unittest.TestCase):
         # MagnetSlots
         beams = [f'B{((index % 2) + 1):d}' for index in range(count)]
         slots = [f'S{(((index - (index % 2)) // 2) + 1):03d}' for index in range(count)]
+        positions = np.zeros((count, 3), dtype=np.float32)
+        direction_matrices = np.zeros((count, 3, 3), dtype=np.float32)
+        direction_matrices[:, ...] = np.eye(3, dtype=np.float32)[np.newaxis, ...]
+        size = np.ones((3,), dtype=np.float32)
         flip_matrix = np.eye(3, dtype=np.float32)
 
-        magnet_slots = MagnetSlots(magnet_type=magnet_type, beams=beams, slots=slots, flip_matrix=flip_matrix)
+        magnet_slots = MagnetSlots(magnet_type=magnet_type, beams=beams, slots=slots, positions=positions,
+                                   direction_matrices=direction_matrices, size=size, flip_matrix=flip_matrix)
 
-        magnet_genome = MagnetGenome.from_random(seed=1234, magnet_set=magnet_set,
+        magnet_genome = MagnetSortGenome.from_random(seed=1234, magnet_set=magnet_set,
                                                  magnet_slots=magnet_slots, magnet_lookup=magnet_lookup)
 
         self.assertTrue(np.all(~magnet_genome.flips))

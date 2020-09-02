@@ -28,8 +28,5 @@ from optid.utils.validate_string_list import \
     ValidateStringListElementTypeError, ValidateStringListElementEmptyError, \
     ValidateStringListElementUniquenessError
 
-from optid.utils.validate_magnet_permutation import \
-    ValidateMagnetGenomePermutationDuplicateError, ValidateMagnetGenomePermutationBoundaryError
-
 from optid.errors.file_handle_error import \
     FileHandleError

@@ -23,7 +23,7 @@ import numpy as np
 
 # Test imports
 import optid
-from optid.magnets import MagnetLookup
+from optid.magnets import MagnetSortLookup
 from optid.utils import Range
 
 # Configure debug logging
@@ -31,15 +31,15 @@ from optid.utils.logging import attach_console_logger
 attach_console_logger(remove_existing=True)
 
 
-class MagnetLookupTest(unittest.TestCase):
+class MagnetSortLookupTest(unittest.TestCase):
     """
-    Tests the MagnetLookup class can be imported and used correctly.
+    Tests the MagnetSortLookup class can be imported and used correctly.
     """
 
     @staticmethod
     def dummy_magnet_lookup_values():
         """
-        Creates a set of constant test values used for constructing and comparing MagnetLookup
+        Creates a set of constant test values used for constructing and comparing MagnetSortLookup
         instances across test cases.
 
         Returns
@@ -59,14 +59,14 @@ class MagnetLookupTest(unittest.TestCase):
 
     def test_constructor(self):
         """
-        Tests the MagnetLookup class can be constructed with correct parameters.
+        Tests the MagnetSortLookup class can be constructed with correct parameters.
         """
 
         # Make dummy parameters
         count, magnet_type, x_range, z_range, s_range, lookup = self.dummy_magnet_lookup_values()
 
-        # Construct MagnetLookup instance
-        magnet_lookup = MagnetLookup(magnet_type=magnet_type, x_range=x_range,
+        # Construct MagnetSortLookup instance
+        magnet_lookup = MagnetSortLookup(magnet_type=magnet_type, x_range=x_range,
                                      z_range=z_range, s_range=s_range, lookup=lookup)
 
         # Assert object members have been correctly assigned
@@ -79,7 +79,7 @@ class MagnetLookupTest(unittest.TestCase):
 
     def test_constructor_raises_on_bad_parameters_magnet_type(self):
         """
-        Tests the MagnetLookup class throws exceptions when constructed with incorrect parameters.
+        Tests the MagnetSortLookup class throws exceptions when constructed with incorrect parameters.
         """
 
         # Make dummy parameters
@@ -87,35 +87,35 @@ class MagnetLookupTest(unittest.TestCase):
 
         fixed_params = dict(x_range=x_range, z_range=z_range, s_range=s_range, lookup=lookup)
 
-        self.assertRaises(optid.errors.ValidateStringEmptyError, MagnetLookup, **fixed_params,
+        self.assertRaises(optid.errors.ValidateStringEmptyError, MagnetSortLookup, **fixed_params,
                           magnet_type='')
 
-        self.assertRaises(optid.errors.ValidateStringTypeError, MagnetLookup, **fixed_params,
+        self.assertRaises(optid.errors.ValidateStringTypeError, MagnetSortLookup, **fixed_params,
                           magnet_type=None)
 
     def test_constructor_raises_on_bad_parameters_range(self):
         """
-        Tests the MagnetLookup class throws exceptions when constructed with incorrect parameters.
+        Tests the MagnetSortLookup class throws exceptions when constructed with incorrect parameters.
         """
 
         # Make dummy parameters
         count, magnet_type, x_range, z_range, s_range, lookup = self.dummy_magnet_lookup_values()
 
         # Assert constructor throws error from bad x_range
-        self.assertRaises(optid.errors.ValidateRangeTypeError, MagnetLookup,
+        self.assertRaises(optid.errors.ValidateRangeTypeError, MagnetSortLookup,
                           magnet_type=magnet_type, x_range=None, z_range=z_range, s_range=s_range, lookup=lookup)
 
         # Assert constructor throws error from bad x_range
-        self.assertRaises(optid.errors.ValidateRangeTypeError, MagnetLookup,
+        self.assertRaises(optid.errors.ValidateRangeTypeError, MagnetSortLookup,
                           magnet_type=magnet_type, x_range=x_range, z_range=None, s_range=s_range, lookup=lookup)
 
         # Assert constructor throws error from bad x_range
-        self.assertRaises(optid.errors.ValidateRangeTypeError, MagnetLookup,
+        self.assertRaises(optid.errors.ValidateRangeTypeError, MagnetSortLookup,
                           magnet_type=magnet_type, x_range=x_range, z_range=z_range, s_range=None, lookup=lookup)
 
     def test_constructor_raises_on_bad_parameters_lookup(self):
         """
-        Tests the MagnetLookup class throws exceptions when constructed with incorrect parameters.
+        Tests the MagnetSortLookup class throws exceptions when constructed with incorrect parameters.
         """
 
         # Make dummy parameters
@@ -124,20 +124,20 @@ class MagnetLookupTest(unittest.TestCase):
         fixed_params = dict(magnet_type=magnet_type, x_range=x_range, z_range=z_range, s_range=s_range)
 
         # Assert constructor throws error from incorrectly shaped lookup
-        self.assertRaises(optid.errors.ValidateTensorShapeError, MagnetLookup, **fixed_params,
+        self.assertRaises(optid.errors.ValidateTensorShapeError, MagnetSortLookup, **fixed_params,
                           lookup=lookup[0])
 
         # Assert constructor throws error from incorrectly typed lookup
-        self.assertRaises(optid.errors.ValidateTensorElementTypeError, MagnetLookup, **fixed_params,
+        self.assertRaises(optid.errors.ValidateTensorElementTypeError, MagnetSortLookup, **fixed_params,
                           lookup=lookup.astype(np.int32))
 
         # Assert constructor throws error from incorrectly typed lookup
-        self.assertRaises(optid.errors.ValidateTensorTypeError, MagnetLookup, **fixed_params,
+        self.assertRaises(optid.errors.ValidateTensorTypeError, MagnetSortLookup, **fixed_params,
                           lookup=None)
 
     def test_save(self):
         """
-        Tests the MagnetLookup class can be saved to a .maglookup file using the member function
+        Tests the MagnetSortLookup class can be saved to a .magsortlookup file using the member function
         and reloaded using the static factory function while retaining the data.
         """
 
@@ -146,17 +146,17 @@ class MagnetLookupTest(unittest.TestCase):
 
         # Run the round trip file save + load in a temporary directory
         with tempfile.TemporaryDirectory() as tmp_path:
-            tmp_file_path = os.path.join(tmp_path, 'example.maglookup')
+            tmp_file_path = os.path.join(tmp_path, 'example.magsortlookup')
 
-            # Construct MagnetLookup instance
-            magnet_lookup = MagnetLookup(magnet_type=magnet_type, x_range=x_range,
+            # Construct MagnetSortLookup instance
+            magnet_lookup = MagnetSortLookup(magnet_type=magnet_type, x_range=x_range,
                                          z_range=z_range, s_range=s_range, lookup=lookup)
 
             # Save the MagnetSlots to the temporary directory
             magnet_lookup.save(file=tmp_file_path)
 
             # Throw away the local object and reload it from the temporary file
-            magnet_lookup = MagnetLookup.from_file(file=tmp_file_path)
+            magnet_lookup = MagnetSortLookup.from_file(file=tmp_file_path)
 
             # Clean up the temporary directory
             shutil.rmtree(tmp_path, ignore_errors=True)
@@ -171,7 +171,7 @@ class MagnetLookupTest(unittest.TestCase):
 
     def test_save_open_file_handle(self):
         """
-        Tests the MagnetLookup class can be saved to a .maglookup file using the member function
+        Tests the MagnetSortLookup class can be saved to a .magsortlookup file using the member function
         and reloaded using the static factory function while retaining the data.
         """
 
@@ -180,18 +180,18 @@ class MagnetLookupTest(unittest.TestCase):
 
         # Run the round trip file save + load in a temporary directory
         with tempfile.TemporaryDirectory() as tmp_path:
-            tmp_file_path = os.path.join(tmp_path, 'example.maglookup')
+            tmp_file_path = os.path.join(tmp_path, 'example.magsortlookup')
 
-            # Construct MagnetLookup instance
-            magnet_lookup = MagnetLookup(magnet_type=magnet_type, x_range=x_range,
+            # Construct MagnetSortLookup instance
+            magnet_lookup = MagnetSortLookup(magnet_type=magnet_type, x_range=x_range,
                                          z_range=z_range, s_range=s_range, lookup=lookup)
 
             with open(tmp_file_path, 'wb') as tmp_file_handle:
-                # Save the MagnetLookup to the temporary directory
+                # Save the MagnetSortLookup to the temporary directory
                 magnet_lookup.save(file=tmp_file_handle)
 
             # Throw away the local object and reload it from the temporary file
-            magnet_lookup = MagnetLookup.from_file(file=tmp_file_path)
+            magnet_lookup = MagnetSortLookup.from_file(file=tmp_file_path)
 
             # Clean up the temporary directory
             shutil.rmtree(tmp_path, ignore_errors=True)
@@ -206,15 +206,15 @@ class MagnetLookupTest(unittest.TestCase):
 
     def test_save_raises_on_bad_parameters(self):
         """
-        Tests the MagnetLookup class save member function raises an error when the file parameter is neither
+        Tests the MagnetSortLookup class save member function raises an error when the file parameter is neither
         as string file path or an open file handle.
         """
 
         # Make dummy parameters
         count, magnet_type, x_range, z_range, s_range, lookup = self.dummy_magnet_lookup_values()
 
-        # Construct MagnetLookup instance
-        magnet_lookup = MagnetLookup(magnet_type=magnet_type, x_range=x_range,
+        # Construct MagnetSortLookup instance
+        magnet_lookup = MagnetSortLookup(magnet_type=magnet_type, x_range=x_range,
                                      z_range=z_range, s_range=s_range, lookup=lookup)
 
         # Attempt to save to a bad file parameter
@@ -222,7 +222,7 @@ class MagnetLookupTest(unittest.TestCase):
 
     def test_static_from_file(self):
         """
-        Tests the MagnetLookup class can be constructed from a .maglookup file using the static factory function.
+        Tests the MagnetSortLookup class can be constructed from a .magsortlookup file using the static factory function.
         """
 
         # Construct absolute path to the data for this test function
@@ -236,8 +236,8 @@ class MagnetLookupTest(unittest.TestCase):
         # Make dummy parameters
         count, magnet_type, x_range, z_range, s_range, lookup = self.dummy_magnet_lookup_values()
 
-        # Construct MagnetLookup instance
-        magnet_lookup = MagnetLookup.from_file(file=os.path.join(inputs_path, 'example.maglookup'))
+        # Construct MagnetSortLookup instance
+        magnet_lookup = MagnetSortLookup.from_file(file=os.path.join(inputs_path, 'example.magsortlookup'))
 
         # Assert object members have been correctly assigned
         self.assertEqual(magnet_lookup.count, count)
@@ -249,7 +249,7 @@ class MagnetLookupTest(unittest.TestCase):
 
     def test_static_from_file_open_file_handle(self):
         """
-        Tests the MagnetLookup class can be constructed from an open handle to a .maglookup file using the
+        Tests the MagnetSortLookup class can be constructed from an open handle to a .magsortlookup file using the
         static factory function.
         """
 
@@ -264,9 +264,9 @@ class MagnetLookupTest(unittest.TestCase):
         # Make dummy parameters
         count, magnet_type, x_range, z_range, s_range, lookup = self.dummy_magnet_lookup_values()
 
-        with open(os.path.join(inputs_path, 'example.maglookup'), 'rb') as file_handle:
-            # Construct MagnetLookup instance
-            magnet_lookup = MagnetLookup.from_file(file=file_handle)
+        with open(os.path.join(inputs_path, 'example.magsortlookup'), 'rb') as file_handle:
+            # Construct MagnetSortLookup instance
+            magnet_lookup = MagnetSortLookup.from_file(file=file_handle)
 
             # Assert object members have been correctly assigned
             self.assertEqual(magnet_lookup.count, count)
@@ -278,9 +278,9 @@ class MagnetLookupTest(unittest.TestCase):
 
     def test_static_from_file_raises_on_bad_parameters(self):
         """
-        Tests the MagnetLookup class raises an error when the file parameter is neither
+        Tests the MagnetSortLookup class raises an error when the file parameter is neither
         as string file path or an open file handle.
         """
 
         # Attempt to load from to a bad file parameter
-        self.assertRaises(optid.errors.FileHandleError, MagnetLookup.from_file, file=None)
+        self.assertRaises(optid.errors.FileHandleError, MagnetSortLookup.from_file, file=None)

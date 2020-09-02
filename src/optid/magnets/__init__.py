@@ -15,5 +15,5 @@
 
 from optid.magnets.magnet_set import MagnetSet
 from optid.magnets.magnet_slots import MagnetSlots
-from optid.magnets.magnet_lookup import MagnetLookup
-from optid.magnets.magnet_genome import MagnetGenome
+from optid.magnets.magnet_sort_lookup import MagnetSortLookup
+from optid.magnets.magnet_sort_genome import MagnetSortGenome

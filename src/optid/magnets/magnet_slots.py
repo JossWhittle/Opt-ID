@@ -26,8 +26,14 @@ from optid.errors import FileHandleError
 logger = optid.utils.logging.get_logger('optid.magnets.MagnetSlots')
 
 
-#                              Matrix
-Flip_Matrix_Type = npt.NDArray[(3, 3), npt.Float]
+#                                     Matrix
+Flip_Matrix_Type        = npt.NDArray[(3, 3), npt.Float]
+#                                     Vector
+Size_Type               = npt.NDArray[(3,), npt.Float]
+#                                     Magnets,     Position
+Positions_Type          = npt.NDArray[(typing.Any, 3), npt.Float]
+#                                     Magnets,     Matrix
+Direction_Matrices_Type = npt.NDArray[(typing.Any, 3, 3), npt.Float]
 
 
 class MagnetSlots:
@@ -41,6 +47,9 @@ class MagnetSlots:
                  magnet_type : str,
                  beams : typing.List[str],
                  slots : typing.List[str],
+                 positions : Positions_Type,
+                 direction_matrices : Direction_Matrices_Type,
+                 size : Size_Type,
                  flip_matrix : Flip_Matrix_Type):
         """
         Constructs a MagnetSlots instance and validates the values are the correct types and consistent sizes.
@@ -60,6 +69,16 @@ class MagnetSlots:
             A list of unique non-empty strings representing the named identifier for each physical magnet slot.
             Uniqueness of slot names must be guaranteed for slots with matching beam names.
             i.e. "{beam}:{slot}" must be unique.
+
+        positions : float tensor (S, 3)
+            A float tensor of 3-dim positions for where to place each magnet slot within the device.
+
+        direction_matrices : float tensor (S, 3, 3)
+            A float tensor of 3x3 rotation matrices for what direction the magnet is transformed into, both geometry
+            and field direction.
+
+        size : float tensor (3,)
+            A float tensor of a single 3-dim size for the reference magnet that is common to all slots.
 
         flip_matrix : float tensor (3, 3)
             A float matrix of shape (3, 3) representing the flips that would be applied to a magnet in order to swap
@@ -96,6 +115,24 @@ class MagnetSlots:
             raise ex
 
         try:
+            self._positions = validate_tensor(positions, shape=(self.count, 3))
+        except Exception as ex:
+            logger.exception('positions must be a float tensor of shape (S, 3)', exc_info=ex)
+            raise ex
+
+        try:
+            self._direction_matrices = validate_tensor(direction_matrices, shape=(self.count, 3, 3))
+        except Exception as ex:
+            logger.exception('direction_matrices must be a float tensor of shape (S, 3, 3)', exc_info=ex)
+            raise ex
+
+        try:
+            self._size = validate_tensor(size, shape=(3,))
+        except Exception as ex:
+            logger.exception('size must be a float tensor of shape (3,)', exc_info=ex)
+            raise ex
+
+        try:
             self._flip_matrix = validate_tensor(flip_matrix, shape=(3, 3))
             self._flippable = not np.allclose(self.flip_matrix, np.eye(3, dtype=np.float32))
         except Exception as ex:
@@ -113,6 +150,18 @@ class MagnetSlots:
     @property
     def slots(self) -> typing.List[str]:
         return self._slots
+
+    @property
+    def positions(self) -> Positions_Type:
+        return self._positions
+
+    @property
+    def direction_matrices(self) -> Direction_Matrices_Type:
+        return self._direction_matrices
+
+    @property
+    def size(self) -> Size_Type:
+        return self._size
 
     @property
     def flip_matrix(self) -> Flip_Matrix_Type:
@@ -148,7 +197,8 @@ class MagnetSlots:
             """
 
             # Pack members into .magslots file as a single tuple
-            pickle.dump((self.magnet_type, self.beams, self.slots, self.flip_matrix), file_handle)
+            pickle.dump((self.magnet_type, self.beams, self.slots, self.positions,
+                         self.direction_matrices, self.size, self.flip_matrix), file_handle)
 
             logger.info('Saved magnet slots to .magslots file handle')
 
@@ -197,10 +247,11 @@ class MagnetSlots:
             """
 
             # Unpack members from .magslots file as a single tuple
-            (magnet_type, beams, slots, flip_matrix) = pickle.load(file_handle)
+            (magnet_type, beams, slots, positions, direction_matrices, size, flip_matrix) = pickle.load(file_handle)
 
             # Offload object construction and validation to the MagnetSlots constructor
-            magnet_slots = MagnetSlots(magnet_type=magnet_type, beams=beams, slots=slots, flip_matrix=flip_matrix)
+            magnet_slots = MagnetSlots(magnet_type=magnet_type, beams=beams, slots=slots, positions=positions,
+                                       direction_matrices=direction_matrices, size=size, flip_matrix=flip_matrix)
 
             logger.info('Loaded magnet slots [%s] with [%d] slots', magnet_type, magnet_slots.count)
 
