@@ -26,6 +26,7 @@ from optid.errors import FileHandleError
 logger = optid.utils.logging.get_logger('optid.magnets.MagnetSlots')
 
 
+#                              Matrix
 Flip_Matrix_Type = npt.NDArray[(3, 3), npt.Float]
 
 
@@ -60,7 +61,7 @@ class MagnetSlots:
             Uniqueness of slot names must be guaranteed for slots with matching beam names.
             i.e. "{beam}:{slot}" must be unique.
 
-        flip_matrix : np.ndarray
+        flip_matrix : float tensor (3, 3)
             A float matrix of shape (3, 3) representing the flips that would be applied to a magnet in order to swap
             the direction of its minor axis vectors while keeping its major (easy) axis vector.
         """

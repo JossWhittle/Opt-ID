@@ -105,7 +105,7 @@ class MagnetGenomeTest(unittest.TestCase):
                                      magnet_slots=magnet_slots, magnet_lookup=magnet_lookup)
 
         # Assert object members have been correctly assigned
-        self.assertEqual(magnet_genome.count, count)
+        self.assertEqual(magnet_genome.set_count, count)
         self.assertEqual(magnet_genome.magnet_type, magnet_type)
         self.assertTrue(np.allclose(magnet_genome.permutation, permutation))
         self.assertTrue(np.allclose(magnet_genome.flips, flips))
@@ -136,7 +136,7 @@ class MagnetGenomeTest(unittest.TestCase):
                                                  magnet_slots=magnet_slots, magnet_lookup=magnet_lookup)
 
         # Assert object members have been correctly assigned
-        self.assertEqual(magnet_genome.count, count)
+        self.assertEqual(magnet_genome.set_count, count)
         self.assertEqual(magnet_genome.magnet_type, magnet_type)
         self.assertTrue(np.all(~magnet_genome.flips))
 
@@ -287,7 +287,7 @@ class MagnetGenomeTest(unittest.TestCase):
                                                  magnet_slots=magnet_slots, magnet_lookup=magnet_lookup)
 
         # Assert object members have been correctly assigned
-        self.assertEqual(magnet_genome.count, count)
+        self.assertEqual(magnet_genome.set_count, count)
         self.assertEqual(magnet_genome.magnet_type, magnet_type)
 
     def test_from_magnet_genome(self):
@@ -308,7 +308,7 @@ class MagnetGenomeTest(unittest.TestCase):
         child_genome = MagnetGenome.from_magnet_genome(magnet_genome=magnet_genome)
 
         # Assert object members have been correctly assigned
-        self.assertEqual(magnet_genome.count, child_genome.count)
+        self.assertEqual(magnet_genome.set_count, child_genome.set_count)
         self.assertEqual(magnet_genome.magnet_type, child_genome.magnet_type)
         self.assertTrue(np.allclose(magnet_genome.permutation, child_genome.permutation))
         self.assertTrue(np.allclose(magnet_genome.flips, flips))
@@ -349,7 +349,7 @@ class MagnetGenomeTest(unittest.TestCase):
             shutil.rmtree(tmp_path, ignore_errors=True)
 
         # Assert object members have been correctly assigned
-        self.assertEqual(magnet_genome.count, count)
+        self.assertEqual(magnet_genome.set_count, count)
         self.assertEqual(magnet_genome.magnet_type, magnet_type)
         self.assertTrue(np.allclose(magnet_genome.permutation, permutation))
         self.assertTrue(np.allclose(magnet_genome.flips, flips))
@@ -391,7 +391,7 @@ class MagnetGenomeTest(unittest.TestCase):
             shutil.rmtree(tmp_path, ignore_errors=True)
 
         # Assert object members have been correctly assigned
-        self.assertEqual(magnet_genome.count, count)
+        self.assertEqual(magnet_genome.set_count, count)
         self.assertEqual(magnet_genome.magnet_type, magnet_type)
         self.assertTrue(np.allclose(magnet_genome.permutation, permutation))
         self.assertTrue(np.allclose(magnet_genome.flips, flips))
@@ -443,7 +443,7 @@ class MagnetGenomeTest(unittest.TestCase):
                                                magnet_lookup=magnet_lookup)
 
         # Assert object members have been correctly assigned
-        self.assertEqual(magnet_genome.count, count)
+        self.assertEqual(magnet_genome.set_count, count)
         self.assertEqual(magnet_genome.magnet_type, magnet_type)
         self.assertTrue(np.allclose(magnet_genome.permutation, permutation))
         self.assertTrue(np.allclose(magnet_genome.flips, flips))
@@ -478,7 +478,7 @@ class MagnetGenomeTest(unittest.TestCase):
                                                    magnet_slots=magnet_slots, magnet_lookup=magnet_lookup)
 
         # Assert object members have been correctly assigned
-        self.assertEqual(magnet_genome.count, count)
+        self.assertEqual(magnet_genome.set_count, count)
         self.assertEqual(magnet_genome.magnet_type, magnet_type)
         self.assertTrue(np.allclose(magnet_genome.permutation, permutation))
         self.assertTrue(np.allclose(magnet_genome.flips, flips))

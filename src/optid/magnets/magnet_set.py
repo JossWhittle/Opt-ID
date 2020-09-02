@@ -26,6 +26,7 @@ from optid.errors import FileHandleError
 logger = optid.utils.logging.get_logger('optid.magnets.MagnetSet')
 
 
+#                                Magnets,    Vector
 Field_Vectors_Type = npt.NDArray[(typing.Any, 3), npt.Float]
 
 
@@ -64,14 +65,14 @@ class MagnetSet:
 
         try:
             self._names = validate_string_list(names, assert_non_empty_list=True,
-                                                                    assert_non_empty_strings=True,
-                                                                    assert_unique_strings=True)
+                                                      assert_non_empty_strings=True,
+                                                      assert_unique_strings=True)
+
+            # Number of magnets derived from number of names provided. All other inputs must be consistent.
+            self._count = len(self.names)
         except Exception as ex:
             logger.exception('names must be a non-empty list of non-empty and unique strings', exc_info=ex)
             raise ex
-
-        # Number of magnets derived from number of names provided. All other inputs must be consistent.
-        self._count = len(self.names)
 
         try:
             self._field_vectors = validate_tensor(field_vectors, shape=(self.count, 3))
@@ -169,8 +170,7 @@ class MagnetSet:
             (magnet_type, names, field_vectors) = pickle.load(file_handle)
 
             # Offload object construction and validation to the MagnetSet constructor
-            magnet_set = MagnetSet(magnet_type=magnet_type, names=names,
-                                   field_vectors=field_vectors)
+            magnet_set = MagnetSet(magnet_type=magnet_type, names=names, field_vectors=field_vectors)
 
             logger.info('Loaded magnet set [%s] with [%d] magnets', magnet_type, magnet_set.count)
 
@@ -255,8 +255,7 @@ class MagnetSet:
                 field_vectors = np.array(field_vectors, dtype=np.float32)
 
                 # Offload object construction and validation to the MagnetSet constructor
-                magnet_set = MagnetSet(magnet_type=magnet_type, names=names,
-                                       field_vectors=field_vectors)
+                magnet_set = MagnetSet(magnet_type=magnet_type, names=names, field_vectors=field_vectors)
 
                 logger.info('Loaded magnet set [%s] with [%d] magnets', magnet_type, magnet_set.count)
 

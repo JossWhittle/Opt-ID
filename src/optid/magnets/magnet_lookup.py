@@ -25,6 +25,7 @@ from optid.errors import FileHandleError
 logger = optid.utils.logging.get_logger('optid.magnets.MagnetLookup')
 
 
+#                          Magnets,    X-Steps,    Z-Steps,    S-Steps,    Matrix
 Lookup_Type = npt.NDArray[(typing.Any, typing.Any, typing.Any, typing.Any, 3, 3), npt.Float]
 
 
@@ -105,14 +106,16 @@ class MagnetLookup:
             raise ex
 
         try:
-            self._lookup = validate_tensor(lookup, shape=(None, self.x_range[2], self.z_range[2],
-                                                          self.s_range[2], 3, 3))
+            self._lookup = validate_tensor(lookup, shape=(None,
+                                                          self.x_range.steps,
+                                                          self.z_range.steps,
+                                                          self.s_range.steps, 3, 3))
+
+            # Number of magnet slots derived from shape of lookup tensor.
+            self._count = self.lookup.shape[0]
         except Exception as ex:
             logger.exception('lookup must be float tensor of shape (N, x_steps, z_steps, s_steps, 3, 3)', exc_info=ex)
             raise ex
-
-        # Number of magnet slots derived from shape of lookup tensor.
-        self._count = self.lookup.shape[0]
 
     @property
     def magnet_type(self) -> str:
