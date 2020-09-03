@@ -13,16 +13,22 @@
 # language governing permissions and limitations under the License.
 
 
-from optid import magnets
-from optid import devices
-from optid import errors
-from optid import utils
+import io
+import typing
+import nptyping as npt
+import pickle
+import numpy as np
 
-# From the root of the optid namespace configure the base logger which attaches
-# a NullHandler to discard all logging messages.
-utils.configure_base_logger()
+import optid
+from optid.errors import FileHandleError
 
-VERSION = 'v3.0a'
-"""
-str : Opt-ID version string.
-"""
+logger = optid.utils.logging.get_logger('optid.devices.Device')
+
+
+class DeviceSpec:
+    """
+    Represents an insertion device composed of multiple magnet types in fixed arrangements.
+    """
+
+    def __init__(self):
+        pass

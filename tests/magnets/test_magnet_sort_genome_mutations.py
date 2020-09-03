@@ -76,10 +76,10 @@ class MagnetSortGenomeMutationTest(unittest.TestCase):
         lookup = np.random.uniform(size=(count, x_range.steps, z_range.steps, s_range.steps, 3, 3))
 
         magnet_lookup = MagnetSortLookup(magnet_type=magnet_type, x_range=x_range,
-                                     z_range=z_range, s_range=s_range, lookup=lookup)
+                                         z_range=z_range, s_range=s_range, lookup=lookup)
 
         magnet_genome = MagnetSortGenome.from_random(seed=1234, magnet_set=magnet_set,
-                                                 magnet_slots=magnet_slots, magnet_lookup=magnet_lookup)
+                                                     magnet_slots=magnet_slots, magnet_lookup=magnet_lookup)
 
         return count, magnet_type, names, field_vectors, \
                beams, slots, flip_matrix, flippable, \
@@ -279,7 +279,7 @@ class MagnetSortGenomeMutationTest(unittest.TestCase):
                                    direction_matrices=direction_matrices, size=size, flip_matrix=flip_matrix)
 
         magnet_genome = MagnetSortGenome.from_random(seed=1234, magnet_set=magnet_set,
-                                                 magnet_slots=magnet_slots, magnet_lookup=magnet_lookup)
+                                                     magnet_slots=magnet_slots, magnet_lookup=magnet_lookup)
 
         self.assertTrue(np.all(~magnet_genome.flips))
 
