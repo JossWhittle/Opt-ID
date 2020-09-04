@@ -46,13 +46,8 @@ class MagnetSortGenomeMutationTest(unittest.TestCase):
         magnet_type = 'HH'
 
         # MagnetSet
-        names = [f'{index + 1:03d}' for index in range(count)]
-        field_vectors = np.array([
-            [0.003770334, -0.000352049, 1.339567917],
-            [-0.007018214, -0.002714164, 1.344710227],
-            [-0.004826321, -0.001714764, 1.342079598],
-            [0.008846784, -0.003088993, 1.344698631],
-        ], dtype=np.float32)
+        names = [f'{index + 1:03d}' for index in range(count*2)]
+        field_vectors = np.random.uniform(size=(count*2, 3))
 
         magnet_set = MagnetSet(magnet_type=magnet_type, names=names, field_vectors=field_vectors)
 
@@ -100,27 +95,38 @@ class MagnetSortGenomeMutationTest(unittest.TestCase):
 
         # Current genome state
         permutation_old = magnet_genome.permutation.copy()
-        flip_old = magnet_genome.flips.copy()[index]
-        bfield_old = magnet_genome.calculate_bfield()
+        flips_old = magnet_genome.flips.copy()
+        bfield_old = magnet_genome.bfield.copy()
 
         validate_tensor(bfield_old, shape=(x_range.steps, z_range.steps, s_range.steps, 3), dtype=np.floating)
+        self.assertTrue(np.allclose(bfield_old, magnet_genome.calculate_bfield()))
 
         # Apply mutation
-        bfield_delta = magnet_genome.flip_mutation(index=index)
-
-        validate_tensor(bfield_delta, shape=(x_range.steps, z_range.steps, s_range.steps, 3), dtype=np.floating)
+        magnet_genome.flip_mutation(index=index)
 
         # New genome state
         permutation_new = magnet_genome.permutation.copy()
-        flip_new = magnet_genome.flips.copy()[index]
-        bfield_new = magnet_genome.calculate_bfield()
+        flips_new = magnet_genome.flips.copy()
+        bfield_new = magnet_genome.bfield.copy()
 
-        validate_tensor(bfield_new, shape=(x_range.steps, z_range.steps, s_range.steps, 3), dtype=np.floating)
-
-        self.assertTrue((not flip_old) == flip_new)
-        self.assertTrue(np.all(permutation_old == permutation_new))
-        self.assertTrue(np.allclose((bfield_old + bfield_delta), bfield_new))
+        validate_tensor(bfield_old, shape=(x_range.steps, z_range.steps, s_range.steps, 3), dtype=np.floating)
+        self.assertTrue(np.allclose(bfield_new, magnet_genome.calculate_bfield()))
         self.assertFalse(np.allclose(bfield_old, bfield_new))
+
+        self.assertEqual(1, np.sum(flips_old != flips_new))
+        self.assertTrue(np.all(permutation_old == permutation_new))
+
+    def test_bad_flip(self):
+        """
+        Tests the MagnetSortGenome class throws exception when flipping a magnet in an unused slot.
+        """
+
+        count, magnet_type, names, field_vectors, \
+            beams, slots, flip_matrix, flippable, \
+            x_range, z_range, s_range, lookup, \
+            magnet_set, magnet_slots, magnet_lookup, magnet_genome = self.dummy_values()
+
+        self.assertRaisesRegex(Exception, '.*', magnet_genome.flip_mutation, index=(count + 1))
 
     def test_random_flip(self):
         """
@@ -135,26 +141,25 @@ class MagnetSortGenomeMutationTest(unittest.TestCase):
         # Current genome state
         permutation_old = magnet_genome.permutation.copy()
         flips_old = magnet_genome.flips.copy()
-        bfield_old = magnet_genome.calculate_bfield()
+        bfield_old = magnet_genome.bfield.copy()
 
         validate_tensor(bfield_old, shape=(x_range.steps, z_range.steps, s_range.steps, 3), dtype=np.floating)
+        self.assertTrue(np.allclose(bfield_old, magnet_genome.calculate_bfield()))
 
         # Apply mutation
-        bfield_delta = magnet_genome.random_flip_mutation()
-
-        validate_tensor(bfield_delta, shape=(x_range.steps, z_range.steps, s_range.steps, 3), dtype=np.floating)
+        magnet_genome.random_flip_mutation()
 
         # New genome state
         permutation_new = magnet_genome.permutation.copy()
         flips_new = magnet_genome.flips.copy()
-        bfield_new = magnet_genome.calculate_bfield()
+        bfield_new = magnet_genome.bfield.copy()
 
-        validate_tensor(bfield_new, shape=(x_range.steps, z_range.steps, s_range.steps, 3), dtype=np.floating)
+        validate_tensor(bfield_old, shape=(x_range.steps, z_range.steps, s_range.steps, 3), dtype=np.floating)
+        self.assertTrue(np.allclose(bfield_new, magnet_genome.calculate_bfield()))
+        self.assertFalse(np.allclose(bfield_old, bfield_new))
 
         self.assertEqual(1, np.sum(flips_old != flips_new))
         self.assertTrue(np.all(permutation_old == permutation_new))
-        self.assertTrue(np.allclose((bfield_old + bfield_delta), bfield_new))
-        self.assertFalse(np.allclose(bfield_old, bfield_new))
 
     def test_exchange(self):
         """
@@ -169,28 +174,45 @@ class MagnetSortGenomeMutationTest(unittest.TestCase):
         index_a, index_b = 1, 3
 
         # Current genome state
-        permutation_old = magnet_genome.permutation.copy()[[index_a, index_b]]
-        flips_old = magnet_genome.flips.copy()[[index_a, index_b]]
-        bfield_old = magnet_genome.calculate_bfield()
+        permutation_old = magnet_genome.permutation.copy()
+        bfield_old = magnet_genome.bfield.copy()
 
         validate_tensor(bfield_old, shape=(x_range.steps, z_range.steps, s_range.steps, 3), dtype=np.floating)
+        self.assertTrue(np.allclose(bfield_old, magnet_genome.calculate_bfield()))
 
         # Apply mutation
-        bfield_delta = magnet_genome.exchange_mutation(index_a=index_a, index_b=index_b)
-
-        validate_tensor(bfield_delta, shape=(x_range.steps, z_range.steps, s_range.steps, 3), dtype=np.floating)
+        magnet_genome.exchange_mutation(index_a=index_a, index_b=index_b)
 
         # New genome state
-        permutation_new = magnet_genome.permutation.copy()[[index_a, index_b]]
-        flips_new = magnet_genome.flips.copy()[[index_a, index_b]]
-        bfield_new = magnet_genome.calculate_bfield()
+        permutation_new = magnet_genome.permutation.copy()
+        bfield_new = magnet_genome.bfield.copy()
 
-        validate_tensor(bfield_new, shape=(x_range.steps, z_range.steps, s_range.steps, 3), dtype=np.floating)
-
-        self.assertTrue(np.allclose(permutation_old, permutation_new[::-1]))
-        self.assertTrue(np.allclose(flips_old, flips_new[::-1]))
-        self.assertTrue(np.allclose((bfield_old + bfield_delta), bfield_new))
+        validate_tensor(bfield_old, shape=(x_range.steps, z_range.steps, s_range.steps, 3), dtype=np.floating)
+        self.assertTrue(np.allclose(bfield_new, magnet_genome.calculate_bfield()))
         self.assertFalse(np.allclose(bfield_old, bfield_new))
+
+        self.assertEqual(2, np.sum(permutation_old != permutation_new))
+
+    def test_bad_exchange(self):
+        """
+        Tests the MagnetSortGenome class throws exception when exchanging a bad pair of magnet slots.
+        """
+
+        count, magnet_type, names, field_vectors, \
+            beams, slots, flip_matrix, flippable, \
+            x_range, z_range, s_range, lookup, \
+            magnet_set, magnet_slots, magnet_lookup, magnet_genome = self.dummy_values()
+
+        magnet_genome.exchange_mutation(index_a=1, index_b=2)
+        magnet_genome.exchange_mutation(index_a=2, index_b=1)
+        magnet_genome.exchange_mutation(index_a=1, index_b=(count + 1))
+        magnet_genome.exchange_mutation(index_a=(count + 1), index_b=1)
+
+        self.assertRaisesRegex(Exception, '.*', magnet_genome.exchange_mutation,
+                               index_a=1, index_b=1)
+
+        self.assertRaisesRegex(Exception, '.*', magnet_genome.exchange_mutation,
+                               index_a=(count + 1), index_b=(count + 2))
 
     def test_random_exchange(self):
         """
@@ -204,27 +226,107 @@ class MagnetSortGenomeMutationTest(unittest.TestCase):
 
         # Current genome state
         permutation_old = magnet_genome.permutation.copy()
-        flips_old = magnet_genome.flips.copy()
-        bfield_old = magnet_genome.calculate_bfield()
+        bfield_old = magnet_genome.bfield.copy()
 
         validate_tensor(bfield_old, shape=(x_range.steps, z_range.steps, s_range.steps, 3), dtype=np.floating)
+        self.assertTrue(np.allclose(bfield_old, magnet_genome.calculate_bfield()))
 
         # Apply mutation
-        bfield_delta = magnet_genome.random_exchange_mutation()
-
-        validate_tensor(bfield_delta, shape=(x_range.steps, z_range.steps, s_range.steps, 3), dtype=np.floating)
+        magnet_genome.random_exchange_mutation()
 
         # New genome state
         permutation_new = magnet_genome.permutation.copy()
-        flips_new = magnet_genome.flips.copy()
-        bfield_new = magnet_genome.calculate_bfield()
+        bfield_new = magnet_genome.bfield.copy()
 
-        validate_tensor(bfield_new, shape=(x_range.steps, z_range.steps, s_range.steps, 3), dtype=np.floating)
-
-        self.assertEqual(2, np.sum(flips_old != flips_new))
-        self.assertEqual(2, np.sum(permutation_old != permutation_new))
-        self.assertTrue(np.allclose((bfield_old + bfield_delta), bfield_new))
+        validate_tensor(bfield_old, shape=(x_range.steps, z_range.steps, s_range.steps, 3), dtype=np.floating)
+        self.assertTrue(np.allclose(bfield_new, magnet_genome.calculate_bfield()))
         self.assertFalse(np.allclose(bfield_old, bfield_new))
+
+        self.assertEqual(2, np.sum(permutation_old != permutation_new))
+
+    def test_insertion(self):
+        """
+        Tests the MagnetSortGenome class calculate bfield deltas consistently after mutations.
+        """
+
+        count, magnet_type, names, field_vectors, \
+            beams, slots, flip_matrix, flippable, \
+            x_range, z_range, s_range, lookup, \
+            magnet_set, magnet_slots, magnet_lookup, magnet_genome = self.dummy_values()
+
+        index_a, index_b = 1, 3
+
+        # Current genome state
+        permutation_old = magnet_genome.permutation.copy()
+        bfield_old = magnet_genome.bfield.copy()
+
+        validate_tensor(bfield_old, shape=(x_range.steps, z_range.steps, s_range.steps, 3), dtype=np.floating)
+        self.assertTrue(np.allclose(bfield_old, magnet_genome.calculate_bfield()))
+
+        # Apply mutation
+        magnet_genome.insertion_mutation(index_a=index_a, index_b=index_b)
+
+        # New genome state
+        permutation_new = magnet_genome.permutation.copy()
+        bfield_new = magnet_genome.bfield.copy()
+
+        validate_tensor(bfield_old, shape=(x_range.steps, z_range.steps, s_range.steps, 3), dtype=np.floating)
+        self.assertTrue(np.allclose(bfield_new, magnet_genome.calculate_bfield()))
+        self.assertFalse(np.allclose(bfield_old, bfield_new))
+
+        self.assertTrue(((index_b + 1) - index_a), np.sum(permutation_old != permutation_new))
+
+    def test_bad_insertion(self):
+        """
+        Tests the MagnetSortGenome class throws exception when exchanging a bad pair of magnet slots.
+        """
+
+        count, magnet_type, names, field_vectors, \
+            beams, slots, flip_matrix, flippable, \
+            x_range, z_range, s_range, lookup, \
+            magnet_set, magnet_slots, magnet_lookup, magnet_genome = self.dummy_values()
+
+        magnet_genome.insertion_mutation(index_a=1, index_b=2)
+        magnet_genome.insertion_mutation(index_a=1, index_b=(count + 1))
+
+        self.assertRaisesRegex(Exception, '.*', magnet_genome.insertion_mutation,
+                               index_a=1, index_b=1)
+
+        self.assertRaisesRegex(Exception, '.*', magnet_genome.insertion_mutation,
+                               index_a=2, index_b=1)
+
+        self.assertRaisesRegex(Exception, '.*', magnet_genome.insertion_mutation,
+                               index_a=(count + 1), index_b=(count + 2))
+
+    def test_random_insertion(self):
+        """
+        Tests the MagnetSortGenome class calculate bfield deltas consistently after mutations.
+        """
+
+        count, magnet_type, names, field_vectors, \
+            beams, slots, flip_matrix, flippable, \
+            x_range, z_range, s_range, lookup, \
+            magnet_set, magnet_slots, magnet_lookup, magnet_genome = self.dummy_values()
+
+        # Current genome state
+        permutation_old = magnet_genome.permutation.copy()
+        bfield_old = magnet_genome.bfield.copy()
+
+        validate_tensor(bfield_old, shape=(x_range.steps, z_range.steps, s_range.steps, 3), dtype=np.floating)
+        self.assertTrue(np.allclose(bfield_old, magnet_genome.calculate_bfield()))
+
+        # Apply mutation
+        magnet_genome.random_insertion_mutation()
+
+        # New genome state
+        permutation_new = magnet_genome.permutation.copy()
+        bfield_new = magnet_genome.bfield.copy()
+
+        validate_tensor(bfield_old, shape=(x_range.steps, z_range.steps, s_range.steps, 3), dtype=np.floating)
+        self.assertTrue(np.allclose(bfield_new, magnet_genome.calculate_bfield()))
+        self.assertFalse(np.allclose(bfield_old, bfield_new))
+
+        self.assertTrue(np.sum(permutation_old != permutation_new) > 0)
 
     def test_random_mutations(self):
         """
@@ -239,22 +341,23 @@ class MagnetSortGenomeMutationTest(unittest.TestCase):
         num_mutations = 16
 
         # Current genome state
-        bfield_old = magnet_genome.calculate_bfield()
+        permutation_old = magnet_genome.permutation.copy()
+        bfield_old = magnet_genome.bfield.copy()
 
         validate_tensor(bfield_old, shape=(x_range.steps, z_range.steps, s_range.steps, 3), dtype=np.floating)
+        self.assertTrue(np.allclose(bfield_old, magnet_genome.calculate_bfield()))
 
-        # Apply mutation
-        bfield_delta = sum(magnet_genome.random_mutation() for _ in range(num_mutations))
-
-        validate_tensor(bfield_delta, shape=(x_range.steps, z_range.steps, s_range.steps, 3), dtype=np.floating)
+        # Apply mutations
+        for _ in range(num_mutations):
+            magnet_genome.random_mutation()
 
         # New genome state
-        bfield_new = magnet_genome.calculate_bfield()
+        permutation_new = magnet_genome.permutation.copy()
+        bfield_new = magnet_genome.bfield.copy()
 
-        validate_tensor(bfield_new, shape=(x_range.steps, z_range.steps, s_range.steps, 3), dtype=np.floating)
-
-        self.assertTrue(np.allclose((bfield_old + bfield_delta), bfield_new))
-        self.assertFalse(np.allclose(bfield_old, bfield_new))
+        validate_tensor(bfield_old, shape=(x_range.steps, z_range.steps, s_range.steps, 3), dtype=np.floating)
+        self.assertTrue(np.allclose(bfield_new, magnet_genome.calculate_bfield()))
+        self.assertEqual(sorted(set(permutation_old.tolist())), sorted(set(permutation_new.tolist())))
 
     def test_random_mutations_non_flippable(self):
         """
@@ -286,20 +389,21 @@ class MagnetSortGenomeMutationTest(unittest.TestCase):
         num_mutations = 16
 
         # Current genome state
-        bfield_old = magnet_genome.calculate_bfield()
+        permutation_old = magnet_genome.permutation.copy()
+        bfield_old = magnet_genome.bfield.copy()
 
         validate_tensor(bfield_old, shape=(x_range.steps, z_range.steps, s_range.steps, 3), dtype=np.floating)
+        self.assertTrue(np.allclose(bfield_old, magnet_genome.calculate_bfield()))
 
-        # Apply mutation
-        bfield_delta = sum(magnet_genome.random_mutation() for _ in range(num_mutations))
-
-        validate_tensor(bfield_delta, shape=(x_range.steps, z_range.steps, s_range.steps, 3), dtype=np.floating)
+        # Apply mutations
+        for _ in range(num_mutations):
+            magnet_genome.random_mutation()
 
         # New genome state
-        bfield_new = magnet_genome.calculate_bfield()
+        permutation_new = magnet_genome.permutation.copy()
+        bfield_new = magnet_genome.bfield.copy()
 
-        validate_tensor(bfield_new, shape=(x_range.steps, z_range.steps, s_range.steps, 3), dtype=np.floating)
-
-        self.assertTrue(np.allclose((bfield_old + bfield_delta), bfield_new))
-        self.assertFalse(np.allclose(bfield_old, bfield_new))
+        validate_tensor(bfield_old, shape=(x_range.steps, z_range.steps, s_range.steps, 3), dtype=np.floating)
+        self.assertTrue(np.allclose(bfield_new, magnet_genome.calculate_bfield()))
+        self.assertEqual(sorted(set(permutation_old.tolist())), sorted(set(permutation_new.tolist())))
         self.assertTrue(np.all(~magnet_genome.flips))

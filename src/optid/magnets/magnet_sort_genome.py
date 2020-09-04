@@ -151,8 +151,11 @@ class MagnetSortGenome:
             raise ex
 
         # The set of mutation functions we can choose between
-        self._mutation_fns = [self.random_exchange_mutation] + \
+        self._mutation_fns = [self.random_exchange_mutation, self.random_insertion_mutation] + \
                             ([self.random_flip_mutation] if self.magnet_slots.flippable else [])
+
+        # Calculate the full bfield of this genome
+        self._bfield = self.calculate_bfield()
 
     @property
     def magnet_type(self) -> str:
@@ -165,6 +168,10 @@ class MagnetSortGenome:
     @property
     def flips(self) -> Flips_Type:
         return self._flips
+
+    @property
+    def bfield(self) -> Bfield_Type:
+        return self._bfield
 
     @property
     def set_count(self) -> int:
@@ -239,19 +246,22 @@ class MagnetSortGenome:
         # Compute the sum of the individual bfield contributions for each magnet slot
         return sum(self.calculate_slot_bfield(slot_index=index) for index in range(self.magnet_slots.count))
 
-    def flip_mutation(self, index : int) -> Bfield_Type:
+    def flip_mutation(self, index : int):
         """
-        Performs a flip mutation at the selected magnet slot and returns the bfield delta from performing the mutation.
+        Performs a flip mutation at the selected magnet slot and updates the bfield delta from performing the mutation.
 
         Parameters
         ----------
         index : int
             The magnet slot to flip.
-
-        Returns
-        -------
-        The bfield delta computed from the mutation.
         """
+
+        if logger.isEnabledFor(logging.DEBUG):
+            logger.debug('active: %s, unused: %s',
+                         [f'{p:03d}:{"F" if f else " "}' for p, f in zip(self.permutation[:self.magnet_slots.count],
+                                                                         self.flips[:self.magnet_slots.count])],
+                         [f'{p:03d}:{"F" if f else " "}' for p, f in zip(self.permutation[self.magnet_slots.count:],
+                                                                         self.flips[self.magnet_slots.count:])])
 
         # Can only apply flip mutations if this genome is flippable (non-identity flip matrix on magnet slots)
         assert self.magnet_slots.flippable
@@ -270,32 +280,32 @@ class MagnetSortGenome:
         bfield_new = self.calculate_slot_bfield(slot_index=index)
 
         # Compute the additive delta to the bfield that this full mutation (removal+flip+insertion) would produce
-        bfield_delta = (bfield_new - bfield_old)
+        self._bfield += (bfield_new - bfield_old)
 
-        return bfield_delta
+        if logger.isEnabledFor(logging.DEBUG):
+            logger.debug('active: %s, unused: %s',
+                         [f'{p:03d}:{"F" if f else " "}' for p, f in zip(self.permutation[:self.magnet_slots.count],
+                                                                         self.flips[:self.magnet_slots.count])],
+                         [f'{p:03d}:{"F" if f else " "}' for p, f in zip(self.permutation[self.magnet_slots.count:],
+                                                                         self.flips[self.magnet_slots.count:])])
 
-    def random_flip_mutation(self) -> Bfield_Type:
+    def random_flip_mutation(self):
         """
-        Performs a flip mutation at a random magnet slot and returns the bfield delta from performing the mutation.
-
-        Returns
-        -------
-        The bfield delta computed from the mutation.
+        Performs a flip mutation at a random magnet slot and updates the bfield delta from performing the mutation.
         """
 
         # Sample index in the range of used slots
         index = self.rng_mutations.randint(low=0, high=self.magnet_slots.count)
 
-        if logger.isEnabledFor(logging.DEBUG):
-            logger.debug('Applying random flip mutation to slot [%d] of [%s] genome...',
-                         index, self.magnet_type)
+        logger.info('Applying random flip mutation to slot [%d] of [%s] genome...',
+                     index, self.magnet_type)
 
         # Perform the selected flip mutation
-        return self.flip_mutation(index=index)
+        self.flip_mutation(index=index)
 
-    def exchange_mutation(self, index_a : int, index_b : int) -> Bfield_Type:
+    def exchange_mutation(self, index_a : int, index_b : int):
         """
-        Performs a swap mutation between the selected magnet slots and returns the bfield delta from performing the
+        Performs a swap mutation between the selected magnet slots and updates the bfield delta from performing the
         mutation.
 
         Parameters
@@ -305,11 +315,14 @@ class MagnetSortGenome:
 
         index_b : int
             The second magnet slot to swap.
-
-        Returns
-        -------
-        The bfield delta computed from the mutation.
         """
+
+        if logger.isEnabledFor(logging.DEBUG):
+            logger.debug('active: %s, unused: %s',
+                         [f'{p:03d}:{"F" if f else " "}' for p, f in zip(self.permutation[:self.magnet_slots.count],
+                                                                         self.flips[:self.magnet_slots.count])],
+                         [f'{p:03d}:{"F" if f else " "}' for p, f in zip(self.permutation[self.magnet_slots.count:],
+                                                                         self.flips[self.magnet_slots.count:])])
 
         # At least one of the indices being swapped must be for a magnet currently being used in a magnet slot
         # Swapping two magnets within the genome but not currently in active slots would be a waste of computation
@@ -338,17 +351,18 @@ class MagnetSortGenome:
             bfield_new += [self.calculate_slot_bfield(slot_index=index_b)]
 
         # Compute the additive delta to the bfield that this full mutation (removal+swap+insertion) would produce
-        bfield_delta = (sum(bfield_new) - sum(bfield_old))
+        self._bfield += (sum(bfield_new) - sum(bfield_old))
 
-        return bfield_delta
+        if logger.isEnabledFor(logging.DEBUG):
+            logger.debug('active: %s, unused: %s',
+                         [f'{p:03d}:{"F" if f else " "}' for p, f in zip(self.permutation[:self.magnet_slots.count],
+                                                                         self.flips[:self.magnet_slots.count])],
+                         [f'{p:03d}:{"F" if f else " "}' for p, f in zip(self.permutation[self.magnet_slots.count:],
+                                                                         self.flips[self.magnet_slots.count:])])
 
-    def random_exchange_mutation(self) -> Bfield_Type:
+    def random_exchange_mutation(self):
         """
-        Performs a exchange mutation at a random magnet slot and returns the bfield delta from performing the mutation.
-
-        Returns
-        -------
-        The bfield delta computed from the mutation.
+        Performs a exchange mutation at a random magnet slot and updates the bfield delta from performing the mutation.
         """
 
         # Sample first index in the range of used slots
@@ -363,23 +377,108 @@ class MagnetSortGenome:
         if index_b >= index_a:
             index_b += 1
 
-        if logger.isEnabledFor(logging.DEBUG):
-            logger.debug('Applying random exchange mutation to slots [%d] and [%d] of [%s] genome...',
-                         index_a, index_b, self.magnet_type)
+        logger.info('Applying random exchange mutation to slots [%d] and [%d] of [%s] genome...',
+                     index_a, index_b, self.magnet_type)
 
         # Perform the selected exchange mutation
-        return self.exchange_mutation(index_a=index_a, index_b=index_b)
+        self.exchange_mutation(index_a=index_a, index_b=index_b)
 
-    def random_mutation(self) -> Bfield_Type:
+    def insertion_mutation(self, index_a : int, index_b : int):
+        """
+        Performs a insertion mutation between the where magnet b will be inserted before magnet a, and all intermediate
+        magnets will be shifted right by one slot to compensate. This mutation will only compute a bfield delta if the
+        amount of computation to compute the delta is smaller than the amount needed to recompute the full bfield.
+
+        Parameters
+        ----------
+        index_a : int
+            The magnet slot index to insert at.
+
+        index_b : int
+            The magnet slot index to move.
+        """
+
+        if logger.isEnabledFor(logging.DEBUG):
+            logger.debug('active: %s, unused: %s',
+                         [f'{p:03d}:{"F" if f else " "}' for p, f in zip(self.permutation[:self.magnet_slots.count],
+                                                                         self.flips[:self.magnet_slots.count])],
+                         [f'{p:03d}:{"F" if f else " "}' for p, f in zip(self.permutation[self.magnet_slots.count:],
+                                                                         self.flips[self.magnet_slots.count:])])
+
+        # Index a must be a currently used magnet slot.
+        # Index b must be to the right of index a, and can be from the entire range of candidates
+        assert (0 <= index_a < (self.magnet_slots.count - 1))
+        assert (index_a < index_b < self.magnet_set.count)
+
+        # Only need to consider bfield contributions within the modified sub-range that is also within the
+        # range of active slots
+        max_bfield_index = min((index_b + 1), self.magnet_slots.count)
+
+        # If the number of delta calculations to remove and add magnets is greater than the cost of recomputing the
+        # entire bfield, then we will skip computing the deltas and just fully recompute the bfield.
+        update_bfield = (((max_bfield_index - index_a) * 2) < self.magnet_slots.count)
+
+        if update_bfield:
+            # Compute the bfield contribution before the mutation
+            bfield_old = sum(self.calculate_slot_bfield(slot_index=index)
+                             for index in range(index_a, max_bfield_index))
+
+        # Extract the slot data to be moved
+        permutation_b, flips_b = self.permutation[index_b], self.flips[index_b]
+
+        # Shift all the intermediate slots to the right one index
+        self.permutation[(index_a + 1):(index_b + 1)] = self.permutation[index_a:index_b]
+        self.flips[(index_a + 1):(index_b + 1)] = self.flips[index_a:index_b]
+
+        # Insert the extracted slot at the start of the range
+        self.permutation[index_a] = permutation_b
+        self.flips[index_a] = flips_b
+
+        if update_bfield:
+            # Compute the bfield contribution after the mutation
+            bfield_new = sum(self.calculate_slot_bfield(slot_index=index)
+                             for index in range(index_a, max_bfield_index))
+
+            # Compute the additive delta to the bfield that this full mutation would produce
+            self._bfield += (bfield_new - bfield_old)
+
+        else:
+            if logger.isEnabledFor(logging.DEBUG):
+                logger.debug('Insertion mutation updating [%d] of [%d] active slots triggers full bfield calculation.',
+                             (max_bfield_index - index_a), self.magnet_slots.count)
+            # Calculate the full bfield of this genome
+            self._bfield = self.calculate_bfield()
+
+        if logger.isEnabledFor(logging.DEBUG):
+            logger.debug('active: %s, unused: %s',
+                         [f'{p:03d}:{"F" if f else " "}' for p, f in zip(self.permutation[:self.magnet_slots.count],
+                                                                         self.flips[:self.magnet_slots.count])],
+                         [f'{p:03d}:{"F" if f else " "}' for p, f in zip(self.permutation[self.magnet_slots.count:],
+                                                                         self.flips[self.magnet_slots.count:])])
+
+    def random_insertion_mutation(self):
+        """
+        Performs a insertion mutation at a random magnet slot and updates the bfield delta from performing the mutation.
+        """
+
+        # Sample first index in the range of used slots
+        index_a = self.rng_mutations.randint(low=0, high=(self.magnet_slots.count - 1))
+
+        # Sample second index in the full range including currently unused magnets
+        index_b = self.rng_mutations.randint(low=(index_a + 1), high=self.magnet_set.count)
+
+        logger.info('Applying random insertion mutation, moving slot [%d] to slot [%d] of [%s] genome...',
+                     index_b, index_a, self.magnet_type)
+
+        # Perform the selected exchange mutation
+        self.insertion_mutation(index_a=index_a, index_b=index_b)
+
+    def random_mutation(self):
         """
         Performs a random mutation at a random magnet slot and returns the bfield delta from performing the mutation.
-
-        Returns
-        -------
-        The bfield delta computed from the mutation.
         """
 
-        return self.mutation_fns[self.rng_mutations.choice(len(self.mutation_fns))]()
+        self.mutation_fns[self.rng_mutations.choice(len(self.mutation_fns))]()
 
     @staticmethod
     def from_random(seed : int,
