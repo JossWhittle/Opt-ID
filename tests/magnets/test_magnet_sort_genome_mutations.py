@@ -42,7 +42,7 @@ class MagnetSortGenomeMutationTest(unittest.TestCase):
         A tuple of the necessary fields.
         """
 
-        count = 4
+        count = 8
         magnet_type = 'HH'
 
         # MagnetSet
@@ -266,7 +266,32 @@ class MagnetSortGenomeMutationTest(unittest.TestCase):
             x_range, z_range, s_range, lookup, \
             magnet_set, magnet_slots, magnet_lookup, magnet_genome = self.dummy_values()
 
-        index_a, index_b = 1, 3
+        index_a, index_b = 0, 1
+
+        # Current genome state
+        permutation_old = magnet_genome.permutation.copy()
+        bfield_old = magnet_genome.bfield.copy()
+
+        validate_tensor(bfield_old, shape=(x_range.steps, z_range.steps, s_range.steps, 3), dtype=np.floating)
+        self.assertTrue(np.allclose(bfield_old, magnet_genome.calculate_bfield()))
+
+        # Apply mutation
+        magnet_genome.insertion_mutation(index_a=index_a, index_b=index_b)
+
+        # New genome state
+        permutation_new = magnet_genome.permutation.copy()
+        bfield_new = magnet_genome.bfield.copy()
+
+        validate_tensor(bfield_old, shape=(x_range.steps, z_range.steps, s_range.steps, 3), dtype=np.floating)
+        self.assertTrue(np.allclose(bfield_new, magnet_genome.calculate_bfield()))
+        self.assertFalse(np.allclose(bfield_old, bfield_new))
+
+        self.assertTrue(((index_b + 1) - index_a), np.sum(permutation_old != permutation_new))
+
+        magnet_genome.recalculate_bfield()
+        self.assertTrue(np.allclose(bfield_new, magnet_genome.bfield))
+
+        index_a, index_b = 1, (count + 1)
 
         # Current genome state
         permutation_old = magnet_genome.permutation.copy()
