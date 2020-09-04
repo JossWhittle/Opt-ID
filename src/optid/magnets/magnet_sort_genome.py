@@ -205,7 +205,7 @@ class MagnetSortGenome:
     def magnet_lookup(self) -> MagnetSortLookup:
         return self._magnet_lookup
 
-    def calculate_slot_bfield(self, slot_index : int) -> Bfield_Type:
+    def _calculate_slot_bfield(self, slot_index : int) -> Bfield_Type:
         """
         Computes the bfield for the magnet from the magnet set used by the genome to fill the selected magnet slot.
 
@@ -244,7 +244,19 @@ class MagnetSortGenome:
         """
 
         # Compute the sum of the individual bfield contributions for each magnet slot
-        return sum(self.calculate_slot_bfield(slot_index=index) for index in range(self.magnet_slots.count))
+        return sum(self._calculate_slot_bfield(slot_index=index) for index in range(self.magnet_slots.count))
+
+    def recalculate_bfield(self):
+        """
+        Recomputes the self.bfield member property for this genome.
+
+        Returns
+        -------
+        The full bfield computed from this genome.
+        """
+
+        self._bfield = self.calculate_bfield()
+        return self.bfield
 
     def flip_mutation(self, index : int):
         """
@@ -271,13 +283,13 @@ class MagnetSortGenome:
         assert 0 <= index < self.magnet_slots.count
 
         # Compute the bfield contribution of this magnet before the mutation
-        bfield_old = self.calculate_slot_bfield(slot_index=index)
+        bfield_old = self._calculate_slot_bfield(slot_index=index)
 
         # Apply the mutation
         self.flips[index] = ~self.flips[index]
 
         # Compute the bfield contribution of this magnet after the mutation
-        bfield_new = self.calculate_slot_bfield(slot_index=index)
+        bfield_new = self._calculate_slot_bfield(slot_index=index)
 
         # Compute the additive delta to the bfield that this full mutation (removal+flip+insertion) would produce
         self._bfield += (bfield_new - bfield_old)
@@ -335,9 +347,9 @@ class MagnetSortGenome:
         # Compute the bfield contribution before the mutation
         bfield_old = []
         if index_a < self.magnet_slots.count:
-            bfield_old += [self.calculate_slot_bfield(slot_index=index_a)]
+            bfield_old += [self._calculate_slot_bfield(slot_index=index_a)]
         if index_b < self.magnet_slots.count:
-            bfield_old += [self.calculate_slot_bfield(slot_index=index_b)]
+            bfield_old += [self._calculate_slot_bfield(slot_index=index_b)]
 
         # Apply the mutation
         self.permutation[[index_a, index_b]] = self.permutation[[index_b, index_a]]
@@ -346,9 +358,9 @@ class MagnetSortGenome:
         # Compute the bfield contribution after the mutation
         bfield_new = []
         if index_a < self.magnet_slots.count:
-            bfield_new += [self.calculate_slot_bfield(slot_index=index_a)]
+            bfield_new += [self._calculate_slot_bfield(slot_index=index_a)]
         if index_b < self.magnet_slots.count:
-            bfield_new += [self.calculate_slot_bfield(slot_index=index_b)]
+            bfield_new += [self._calculate_slot_bfield(slot_index=index_b)]
 
         # Compute the additive delta to the bfield that this full mutation (removal+swap+insertion) would produce
         self._bfield += (sum(bfield_new) - sum(bfield_old))
@@ -420,7 +432,7 @@ class MagnetSortGenome:
 
         if update_bfield:
             # Compute the bfield contribution before the mutation
-            bfield_old = sum(self.calculate_slot_bfield(slot_index=index)
+            bfield_old = sum(self._calculate_slot_bfield(slot_index=index)
                              for index in range(index_a, max_bfield_index))
 
         # Extract the slot data to be moved
@@ -436,7 +448,7 @@ class MagnetSortGenome:
 
         if update_bfield:
             # Compute the bfield contribution after the mutation
-            bfield_new = sum(self.calculate_slot_bfield(slot_index=index)
+            bfield_new = sum(self._calculate_slot_bfield(slot_index=index)
                              for index in range(index_a, max_bfield_index))
 
             # Compute the additive delta to the bfield that this full mutation would produce
@@ -447,7 +459,7 @@ class MagnetSortGenome:
                 logger.debug('Insertion mutation updating [%d] of [%d] active slots triggers full bfield calculation.',
                              (max_bfield_index - index_a), self.magnet_slots.count)
             # Calculate the full bfield of this genome
-            self._bfield = self.calculate_bfield()
+            self.recalculate_bfield()
 
         if logger.isEnabledFor(logging.DEBUG):
             logger.debug('active: %s, unused: %s',
