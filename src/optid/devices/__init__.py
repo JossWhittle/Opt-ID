@@ -13,3 +13,9 @@
 # language governing permissions and limitations under the License.
 
 
+from optid.devices.magnet_spec import MagnetSlotSpec, MagnetTypeSpec
+from optid.devices.beam_spec import BeamSpec
+from optid.devices.device_spec import DeviceSpec
+
+from optid.devices.ppm_antisymmetric import ppm_antisymmetric
+from optid.devices.hybrid_symmetric import hybrid_symmetric
