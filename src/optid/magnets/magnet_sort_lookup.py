@@ -25,10 +25,6 @@ from optid.errors import FileHandleError
 logger = optid.utils.logging.get_logger('optid.magnets.MagnetSortLookup')
 
 
-#                          Magnets,    X-Steps,    Z-Steps,    S-Steps,    Matrix
-Lookup_Type = npt.NDArray[(typing.Any, typing.Any, typing.Any, typing.Any, 3, 3), npt.Float]
-
-
 class MagnetSortLookup:
     """
     Represents a B-field contribution lookup table for a set of magnet slots.
@@ -37,7 +33,7 @@ class MagnetSortLookup:
     def __init__(self,
                  magnet_type : str,
                  x_range : Range, z_range : Range, s_range : Range,
-                 lookup : Lookup_Type):
+                 lookup : optid.types.TensorSortLookup):
         """
         Constructs a MagnetSortLookup instance and validates the values are the correct types and consistent sizes.
 
@@ -84,7 +80,7 @@ class MagnetSortLookup:
         try:
             self._magnet_type = validate_string(magnet_type, assert_non_empty=True)
         except Exception as ex:
-            logger.exception('magnet_type must be a non-empty string', exc_info=ex)
+            logger.exception('name must be a non-empty string', exc_info=ex)
             raise ex
 
         try:
@@ -134,7 +130,7 @@ class MagnetSortLookup:
         return self._s_range
 
     @property
-    def lookup(self) -> Lookup_Type:
+    def lookup(self) -> optid.types.TensorSortLookup:
         return self._lookup
 
     @property

@@ -26,10 +26,6 @@ from optid.errors import FileHandleError
 logger = optid.utils.logging.get_logger('optid.magnets.MagnetSet')
 
 
-#                                Magnets,    Vector
-Field_Vectors_Type = npt.NDArray[(typing.Any, 3), npt.Float]
-
-
 class MagnetSet:
     """
     Represents a set of named candidate magnets of the same type and size with their measured field strength vectors.
@@ -38,7 +34,7 @@ class MagnetSet:
     def __init__(self,
                  magnet_type : str,
                  names : typing.List[str],
-                 field_vectors : Field_Vectors_Type):
+                 field_vectors : optid.types.TensorVectors):
         """
         Constructs a MagnetSet instance and validates the values are the correct types and consistent sizes.
 
@@ -60,7 +56,7 @@ class MagnetSet:
         try:
             self._magnet_type = validate_string(magnet_type, assert_non_empty=True)
         except Exception as ex:
-            logger.exception('magnet_type must be a non-empty string', exc_info=ex)
+            logger.exception('name must be a non-empty string', exc_info=ex)
             raise ex
 
         try:
@@ -89,7 +85,7 @@ class MagnetSet:
         return self._names
 
     @property
-    def field_vectors(self) -> Field_Vectors_Type:
+    def field_vectors(self) -> optid.types.TensorVectors:
         return self._field_vectors
 
     @property

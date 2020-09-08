@@ -28,14 +28,6 @@ import logging
 logger = optid.utils.logging.get_logger('optid.magnets.MagnetSortGenome')
 
 
-#                               Magnets,   Scalar
-Permutation_Type = npt.NDArray[(typing.Any,), npt.Int]
-Flips_Type       = npt.NDArray[(typing.Any,), npt.Bool]
-
-#                               X-Steps,    Z-Steps,    S-Steps,    Vector
-Bfield_Type      = npt.NDArray[(typing.Any, typing.Any, typing.Any, 3), npt.Float]
-
-
 class MagnetSortGenome:
     """
     Represents a permutation of magnets of the same type w.r.t a MagnetSet, MagnetSlots, and MagnetSortLookup
@@ -51,8 +43,8 @@ class MagnetSortGenome:
 
     def __init__(self,
                  magnet_type : str,
-                 permutation : Permutation_Type,
-                 flips : Flips_Type,
+                 permutation : optid.types.TensorPermutation,
+                 flips : optid.types.TensorFlips,
                  rng_states : typing.Tuple[np.random.RandomState, np.random.RandomState],
                  magnet_set : MagnetSet,
                  magnet_slots : MagnetSlots,
@@ -90,7 +82,7 @@ class MagnetSortGenome:
         try:
             self._magnet_type = validate_string(magnet_type, assert_non_empty=True)
         except Exception as ex:
-            logger.exception('magnet_type must be a non-empty string', exc_info=ex)
+            logger.exception('name must be a non-empty string', exc_info=ex)
             raise ex
 
         try:
@@ -162,15 +154,15 @@ class MagnetSortGenome:
         return self._magnet_type
 
     @property
-    def permutation(self) -> Permutation_Type:
+    def permutation(self) -> optid.types.TensorPermutation:
         return self._permutation
 
     @property
-    def flips(self) -> Flips_Type:
+    def flips(self) -> optid.types.TensorFlips:
         return self._flips
 
     @property
-    def bfield(self) -> Bfield_Type:
+    def bfield(self) -> optid.types.TensorBfield:
         return self._bfield
 
     @property
@@ -205,7 +197,7 @@ class MagnetSortGenome:
     def magnet_lookup(self) -> MagnetSortLookup:
         return self._magnet_lookup
 
-    def _calculate_slot_bfield(self, slot_index : int) -> Bfield_Type:
+    def _calculate_slot_bfield(self, slot_index : int) -> optid.types.TensorBfield:
         """
         Computes the bfield for the magnet from the magnet set used by the genome to fill the selected magnet slot.
 
@@ -234,7 +226,7 @@ class MagnetSortGenome:
 
         return bfield
 
-    def calculate_bfield(self) -> Bfield_Type:
+    def calculate_bfield(self) -> optid.types.TensorBfield:
         """
         Computes the full bfield for the genome.
 

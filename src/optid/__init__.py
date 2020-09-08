@@ -13,8 +13,8 @@
 # language governing permissions and limitations under the License.
 
 
+from optid import types
 from optid import magnets
-from optid import devices
 from optid import errors
 from optid import utils
 

@@ -26,16 +26,6 @@ from optid.errors import FileHandleError
 logger = optid.utils.logging.get_logger('optid.magnets.MagnetSlots')
 
 
-#                                     Matrix
-Flip_Matrix_Type        = npt.NDArray[(3, 3), npt.Float]
-#                                     Vector
-Size_Type               = npt.NDArray[(3,), npt.Float]
-#                                     Magnets,     Position
-Positions_Type          = npt.NDArray[(typing.Any, 3), npt.Float]
-#                                     Magnets,     Matrix
-Direction_Matrices_Type = npt.NDArray[(typing.Any, 3, 3), npt.Float]
-
-
 class MagnetSlots:
     """
     Represents a set of magnet slots. Magnet slots are characterized by beam name, position, 3x3 direction matrix,
@@ -47,10 +37,10 @@ class MagnetSlots:
                  magnet_type : str,
                  beams : typing.List[str],
                  slots : typing.List[str],
-                 positions : Positions_Type,
-                 direction_matrices : Direction_Matrices_Type,
-                 size : Size_Type,
-                 flip_matrix : Flip_Matrix_Type):
+                 positions : optid.types.TensorPoints,
+                 direction_matrices : optid.types.TensorMatrices,
+                 size : optid.types.TensorVector,
+                 flip_matrix : optid.types.TensorMatrix):
         """
         Constructs a MagnetSlots instance and validates the values are the correct types and consistent sizes.
 
@@ -88,7 +78,7 @@ class MagnetSlots:
         try:
             self._magnet_type = validate_string(magnet_type, assert_non_empty=True)
         except Exception as ex:
-            logger.exception('magnet_type must be a non-empty string', exc_info=ex)
+            logger.exception('name must be a non-empty string', exc_info=ex)
             raise ex
 
         try:
@@ -152,19 +142,19 @@ class MagnetSlots:
         return self._slots
 
     @property
-    def positions(self) -> Positions_Type:
+    def positions(self) -> optid.types.TensorPoints:
         return self._positions
 
     @property
-    def direction_matrices(self) -> Direction_Matrices_Type:
+    def direction_matrices(self) -> optid.types.TensorMatrices:
         return self._direction_matrices
 
     @property
-    def size(self) -> Size_Type:
+    def size(self) -> optid.types.TensorVector:
         return self._size
 
     @property
-    def flip_matrix(self) -> Flip_Matrix_Type:
+    def flip_matrix(self) -> optid.types.TensorMatrix:
         return self._flip_matrix
 
     @property
