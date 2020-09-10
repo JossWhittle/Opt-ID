@@ -16,6 +16,9 @@
 import typing
 
 
+import optid
+
+
 class ValidateStringListErrorBase(Exception):
     """
     Base Exception to inherit from for string list errors.
@@ -120,7 +123,7 @@ class ValidateStringListElementUniquenessError(ValidateStringListErrorBase):
         return 'list elements must all be unique strings'
 
 
-def validate_string_list(values : typing.List[str],
+def validate_string_list(values : optid.types.ListStrings,
                          shape : typing.Optional[int] = None,
                          assert_non_empty_list : bool = True,
                          assert_non_empty_strings : bool = True,
