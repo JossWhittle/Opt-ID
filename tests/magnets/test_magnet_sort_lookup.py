@@ -52,7 +52,7 @@ class MagnetSortLookupTest(unittest.TestCase):
         x_range = Range(-1, 1, 5)
         z_range = Range(-1, 1, 5)
         s_range = Range(-1, 1, 5)
-        lookup = np.empty((count, x_range[2], z_range[2], s_range[2], 3, 3), dtype=np.float32)
+        lookup = np.empty((count, x_range.steps, z_range.steps, s_range.steps, 3, 3), dtype=np.float32)
         lookup[..., :, :] = np.eye(3, dtype=np.float32)
 
         return count, mtype, x_range, z_range, s_range, lookup
@@ -102,15 +102,15 @@ class MagnetSortLookupTest(unittest.TestCase):
         count, mtype, x_range, z_range, s_range, lookup = self.dummy_magnet_lookup_values()
 
         # Assert constructor throws error from bad x_range
-        self.assertRaises(optid.errors.ValidateRangeTypeError, MagnetSortLookup,
+        self.assertRaises(Exception, MagnetSortLookup,
                           mtype=mtype, x_range=None, z_range=z_range, s_range=s_range, lookup=lookup)
 
         # Assert constructor throws error from bad x_range
-        self.assertRaises(optid.errors.ValidateRangeTypeError, MagnetSortLookup,
+        self.assertRaises(Exception, MagnetSortLookup,
                           mtype=mtype, x_range=x_range, z_range=None, s_range=s_range, lookup=lookup)
 
         # Assert constructor throws error from bad x_range
-        self.assertRaises(optid.errors.ValidateRangeTypeError, MagnetSortLookup,
+        self.assertRaises(Exception, MagnetSortLookup,
                           mtype=mtype, x_range=x_range, z_range=z_range, s_range=None, lookup=lookup)
 
     def test_constructor_raises_on_bad_parameters_lookup(self):
@@ -184,7 +184,7 @@ class MagnetSortLookupTest(unittest.TestCase):
 
             # Construct MagnetSortLookup instance
             magnet_lookup = MagnetSortLookup(mtype=mtype, x_range=x_range,
-                                         z_range=z_range, s_range=s_range, lookup=lookup)
+                                             z_range=z_range, s_range=s_range, lookup=lookup)
 
             with open(tmp_file_path, 'wb') as tmp_file_handle:
                 # Save the MagnetSortLookup to the temporary directory

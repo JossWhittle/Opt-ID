@@ -16,7 +16,7 @@
 import typing
 
 import optid
-from optid.utils import Range, validate_tensor, validate_string, validate_range
+from optid.utils import Range, validate_tensor, validate_string
 from optid.utils.logging import get_logger
 
 logger = get_logger('optid.magnets.MagnetSortLookup')
@@ -81,19 +81,22 @@ class MagnetSortLookup:
             raise ex
 
         try:
-            self._x_range = validate_range(x_range)
+            self._x_range = x_range
+            assert isinstance(self.x_range, Range)
         except Exception as ex:
             logger.exception('x_range must be a valid range', exc_info=ex)
             raise ex
 
         try:
-            self._z_range = validate_range(z_range)
+            self._z_range = z_range
+            assert isinstance(self.z_range, Range)
         except Exception as ex:
             logger.exception('z_range must be a valid range', exc_info=ex)
             raise ex
 
         try:
-            self._s_range = validate_range(s_range)
+            self._s_range = s_range
+            assert isinstance(self.s_range, Range)
         except Exception as ex:
             logger.exception('s_range must be a valid range', exc_info=ex)
             raise ex
