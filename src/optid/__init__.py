@@ -16,7 +16,6 @@
 from optid import constants
 from optid import types
 from optid import magnets
-from optid import devices
 from optid import errors
 from optid import utils
 
