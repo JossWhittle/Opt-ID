@@ -19,7 +19,7 @@ import numpy as np
 
 # Test imports
 from optid.magnets import MagnetSortGenome, MagnetSet, MagnetSlots, MagnetSortLookup
-from optid.utils import Range, validate_tensor
+from optid.utils import Range, Grid, validate_tensor
 
 # Configure debug logging
 from optid.utils.logging import attach_console_logger
@@ -70,25 +70,24 @@ class MagnetSortGenomeMutationTest(unittest.TestCase):
                                    shim_vectors=shim_vectors, direction_matrices=direction_matrices)
 
         # MagnetSortLookup
-        x_range = Range(-1, 1, 5)
-        z_range = Range(-1, 1, 5)
-        s_range = Range(-1, 1, 5)
-        lookup = np.random.uniform(size=(count, x_range.steps, z_range.steps, s_range.steps, 3, 3))
+        grid = Grid(x_range=Range(min=-1, max=1, steps=5),
+                    z_range=Range(min=-1, max=1, steps=5),
+                    s_range=Range(min=-1, max=1, steps=5))
+        lookup = np.random.uniform(size=(count, *grid.steps, 3, 3))
 
-        magnet_lookup = MagnetSortLookup(mtype=mtype, x_range=x_range,
-                                         z_range=z_range, s_range=s_range, lookup=lookup)
+        magnet_lookup = MagnetSortLookup(mtype=mtype, grid=grid, lookup=lookup)
 
         magnet_genome = MagnetSortGenome.from_random(seed=1234, magnet_set=magnet_set,
                                                      magnet_slots=magnet_slots, magnet_lookup=magnet_lookup)
 
-        return count, mtype, x_range, z_range, s_range, magnet_set, magnet_slots, magnet_lookup, magnet_genome
+        return count, mtype, grid, magnet_set, magnet_slots, magnet_lookup, magnet_genome
 
     def test_flip(self):
         """
         Tests the MagnetSortGenome class calculate bfield deltas consistently after mutations.
         """
 
-        count, mtype, x_range, z_range, s_range, \
+        count, mtype, grid, \
             magnet_set, magnet_slots, magnet_lookup, magnet_genome = self.dummy_values()
 
         index = 1
@@ -98,7 +97,7 @@ class MagnetSortGenomeMutationTest(unittest.TestCase):
         flips_old = magnet_genome.flips.copy()
         bfield_old = magnet_genome.bfield.copy()
 
-        validate_tensor(bfield_old, shape=(x_range.steps, z_range.steps, s_range.steps, 3), dtype=np.floating)
+        validate_tensor(bfield_old, shape=(*grid.steps, 3), dtype=np.floating)
         self.assertTrue(np.allclose(bfield_old, magnet_genome.calculate_bfield()))
 
         # Apply mutation
@@ -109,7 +108,7 @@ class MagnetSortGenomeMutationTest(unittest.TestCase):
         flips_new = magnet_genome.flips.copy()
         bfield_new = magnet_genome.bfield.copy()
 
-        validate_tensor(bfield_old, shape=(x_range.steps, z_range.steps, s_range.steps, 3), dtype=np.floating)
+        validate_tensor(bfield_old, shape=(*grid.steps, 3), dtype=np.floating)
         self.assertTrue(np.allclose(bfield_new, magnet_genome.calculate_bfield()))
         self.assertFalse(np.allclose(bfield_old, bfield_new))
 
@@ -124,7 +123,7 @@ class MagnetSortGenomeMutationTest(unittest.TestCase):
         Tests the MagnetSortGenome class throws exception when flipping a magnet in an unused slot.
         """
 
-        count, mtype, x_range, z_range, s_range, \
+        count, mtype, grid, \
             magnet_set, magnet_slots, magnet_lookup, magnet_genome = self.dummy_values()
 
         self.assertRaisesRegex(Exception, '.*', magnet_genome.flip_mutation, index=(count + 1))
@@ -134,7 +133,7 @@ class MagnetSortGenomeMutationTest(unittest.TestCase):
         Tests the MagnetSortGenome class calculate bfield deltas consistently after mutations.
         """
 
-        count, mtype, x_range, z_range, s_range, \
+        count, mtype, grid, \
             magnet_set, magnet_slots, magnet_lookup, magnet_genome = self.dummy_values()
 
         # Current genome state
@@ -142,7 +141,7 @@ class MagnetSortGenomeMutationTest(unittest.TestCase):
         flips_old = magnet_genome.flips.copy()
         bfield_old = magnet_genome.bfield.copy()
 
-        validate_tensor(bfield_old, shape=(x_range.steps, z_range.steps, s_range.steps, 3), dtype=np.floating)
+        validate_tensor(bfield_old, shape=(*grid.steps, 3), dtype=np.floating)
         self.assertTrue(np.allclose(bfield_old, magnet_genome.calculate_bfield()))
 
         # Apply mutation
@@ -153,7 +152,7 @@ class MagnetSortGenomeMutationTest(unittest.TestCase):
         flips_new = magnet_genome.flips.copy()
         bfield_new = magnet_genome.bfield.copy()
 
-        validate_tensor(bfield_old, shape=(x_range.steps, z_range.steps, s_range.steps, 3), dtype=np.floating)
+        validate_tensor(bfield_old, shape=(*grid.steps, 3), dtype=np.floating)
         self.assertTrue(np.allclose(bfield_new, magnet_genome.calculate_bfield()))
         self.assertFalse(np.allclose(bfield_old, bfield_new))
 
@@ -168,7 +167,7 @@ class MagnetSortGenomeMutationTest(unittest.TestCase):
         Tests the MagnetSortGenome class calculate bfield deltas consistently after mutations.
         """
 
-        count, mtype, x_range, z_range, s_range, \
+        count, mtype, grid, \
             magnet_set, magnet_slots, magnet_lookup, magnet_genome = self.dummy_values()
 
         index_a, index_b = 1, 3
@@ -177,7 +176,7 @@ class MagnetSortGenomeMutationTest(unittest.TestCase):
         permutation_old = magnet_genome.permutation.copy()
         bfield_old = magnet_genome.bfield.copy()
 
-        validate_tensor(bfield_old, shape=(x_range.steps, z_range.steps, s_range.steps, 3), dtype=np.floating)
+        validate_tensor(bfield_old, shape=(*grid.steps, 3), dtype=np.floating)
         self.assertTrue(np.allclose(bfield_old, magnet_genome.calculate_bfield()))
 
         # Apply mutation
@@ -187,7 +186,7 @@ class MagnetSortGenomeMutationTest(unittest.TestCase):
         permutation_new = magnet_genome.permutation.copy()
         bfield_new = magnet_genome.bfield.copy()
 
-        validate_tensor(bfield_old, shape=(x_range.steps, z_range.steps, s_range.steps, 3), dtype=np.floating)
+        validate_tensor(bfield_old, shape=(*grid.steps, 3), dtype=np.floating)
         self.assertTrue(np.allclose(bfield_new, magnet_genome.calculate_bfield()))
         self.assertFalse(np.allclose(bfield_old, bfield_new))
 
@@ -201,7 +200,7 @@ class MagnetSortGenomeMutationTest(unittest.TestCase):
         Tests the MagnetSortGenome class throws exception when exchanging a bad pair of magnet slots.
         """
 
-        count, mtype, x_range, z_range, s_range, \
+        count, mtype, grid, \
             magnet_set, magnet_slots, magnet_lookup, magnet_genome = self.dummy_values()
 
         magnet_genome.exchange_mutation(index_a=1, index_b=2)
@@ -220,14 +219,14 @@ class MagnetSortGenomeMutationTest(unittest.TestCase):
         Tests the MagnetSortGenome class calculate bfield deltas consistently after mutations.
         """
 
-        count, mtype, x_range, z_range, s_range, \
+        count, mtype, grid, \
             magnet_set, magnet_slots, magnet_lookup, magnet_genome = self.dummy_values()
 
         # Current genome state
         permutation_old = magnet_genome.permutation.copy()
         bfield_old = magnet_genome.bfield.copy()
 
-        validate_tensor(bfield_old, shape=(x_range.steps, z_range.steps, s_range.steps, 3), dtype=np.floating)
+        validate_tensor(bfield_old, shape=(*grid.steps, 3), dtype=np.floating)
         self.assertTrue(np.allclose(bfield_old, magnet_genome.calculate_bfield()))
 
         # Apply mutation
@@ -237,7 +236,7 @@ class MagnetSortGenomeMutationTest(unittest.TestCase):
         permutation_new = magnet_genome.permutation.copy()
         bfield_new = magnet_genome.bfield.copy()
 
-        validate_tensor(bfield_old, shape=(x_range.steps, z_range.steps, s_range.steps, 3), dtype=np.floating)
+        validate_tensor(bfield_old, shape=(*grid.steps, 3), dtype=np.floating)
         self.assertTrue(np.allclose(bfield_new, magnet_genome.calculate_bfield()))
         self.assertFalse(np.allclose(bfield_old, bfield_new))
 
@@ -251,7 +250,7 @@ class MagnetSortGenomeMutationTest(unittest.TestCase):
         Tests the MagnetSortGenome class calculate bfield deltas consistently after mutations.
         """
 
-        count, mtype, x_range, z_range, s_range, \
+        count, mtype, grid, \
             magnet_set, magnet_slots, magnet_lookup, magnet_genome = self.dummy_values()
 
         index_a, index_b = 0, 1
@@ -260,7 +259,7 @@ class MagnetSortGenomeMutationTest(unittest.TestCase):
         permutation_old = magnet_genome.permutation.copy()
         bfield_old = magnet_genome.bfield.copy()
 
-        validate_tensor(bfield_old, shape=(x_range.steps, z_range.steps, s_range.steps, 3), dtype=np.floating)
+        validate_tensor(bfield_old, shape=(*grid.steps, 3), dtype=np.floating)
         self.assertTrue(np.allclose(bfield_old, magnet_genome.calculate_bfield()))
 
         # Apply mutation
@@ -270,7 +269,7 @@ class MagnetSortGenomeMutationTest(unittest.TestCase):
         permutation_new = magnet_genome.permutation.copy()
         bfield_new = magnet_genome.bfield.copy()
 
-        validate_tensor(bfield_old, shape=(x_range.steps, z_range.steps, s_range.steps, 3), dtype=np.floating)
+        validate_tensor(bfield_old, shape=(*grid.steps, 3), dtype=np.floating)
         self.assertTrue(np.allclose(bfield_new, magnet_genome.calculate_bfield()))
         self.assertFalse(np.allclose(bfield_old, bfield_new))
 
@@ -285,7 +284,7 @@ class MagnetSortGenomeMutationTest(unittest.TestCase):
         permutation_old = magnet_genome.permutation.copy()
         bfield_old = magnet_genome.bfield.copy()
 
-        validate_tensor(bfield_old, shape=(x_range.steps, z_range.steps, s_range.steps, 3), dtype=np.floating)
+        validate_tensor(bfield_old, shape=(*grid.steps, 3), dtype=np.floating)
         self.assertTrue(np.allclose(bfield_old, magnet_genome.calculate_bfield()))
 
         # Apply mutation
@@ -295,7 +294,7 @@ class MagnetSortGenomeMutationTest(unittest.TestCase):
         permutation_new = magnet_genome.permutation.copy()
         bfield_new = magnet_genome.bfield.copy()
 
-        validate_tensor(bfield_old, shape=(x_range.steps, z_range.steps, s_range.steps, 3), dtype=np.floating)
+        validate_tensor(bfield_old, shape=(*grid.steps, 3), dtype=np.floating)
         self.assertTrue(np.allclose(bfield_new, magnet_genome.calculate_bfield()))
         self.assertFalse(np.allclose(bfield_old, bfield_new))
 
@@ -309,7 +308,7 @@ class MagnetSortGenomeMutationTest(unittest.TestCase):
         Tests the MagnetSortGenome class throws exception when exchanging a bad pair of magnet slots.
         """
 
-        count, mtype, x_range, z_range, s_range, \
+        count, mtype, grid, \
             magnet_set, magnet_slots, magnet_lookup, magnet_genome = self.dummy_values()
 
         magnet_genome.insertion_mutation(index_a=1, index_b=2)
@@ -329,14 +328,14 @@ class MagnetSortGenomeMutationTest(unittest.TestCase):
         Tests the MagnetSortGenome class calculate bfield deltas consistently after mutations.
         """
 
-        count, mtype, x_range, z_range, s_range, \
+        count, mtype, grid, \
             magnet_set, magnet_slots, magnet_lookup, magnet_genome = self.dummy_values()
 
         # Current genome state
         permutation_old = magnet_genome.permutation.copy()
         bfield_old = magnet_genome.bfield.copy()
 
-        validate_tensor(bfield_old, shape=(x_range.steps, z_range.steps, s_range.steps, 3), dtype=np.floating)
+        validate_tensor(bfield_old, shape=(*grid.steps, 3), dtype=np.floating)
         self.assertTrue(np.allclose(bfield_old, magnet_genome.calculate_bfield()))
 
         # Apply mutation
@@ -346,7 +345,7 @@ class MagnetSortGenomeMutationTest(unittest.TestCase):
         permutation_new = magnet_genome.permutation.copy()
         bfield_new = magnet_genome.bfield.copy()
 
-        validate_tensor(bfield_old, shape=(x_range.steps, z_range.steps, s_range.steps, 3), dtype=np.floating)
+        validate_tensor(bfield_old, shape=(*grid.steps, 3), dtype=np.floating)
         self.assertTrue(np.allclose(bfield_new, magnet_genome.calculate_bfield()))
         self.assertFalse(np.allclose(bfield_old, bfield_new))
 
@@ -360,7 +359,7 @@ class MagnetSortGenomeMutationTest(unittest.TestCase):
         Tests the MagnetSortGenome class calculate bfield deltas consistently after mutations.
         """
 
-        count, mtype, x_range, z_range, s_range, \
+        count, mtype, grid, \
             magnet_set, magnet_slots, magnet_lookup, magnet_genome = self.dummy_values()
 
         num_mutations = 16
@@ -369,7 +368,7 @@ class MagnetSortGenomeMutationTest(unittest.TestCase):
         permutation_old = magnet_genome.permutation.copy()
         bfield_old = magnet_genome.bfield.copy()
 
-        validate_tensor(bfield_old, shape=(x_range.steps, z_range.steps, s_range.steps, 3), dtype=np.floating)
+        validate_tensor(bfield_old, shape=(*grid.steps, 3), dtype=np.floating)
         self.assertTrue(np.allclose(bfield_old, magnet_genome.calculate_bfield()))
 
         # Apply mutations
@@ -380,7 +379,7 @@ class MagnetSortGenomeMutationTest(unittest.TestCase):
         permutation_new = magnet_genome.permutation.copy()
         bfield_new = magnet_genome.bfield.copy()
 
-        validate_tensor(bfield_old, shape=(x_range.steps, z_range.steps, s_range.steps, 3), dtype=np.floating)
+        validate_tensor(bfield_old, shape=(*grid.steps, 3), dtype=np.floating)
         self.assertTrue(np.allclose(bfield_new, magnet_genome.calculate_bfield()))
         self.assertEqual(sorted(set(permutation_old.tolist())), sorted(set(permutation_new.tolist())))
 
@@ -392,7 +391,7 @@ class MagnetSortGenomeMutationTest(unittest.TestCase):
         Tests the MagnetSortGenome class calculate bfield deltas consistently after mutations.
         """
 
-        count, mtype, x_range, z_range, s_range, \
+        count, mtype, grid, \
             _, magnet_slots, magnet_lookup, magnet_genome = self.dummy_values()
 
         # MagnetSet
@@ -418,7 +417,7 @@ class MagnetSortGenomeMutationTest(unittest.TestCase):
         permutation_old = magnet_genome.permutation.copy()
         bfield_old = magnet_genome.bfield.copy()
 
-        validate_tensor(bfield_old, shape=(x_range.steps, z_range.steps, s_range.steps, 3), dtype=np.floating)
+        validate_tensor(bfield_old, shape=(*grid.steps, 3), dtype=np.floating)
         self.assertTrue(np.allclose(bfield_old, magnet_genome.calculate_bfield()))
 
         # Apply mutations
@@ -429,7 +428,7 @@ class MagnetSortGenomeMutationTest(unittest.TestCase):
         permutation_new = magnet_genome.permutation.copy()
         bfield_new = magnet_genome.bfield.copy()
 
-        validate_tensor(bfield_old, shape=(x_range.steps, z_range.steps, s_range.steps, 3), dtype=np.floating)
+        validate_tensor(bfield_old, shape=(*grid.steps, 3), dtype=np.floating)
         self.assertTrue(np.allclose(bfield_new, magnet_genome.calculate_bfield()))
         self.assertEqual(sorted(set(permutation_old.tolist())), sorted(set(permutation_new.tolist())))
         self.assertTrue(np.all(~magnet_genome.flips))

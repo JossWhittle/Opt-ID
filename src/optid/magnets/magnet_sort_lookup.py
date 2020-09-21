@@ -16,7 +16,7 @@
 import typing
 
 import optid
-from optid.utils import Range, validate_tensor, validate_string
+from optid.utils import Grid, validate_tensor, validate_string
 from optid.utils.logging import get_logger
 
 logger = get_logger('optid.magnets.MagnetSortLookup')
@@ -29,7 +29,7 @@ class MagnetSortLookup:
 
     def __init__(self,
                  mtype : str,
-                 x_range : Range, z_range : Range, s_range : Range,
+                 grid : Grid,
                  lookup : optid.types.TensorSortLookup):
         """
         Constructs a MagnetSortLookup instance and validates the values are the correct types and consistent sizes.
@@ -40,18 +40,8 @@ class MagnetSortLookup:
             A non-empty string name for this magnet type that should be unique in the context of the full insertion
             device. Names such as 'HH', 'VV', 'HE', 'VE', 'HT' are common.
 
-        x_range : Range(min : float, max : float, steps : int)
-            A tuple representing the sample range across the x-axis for the lookup table. This is used for validating
-            that multiple MagnetSortLookup objects represent lookup tables constructed over the same sampling grid.
-            The grid is used to construct samples w.r.t an np.linspace(*x_range) == np.linspace(min, max, steps)
-
-        z_range : Range(min : float, max : float, steps : int)
-            A tuple representing the sample range across the z-axis for the lookup table.
-            See documentation for x_range parameter.
-
-        s_range : Range(min : float, max : float, steps : int)
-            A tuple representing the sample range across the s-axis for the lookup table.
-            See documentation for x_range parameter.
+        grid : Grid
+            A class specifying a regularly spaced 3D Range of sample points.
 
         lookup : float tensor (S, x_steps, z_steps, s_steps, 3, 3)
             A float tensor of shape (slots, x_steps, z_steps, s_steps, 3, 3) representing the unscaled magnetic field
@@ -81,31 +71,14 @@ class MagnetSortLookup:
             raise ex
 
         try:
-            self._x_range = x_range
-            assert isinstance(self.x_range, Range)
+            self._grid = grid
+            assert isinstance(self.grid, Grid)
         except Exception as ex:
-            logger.exception('x_range must be a valid range', exc_info=ex)
+            logger.exception('grid must be a valid Grid', exc_info=ex)
             raise ex
 
         try:
-            self._z_range = z_range
-            assert isinstance(self.z_range, Range)
-        except Exception as ex:
-            logger.exception('z_range must be a valid range', exc_info=ex)
-            raise ex
-
-        try:
-            self._s_range = s_range
-            assert isinstance(self.s_range, Range)
-        except Exception as ex:
-            logger.exception('s_range must be a valid range', exc_info=ex)
-            raise ex
-
-        try:
-            self._lookup = validate_tensor(lookup, shape=(None,
-                                                          self.x_range.steps,
-                                                          self.z_range.steps,
-                                                          self.s_range.steps, 3, 3))
+            self._lookup = validate_tensor(lookup, shape=(None, *self.grid.steps, 3, 3))
 
             # Number of magnet slots derived from shape of lookup tensor.
             self._count = self.lookup.shape[0]
@@ -118,16 +91,8 @@ class MagnetSortLookup:
         return self._mtype
 
     @property
-    def x_range(self) -> Range:
-        return self._x_range
-
-    @property
-    def z_range(self) -> Range:
-        return self._z_range
-
-    @property
-    def s_range(self) -> Range:
-        return self._s_range
+    def grid(self) -> Grid:
+        return self._grid
 
     @property
     def lookup(self) -> optid.types.TensorSortLookup:
@@ -151,9 +116,7 @@ class MagnetSortLookup:
         logger.info('Saving magnet sort lookup...')
         optid.utils.io.save(file, dict(
             mtype=self.mtype,
-            x_range=self.x_range,
-            z_range=self.z_range,
-            s_range=self.s_range,
+            grid=self.grid,
             lookup=self.lookup
         ))
 
