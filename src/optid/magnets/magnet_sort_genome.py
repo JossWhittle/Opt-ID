@@ -12,20 +12,16 @@
 # either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 
-
-import io
+import logging
 import typing
-import nptyping as npt
-import pickle
 import numpy as np
 
 import optid
 from optid.magnets import MagnetSet, MagnetSlots, MagnetSortLookup
 from optid.utils import validate_tensor, validate_string
-from optid.errors import FileHandleError
+from optid.utils.logging import get_logger
 
-import logging
-logger = optid.utils.logging.get_logger('optid.magnets.MagnetSortGenome')
+logger = get_logger('optid.magnets.MagnetSortGenome')
 
 
 class MagnetSortGenome:
@@ -42,7 +38,7 @@ class MagnetSortGenome:
     """
 
     def __init__(self,
-                 magnet_type : str,
+                 mtype : str,
                  permutation : optid.types.TensorPermutation,
                  flips : optid.types.TensorFlips,
                  rng_states : typing.Tuple[np.random.RandomState, np.random.RandomState],
@@ -54,7 +50,7 @@ class MagnetSortGenome:
 
         Parameters
         ----------
-        magnet_type : str
+        mtype : str
             A non-empty string name for this magnet type that should be unique in the context of the full insertion
             device. Names such as 'HH', 'VV', 'HE', 'VE', 'HT' are common.
 
@@ -80,7 +76,7 @@ class MagnetSortGenome:
         """
 
         try:
-            self._magnet_type = validate_string(magnet_type, assert_non_empty=True)
+            self._mtype = validate_string(mtype, assert_non_empty=True)
         except Exception as ex:
             logger.exception('name must be a non-empty string', exc_info=ex)
             raise ex
@@ -88,7 +84,7 @@ class MagnetSortGenome:
         try:
             self._magnet_set = magnet_set
             assert isinstance(self.magnet_set, MagnetSet)
-            assert self.magnet_type == self.magnet_set.magnet_type
+            assert self.mtype == self.magnet_set.mtype
 
             self._set_count = self.magnet_set.count
         except Exception as ex:
@@ -98,7 +94,7 @@ class MagnetSortGenome:
         try:
             self._magnet_slots = magnet_slots
             assert isinstance(self.magnet_slots, MagnetSlots)
-            assert self.magnet_type == self.magnet_slots.magnet_type
+            assert self.mtype == self.magnet_slots.mtype
             assert self.set_count >= self.magnet_slots.count
 
             self._slot_count = self.magnet_slots.count
@@ -109,7 +105,7 @@ class MagnetSortGenome:
         try:
             self._magnet_lookup = magnet_lookup
             assert isinstance(self.magnet_lookup, MagnetSortLookup)
-            assert self.magnet_type == self.magnet_lookup.magnet_type
+            assert self.mtype == self.magnet_lookup.mtype
             assert self.set_count >= self.magnet_lookup.count
             assert self.magnet_slots.count == self.magnet_lookup.count
 
@@ -144,14 +140,14 @@ class MagnetSortGenome:
 
         # The set of mutation functions we can choose between
         self._mutation_fns = [self.random_exchange_mutation, self.random_insertion_mutation] + \
-                            ([self.random_flip_mutation] if self.magnet_slots.flippable else [])
+                            ([self.random_flip_mutation] if self.magnet_set.flippable else [])
 
         # Calculate the full bfield of this genome
         self._bfield = self.calculate_bfield()
 
     @property
-    def magnet_type(self) -> str:
-        return self._magnet_type
+    def mtype(self) -> str:
+        return self._mtype
 
     @property
     def permutation(self) -> optid.types.TensorPermutation:
@@ -197,7 +193,7 @@ class MagnetSortGenome:
     def magnet_lookup(self) -> MagnetSortLookup:
         return self._magnet_lookup
 
-    def _calculate_slot_bfield(self, slot_index : int) -> optid.types.TensorBfield:
+    def calculate_slot_bfield(self, slot_index : int) -> optid.types.TensorBfield:
         """
         Computes the bfield for the magnet from the magnet set used by the genome to fill the selected magnet slot.
 
@@ -217,9 +213,9 @@ class MagnetSortGenome:
         # Get the field strength vector (before potential flipping) for the real magnet currently in the desired slot
         field_vector = self.magnet_set.field_vectors[set_index]
 
-        if self.magnet_slots.flippable and self.flips[slot_index]:
+        if self.magnet_set.flippable and self.flips[slot_index]:
             # Flip the field vector by the flip matrix if the genome says this slot is currently flipped
-            field_vector = np.dot(self.magnet_slots.flip_matrix, field_vector)
+            field_vector = np.dot(self.magnet_set.flip_matrix, field_vector)
 
         # Scale the lookup w.r.t the (potentially flipped) field vector for the magnet under consideration
         bfield = np.dot(self.magnet_lookup.lookup[slot_index], field_vector)
@@ -236,7 +232,7 @@ class MagnetSortGenome:
         """
 
         # Compute the sum of the individual bfield contributions for each magnet slot
-        return sum(self._calculate_slot_bfield(slot_index=index) for index in range(self.magnet_slots.count))
+        return sum(self.calculate_slot_bfield(slot_index=index) for index in range(self.magnet_slots.count))
 
     def recalculate_bfield(self):
         """
@@ -268,20 +264,20 @@ class MagnetSortGenome:
                                                                          self.flips[self.magnet_slots.count:])])
 
         # Can only apply flip mutations if this genome is flippable (non-identity flip matrix on magnet slots)
-        assert self.magnet_slots.flippable
+        assert self.magnet_set.flippable
 
         # Index needs to be valid within the magnet_slots which may be fewer than the full magnet_genome and magnet_set
         # Flipping a magnet within the genome but not currently in an active slot would be a waste of computation
         assert 0 <= index < self.magnet_slots.count
 
         # Compute the bfield contribution of this magnet before the mutation
-        bfield_old = self._calculate_slot_bfield(slot_index=index)
+        bfield_old = self.calculate_slot_bfield(slot_index=index)
 
         # Apply the mutation
         self.flips[index] = ~self.flips[index]
 
         # Compute the bfield contribution of this magnet after the mutation
-        bfield_new = self._calculate_slot_bfield(slot_index=index)
+        bfield_new = self.calculate_slot_bfield(slot_index=index)
 
         # Compute the additive delta to the bfield that this full mutation (removal+flip+insertion) would produce
         self._bfield += (bfield_new - bfield_old)
@@ -300,9 +296,7 @@ class MagnetSortGenome:
 
         # Sample index in the range of used slots
         index = self.rng_mutations.randint(low=0, high=self.magnet_slots.count)
-
-        logger.info('Applying random flip mutation to slot [%d] of [%s] genome...',
-                     index, self.magnet_type)
+        logger.info('Applying random flip mutation to slot [%d] of [%s] genome...', index, self.mtype)
 
         # Perform the selected flip mutation
         self.flip_mutation(index=index)
@@ -339,9 +333,9 @@ class MagnetSortGenome:
         # Compute the bfield contribution before the mutation
         bfield_old = []
         if index_a < self.magnet_slots.count:
-            bfield_old += [self._calculate_slot_bfield(slot_index=index_a)]
+            bfield_old += [self.calculate_slot_bfield(slot_index=index_a)]
         if index_b < self.magnet_slots.count:
-            bfield_old += [self._calculate_slot_bfield(slot_index=index_b)]
+            bfield_old += [self.calculate_slot_bfield(slot_index=index_b)]
 
         # Apply the mutation
         self.permutation[[index_a, index_b]] = self.permutation[[index_b, index_a]]
@@ -350,9 +344,9 @@ class MagnetSortGenome:
         # Compute the bfield contribution after the mutation
         bfield_new = []
         if index_a < self.magnet_slots.count:
-            bfield_new += [self._calculate_slot_bfield(slot_index=index_a)]
+            bfield_new += [self.calculate_slot_bfield(slot_index=index_a)]
         if index_b < self.magnet_slots.count:
-            bfield_new += [self._calculate_slot_bfield(slot_index=index_b)]
+            bfield_new += [self.calculate_slot_bfield(slot_index=index_b)]
 
         # Compute the additive delta to the bfield that this full mutation (removal+swap+insertion) would produce
         self._bfield += (sum(bfield_new) - sum(bfield_old))
@@ -382,7 +376,7 @@ class MagnetSortGenome:
             index_b += 1
 
         logger.info('Applying random exchange mutation to slots [%d] and [%d] of [%s] genome...',
-                     index_a, index_b, self.magnet_type)
+                    index_a, index_b, self.mtype)
 
         # Perform the selected exchange mutation
         self.exchange_mutation(index_a=index_a, index_b=index_b)
@@ -424,7 +418,7 @@ class MagnetSortGenome:
 
         if update_bfield:
             # Compute the bfield contribution before the mutation
-            bfield_old = sum(self._calculate_slot_bfield(slot_index=index)
+            bfield_old = sum(self.calculate_slot_bfield(slot_index=index)
                              for index in range(index_a, max_bfield_index))
 
         # Extract the slot data to be moved
@@ -440,7 +434,7 @@ class MagnetSortGenome:
 
         if update_bfield:
             # Compute the bfield contribution after the mutation
-            bfield_new = sum(self._calculate_slot_bfield(slot_index=index)
+            bfield_new = sum(self.calculate_slot_bfield(slot_index=index)
                              for index in range(index_a, max_bfield_index))
 
             # Compute the additive delta to the bfield that this full mutation would produce
@@ -472,7 +466,7 @@ class MagnetSortGenome:
         index_b = self.rng_mutations.randint(low=(index_a + 1), high=self.magnet_set.count)
 
         logger.info('Applying random insertion mutation, moving slot [%d] to slot [%d] of [%s] genome...',
-                     index_b, index_a, self.magnet_type)
+                    index_b, index_a, self.mtype)
 
         # Perform the selected exchange mutation
         self.insertion_mutation(index_a=index_a, index_b=index_b)
@@ -514,23 +508,22 @@ class MagnetSortGenome:
         A randomly initialized MagnetSortGenome for the given MagnetSet instance.
         """
 
-        assert magnet_set.magnet_type == magnet_slots.magnet_type
+        assert magnet_set.mtype == magnet_slots.mtype
 
         # Seed one RNG and use it to seed a second independent RNG
-        max_rand_int  = (np.iinfo(np.int32).max - 1)
         rng_children  = np.random.RandomState(seed=seed)
-        rng_mutations = np.random.RandomState(seed=rng_children.randint(low=0, high=max_rand_int))
+        rng_mutations = np.random.RandomState(seed=rng_children.randint(low=0, high=optid.constants.MAX_RAND_INT))
 
         # Use rng_mutations to sample the initial genome permutation and flip states
         permutation = rng_mutations.permutation(magnet_set.count)
 
-        if magnet_slots.flippable:
+        if magnet_set.flippable:
             flips = rng_mutations.randint(low=0, high=2, size=(magnet_set.count,)).astype(np.bool)
         else:
             flips = np.zeros((magnet_set.count,), dtype=np.bool)
 
         # Construct and return the randomly initialized genome
-        return MagnetSortGenome(magnet_type=str(magnet_set.magnet_type),
+        return MagnetSortGenome(mtype=str(magnet_set.mtype),
                                 permutation=permutation, flips=flips, rng_states=(rng_children, rng_mutations),
                                 magnet_set=magnet_set, magnet_slots=magnet_slots, magnet_lookup=magnet_lookup)
 
@@ -552,17 +545,18 @@ class MagnetSortGenome:
         """
 
         # Seed one RNG and use it to seed a second independent RNG
-        max_rand_int  = (np.iinfo(np.int32).max - 1)
-        rng_children  = np.random.RandomState(seed=magnet_genome.rng_children.randint(low=0, high=max_rand_int))
-        rng_mutations = np.random.RandomState(seed=rng_children.randint(low=0, high=max_rand_int))
+        rng_children  = np.random.RandomState(
+            seed=magnet_genome.rng_children.randint(low=0, high=optid.constants.MAX_RAND_INT))
+        rng_mutations = np.random.RandomState(
+            seed=rng_children.randint(low=0, high=optid.constants.MAX_RAND_INT))
 
         # Construct and return the independent genome
-        return MagnetSortGenome(magnet_type=str(magnet_genome.magnet_type), permutation=magnet_genome.permutation.copy(),
+        return MagnetSortGenome(mtype=str(magnet_genome.mtype), permutation=magnet_genome.permutation.copy(),
                                 flips=magnet_genome.flips.copy(), rng_states=(rng_children, rng_mutations),
                                 magnet_set=magnet_genome.magnet_set, magnet_slots=magnet_genome.magnet_slots,
                                 magnet_lookup=magnet_genome.magnet_lookup)
 
-    def save(self, file : typing.Union[str, typing.BinaryIO]):
+    def save(self, file : optid.types.BinaryFileHandle):
         """
         Saves a MagnetSortGenome instance to a .magsortgenome file.
 
@@ -573,39 +567,16 @@ class MagnetSortGenome:
             a .magsortgenome file.
         """
 
-        def write_file(file_handle : typing.BinaryIO):
-            """
-            Private helper function for writing data to a .magsortgenome file given an already open file handle.
-
-            Parameters
-            ----------
-            file_handle : open writable file handle
-                An open writable file handle to a .magsortgenome file.
-            """
-
-            # Pack members into .magsortgenome file as a single tuple
-            pickle.dump((self.magnet_type, self.permutation, self.flips,
-                         (self.rng_children, self.rng_mutations)), file_handle)
-
-            logger.info('Saved magnet set to .magsortgenome file handle')
-
-        if isinstance(file, (io.RawIOBase, io.BufferedIOBase, typing.BinaryIO)):
-            # Load directly from the already open file handle
-            logger.info('Saving magnet set to .magsortgenome file handle')
-            write_file(file_handle=file)
-
-        elif isinstance(file, str):
-            # Open the .magsortgenome file in a closure to ensure it gets closed on error
-            with open(file, 'wb') as file_handle:
-                logger.info('Saving magnet set to .magsortgenome file [%s]', file)
-                write_file(file_handle=file_handle)
-
-        else:
-            # Assert that the file object provided is an open file handle or can be used to open one
-            raise FileHandleError()
+        logger.info('Saving magnet genome...')
+        optid.utils.io.save(file, dict(
+            mtype=self.mtype,
+            permutation=self.permutation,
+            flips=self.flips,
+            rng_states=(self.rng_children, self.rng_mutations)
+        ))
 
     @staticmethod
-    def from_file(file : typing.Union[str, typing.BinaryIO],
+    def from_file(file : optid.types.BinaryFileHandle,
                   magnet_set : MagnetSet,
                   magnet_slots : MagnetSlots,
                   magnet_lookup : MagnetSortLookup) -> 'MagnetSortGenome':
@@ -632,58 +603,8 @@ class MagnetSortGenome:
         A MagnetSortGenome instance with the desired values loaded from the .magsortgenome file.
         """
 
-        def read_file(file_handle : typing.BinaryIO,
-                      magnet_set : MagnetSet,
-                      magnet_slots : MagnetSlots,
-                      magnet_lookup : MagnetSortLookup) -> 'MagnetSortGenome':
-            """
-            Private helper function for reading data from a .magsortgenome file given an already open file handle.
-
-            Parameters
-            ----------
-            file_handle : open file handle
-                An open file handle to a .magsortgenome file.
-
-            magnet_set : MagnetSet
-            A MagnetSet class instance to use to determine the size of the genome and the magnet type string.
-
-            magnet_slots : MagnetSlots
-                A MagnetSlots class instance to use to determine the whether elements are flippable. Magnet type must be
-                consistent.
-
-            magnet_lookup : MagnetSortLookup
-                The lookup table used for the magnet slots to compute the bfields from.
-
-            Returns
-            -------
-            A MagnetSortGenome instance with the desired values loaded from the .magsortgenome file.
-            """
-
-            # Unpack members from .magsortgenome file as a single tuple
-            (magnet_type, permutation, flips, rng_states) = pickle.load(file_handle)
-
-            # Offload object construction and validation to the MagnetSortGenome constructor
-            magnet_genome = MagnetSortGenome(magnet_type=magnet_type, permutation=permutation, flips=flips,
-                                             rng_states=rng_states, magnet_set=magnet_set,
-                                             magnet_slots=magnet_slots, magnet_lookup=magnet_lookup)
-
-            logger.info('Loaded magnet genome for type [%s] with [%d] magnets', magnet_type, magnet_genome.set_count)
-
-            return magnet_genome
-
-        if isinstance(file, (io.RawIOBase, io.BufferedIOBase, typing.BinaryIO)):
-            # Load directly from the already open file handle
-            logger.info('Loading magnet set from .magsortgenome file handle')
-            return read_file(file_handle=file, magnet_set=magnet_set,
-                             magnet_slots=magnet_slots, magnet_lookup=magnet_lookup)
-
-        elif isinstance(file, str):
-            # Open the .magsortgenome file in a closure to ensure it gets closed on error
-            with open(file, 'rb') as file_handle:
-                logger.info('Loading magnet set from .magsortgenome file [%s]', file)
-                return read_file(file_handle=file_handle, magnet_set=magnet_set,
-                                 magnet_slots=magnet_slots, magnet_lookup=magnet_lookup)
-
-        else:
-            # Assert that the file object provided is an open file handle or can be used to open one
-            raise FileHandleError()
+        logger.info('Loading magnet genome...')
+        return MagnetSortGenome(**optid.utils.io.from_file(file),
+                                magnet_set=magnet_set,
+                                magnet_slots=magnet_slots,
+                                magnet_lookup=magnet_lookup)

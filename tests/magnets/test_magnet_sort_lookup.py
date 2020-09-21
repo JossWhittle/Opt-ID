@@ -48,14 +48,14 @@ class MagnetSortLookupTest(unittest.TestCase):
         """
 
         count = 4
-        magnet_type  = 'HH'
+        mtype  = 'HH'
         x_range = Range(-1, 1, 5)
         z_range = Range(-1, 1, 5)
         s_range = Range(-1, 1, 5)
         lookup = np.empty((count, x_range[2], z_range[2], s_range[2], 3, 3), dtype=np.float32)
         lookup[..., :, :] = np.eye(3, dtype=np.float32)
 
-        return count, magnet_type, x_range, z_range, s_range, lookup
+        return count, mtype, x_range, z_range, s_range, lookup
 
     def test_constructor(self):
         """
@@ -63,10 +63,10 @@ class MagnetSortLookupTest(unittest.TestCase):
         """
 
         # Make dummy parameters
-        count, magnet_type, x_range, z_range, s_range, lookup = self.dummy_magnet_lookup_values()
+        count, mtype, x_range, z_range, s_range, lookup = self.dummy_magnet_lookup_values()
 
         # Construct MagnetSortLookup instance
-        magnet_lookup = MagnetSortLookup(magnet_type=magnet_type, x_range=x_range,
+        magnet_lookup = MagnetSortLookup(mtype=mtype, x_range=x_range,
                                      z_range=z_range, s_range=s_range, lookup=lookup)
 
         # Assert object members have been correctly assigned
@@ -74,24 +74,24 @@ class MagnetSortLookupTest(unittest.TestCase):
         self.assertEqual(magnet_lookup.x_range, x_range)
         self.assertEqual(magnet_lookup.z_range, z_range)
         self.assertEqual(magnet_lookup.s_range, s_range)
-        self.assertEqual(magnet_lookup.magnet_type, magnet_type)
+        self.assertEqual(magnet_lookup.mtype, mtype)
         self.assertTrue(np.allclose(magnet_lookup.lookup, lookup))
 
-    def test_constructor_raises_on_bad_parameters_magnet_type(self):
+    def test_constructor_raises_on_bad_parameters_mtype(self):
         """
         Tests the MagnetSortLookup class throws exceptions when constructed with incorrect parameters.
         """
 
         # Make dummy parameters
-        count, magnet_type, x_range, z_range, s_range, lookup = self.dummy_magnet_lookup_values()
+        count, mtype, x_range, z_range, s_range, lookup = self.dummy_magnet_lookup_values()
 
         fixed_params = dict(x_range=x_range, z_range=z_range, s_range=s_range, lookup=lookup)
 
         self.assertRaises(optid.errors.ValidateStringEmptyError, MagnetSortLookup, **fixed_params,
-                          magnet_type='')
+                          mtype='')
 
         self.assertRaises(optid.errors.ValidateStringTypeError, MagnetSortLookup, **fixed_params,
-                          magnet_type=None)
+                          mtype=None)
 
     def test_constructor_raises_on_bad_parameters_range(self):
         """
@@ -99,19 +99,19 @@ class MagnetSortLookupTest(unittest.TestCase):
         """
 
         # Make dummy parameters
-        count, magnet_type, x_range, z_range, s_range, lookup = self.dummy_magnet_lookup_values()
+        count, mtype, x_range, z_range, s_range, lookup = self.dummy_magnet_lookup_values()
 
         # Assert constructor throws error from bad x_range
         self.assertRaises(optid.errors.ValidateRangeTypeError, MagnetSortLookup,
-                          magnet_type=magnet_type, x_range=None, z_range=z_range, s_range=s_range, lookup=lookup)
+                          mtype=mtype, x_range=None, z_range=z_range, s_range=s_range, lookup=lookup)
 
         # Assert constructor throws error from bad x_range
         self.assertRaises(optid.errors.ValidateRangeTypeError, MagnetSortLookup,
-                          magnet_type=magnet_type, x_range=x_range, z_range=None, s_range=s_range, lookup=lookup)
+                          mtype=mtype, x_range=x_range, z_range=None, s_range=s_range, lookup=lookup)
 
         # Assert constructor throws error from bad x_range
         self.assertRaises(optid.errors.ValidateRangeTypeError, MagnetSortLookup,
-                          magnet_type=magnet_type, x_range=x_range, z_range=z_range, s_range=None, lookup=lookup)
+                          mtype=mtype, x_range=x_range, z_range=z_range, s_range=None, lookup=lookup)
 
     def test_constructor_raises_on_bad_parameters_lookup(self):
         """
@@ -119,9 +119,9 @@ class MagnetSortLookupTest(unittest.TestCase):
         """
 
         # Make dummy parameters
-        count, magnet_type, x_range, z_range, s_range, lookup = self.dummy_magnet_lookup_values()
+        count, mtype, x_range, z_range, s_range, lookup = self.dummy_magnet_lookup_values()
 
-        fixed_params = dict(magnet_type=magnet_type, x_range=x_range, z_range=z_range, s_range=s_range)
+        fixed_params = dict(mtype=mtype, x_range=x_range, z_range=z_range, s_range=s_range)
 
         # Assert constructor throws error from incorrectly shaped lookup
         self.assertRaises(optid.errors.ValidateTensorShapeError, MagnetSortLookup, **fixed_params,
@@ -142,15 +142,15 @@ class MagnetSortLookupTest(unittest.TestCase):
         """
 
         # Make dummy parameters
-        count, magnet_type, x_range, z_range, s_range, lookup = self.dummy_magnet_lookup_values()
+        count, mtype, x_range, z_range, s_range, lookup = self.dummy_magnet_lookup_values()
 
         # Run the round trip file save + load in a temporary directory
         with tempfile.TemporaryDirectory() as tmp_path:
             tmp_file_path = os.path.join(tmp_path, 'example.magsortlookup')
 
             # Construct MagnetSortLookup instance
-            magnet_lookup = MagnetSortLookup(magnet_type=magnet_type, x_range=x_range,
-                                         z_range=z_range, s_range=s_range, lookup=lookup)
+            magnet_lookup = MagnetSortLookup(mtype=mtype, x_range=x_range,
+                                             z_range=z_range, s_range=s_range, lookup=lookup)
 
             # Save the MagnetSlots to the temporary directory
             magnet_lookup.save(file=tmp_file_path)
@@ -166,7 +166,7 @@ class MagnetSortLookupTest(unittest.TestCase):
         self.assertEqual(magnet_lookup.x_range, x_range)
         self.assertEqual(magnet_lookup.z_range, z_range)
         self.assertEqual(magnet_lookup.s_range, s_range)
-        self.assertEqual(magnet_lookup.magnet_type, magnet_type)
+        self.assertEqual(magnet_lookup.mtype, mtype)
         self.assertTrue(np.allclose(magnet_lookup.lookup, lookup))
 
     def test_save_open_file_handle(self):
@@ -176,14 +176,14 @@ class MagnetSortLookupTest(unittest.TestCase):
         """
 
         # Make dummy parameters
-        count, magnet_type, x_range, z_range, s_range, lookup = self.dummy_magnet_lookup_values()
+        count, mtype, x_range, z_range, s_range, lookup = self.dummy_magnet_lookup_values()
 
         # Run the round trip file save + load in a temporary directory
         with tempfile.TemporaryDirectory() as tmp_path:
             tmp_file_path = os.path.join(tmp_path, 'example.magsortlookup')
 
             # Construct MagnetSortLookup instance
-            magnet_lookup = MagnetSortLookup(magnet_type=magnet_type, x_range=x_range,
+            magnet_lookup = MagnetSortLookup(mtype=mtype, x_range=x_range,
                                          z_range=z_range, s_range=s_range, lookup=lookup)
 
             with open(tmp_file_path, 'wb') as tmp_file_handle:
@@ -201,7 +201,7 @@ class MagnetSortLookupTest(unittest.TestCase):
         self.assertEqual(magnet_lookup.x_range, x_range)
         self.assertEqual(magnet_lookup.z_range, z_range)
         self.assertEqual(magnet_lookup.s_range, s_range)
-        self.assertEqual(magnet_lookup.magnet_type, magnet_type)
+        self.assertEqual(magnet_lookup.mtype, mtype)
         self.assertTrue(np.allclose(magnet_lookup.lookup, lookup))
 
     def test_save_raises_on_bad_parameters(self):
@@ -211,11 +211,11 @@ class MagnetSortLookupTest(unittest.TestCase):
         """
 
         # Make dummy parameters
-        count, magnet_type, x_range, z_range, s_range, lookup = self.dummy_magnet_lookup_values()
+        count, mtype, x_range, z_range, s_range, lookup = self.dummy_magnet_lookup_values()
 
         # Construct MagnetSortLookup instance
-        magnet_lookup = MagnetSortLookup(magnet_type=magnet_type, x_range=x_range,
-                                     z_range=z_range, s_range=s_range, lookup=lookup)
+        magnet_lookup = MagnetSortLookup(mtype=mtype, x_range=x_range,
+                                         z_range=z_range, s_range=s_range, lookup=lookup)
 
         # Attempt to save to a bad file parameter
         self.assertRaises(optid.errors.FileHandleError, magnet_lookup.save, file=None)
@@ -234,7 +234,7 @@ class MagnetSortLookupTest(unittest.TestCase):
         inputs_path = os.path.join(data_path, 'inputs')
 
         # Make dummy parameters
-        count, magnet_type, x_range, z_range, s_range, lookup = self.dummy_magnet_lookup_values()
+        count, mtype, x_range, z_range, s_range, lookup = self.dummy_magnet_lookup_values()
 
         # Construct MagnetSortLookup instance
         magnet_lookup = MagnetSortLookup.from_file(file=os.path.join(inputs_path, 'example.magsortlookup'))
@@ -244,7 +244,7 @@ class MagnetSortLookupTest(unittest.TestCase):
         self.assertEqual(magnet_lookup.x_range, x_range)
         self.assertEqual(magnet_lookup.z_range, z_range)
         self.assertEqual(magnet_lookup.s_range, s_range)
-        self.assertEqual(magnet_lookup.magnet_type, magnet_type)
+        self.assertEqual(magnet_lookup.mtype, mtype)
         self.assertTrue(np.allclose(magnet_lookup.lookup, lookup))
 
     def test_static_from_file_open_file_handle(self):
@@ -262,19 +262,19 @@ class MagnetSortLookupTest(unittest.TestCase):
         inputs_path = os.path.join(data_path, 'inputs')
 
         # Make dummy parameters
-        count, magnet_type, x_range, z_range, s_range, lookup = self.dummy_magnet_lookup_values()
+        count, mtype, x_range, z_range, s_range, lookup = self.dummy_magnet_lookup_values()
 
         with open(os.path.join(inputs_path, 'example.magsortlookup'), 'rb') as file_handle:
             # Construct MagnetSortLookup instance
             magnet_lookup = MagnetSortLookup.from_file(file=file_handle)
 
-            # Assert object members have been correctly assigned
-            self.assertEqual(magnet_lookup.count, count)
-            self.assertEqual(magnet_lookup.x_range, x_range)
-            self.assertEqual(magnet_lookup.z_range, z_range)
-            self.assertEqual(magnet_lookup.s_range, s_range)
-            self.assertEqual(magnet_lookup.magnet_type, magnet_type)
-            self.assertTrue(np.allclose(magnet_lookup.lookup, lookup))
+        # Assert object members have been correctly assigned
+        self.assertEqual(magnet_lookup.count, count)
+        self.assertEqual(magnet_lookup.x_range, x_range)
+        self.assertEqual(magnet_lookup.z_range, z_range)
+        self.assertEqual(magnet_lookup.s_range, s_range)
+        self.assertEqual(magnet_lookup.mtype, mtype)
+        self.assertTrue(np.allclose(magnet_lookup.lookup, lookup))
 
     def test_static_from_file_raises_on_bad_parameters(self):
         """

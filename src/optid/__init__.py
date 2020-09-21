@@ -22,7 +22,7 @@ from optid import utils
 
 # From the root of the optid namespace configure the base logger which attaches
 # a NullHandler to discard all logging messages.
-utils.configure_base_logger()
+utils.logging.configure_base_logger()
 
 VERSION = 'v3.0a'
 """

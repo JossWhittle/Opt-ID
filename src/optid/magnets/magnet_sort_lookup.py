@@ -13,16 +13,13 @@
 # language governing permissions and limitations under the License.
 
 
-import io
 import typing
-import nptyping as npt
-import pickle
 
 import optid
 from optid.utils import Range, validate_tensor, validate_string, validate_range
-from optid.errors import FileHandleError
+from optid.utils.logging import get_logger
 
-logger = optid.utils.logging.get_logger('optid.magnets.MagnetSortLookup')
+logger = get_logger('optid.magnets.MagnetSortLookup')
 
 
 class MagnetSortLookup:
@@ -31,7 +28,7 @@ class MagnetSortLookup:
     """
 
     def __init__(self,
-                 magnet_type : str,
+                 mtype : str,
                  x_range : Range, z_range : Range, s_range : Range,
                  lookup : optid.types.TensorSortLookup):
         """
@@ -39,7 +36,7 @@ class MagnetSortLookup:
 
         Parameters
         ----------
-        magnet_type : str
+        mtype : str
             A non-empty string name for this magnet type that should be unique in the context of the full insertion
             device. Names such as 'HH', 'VV', 'HE', 'VE', 'HT' are common.
 
@@ -78,7 +75,7 @@ class MagnetSortLookup:
         """
 
         try:
-            self._magnet_type = validate_string(magnet_type, assert_non_empty=True)
+            self._mtype = validate_string(mtype, assert_non_empty=True)
         except Exception as ex:
             logger.exception('name must be a non-empty string', exc_info=ex)
             raise ex
@@ -114,8 +111,8 @@ class MagnetSortLookup:
             raise ex
 
     @property
-    def magnet_type(self) -> str:
-        return self._magnet_type
+    def mtype(self) -> str:
+        return self._mtype
 
     @property
     def x_range(self) -> Range:
@@ -137,7 +134,7 @@ class MagnetSortLookup:
     def count(self) -> int:
         return self._count
 
-    def save(self, file : typing.Union[str, typing.BinaryIO]):
+    def save(self, file : optid.types.BinaryFileHandle):
         """
         Saves a MagnetSortLookup instance to a .magsortlookup file.
 
@@ -148,38 +145,17 @@ class MagnetSortLookup:
             a .magsortlookup file.
         """
 
-        def write_file(file_handle : typing.BinaryIO):
-            """
-            Private helper function for writing data to a .magsortlookup file given an already open file handle.
-
-            Parameters
-            ----------
-            file_handle : open writable file handle
-                An open writable file handle to a .magsortlookup file.
-            """
-
-            # Pack members into .magsortlookup file as a single tuple
-            pickle.dump((self.magnet_type, self.x_range, self.z_range, self.s_range, self.lookup), file_handle)
-
-            logger.info('Saved magnet lookup to .magsortlookup file handle')
-
-        if isinstance(file, (io.RawIOBase, io.BufferedIOBase, typing.BinaryIO)):
-            # Load directly from the already open file handle
-            logger.info('Saving magnet slots to .magsortlookup file handle')
-            write_file(file_handle=file)
-
-        elif isinstance(file, str):
-            # Open the .magsortlookup file in a closure to ensure it gets closed on error
-            with open(file, 'wb') as file_handle:
-                logger.info('Saving magnet slots to .magsortlookup file [%s]', file)
-                write_file(file_handle=file_handle)
-
-        else:
-            # Assert that the file object provided is an open file handle or can be used to open one
-            raise FileHandleError()
+        logger.info('Saving magnet sort lookup...')
+        optid.utils.io.save(file, dict(
+            mtype=self.mtype,
+            x_range=self.x_range,
+            z_range=self.z_range,
+            s_range=self.s_range,
+            lookup=self.lookup
+        ))
 
     @staticmethod
-    def from_file(file : typing.Union[str, typing.BinaryIO]) -> 'MagnetSortLookup':
+    def from_file(file : optid.types.BinaryFileHandle) -> 'MagnetSortLookup':
         """
         Constructs a MagnetSlots instance from a .magsortlookup file.
 
@@ -193,42 +169,5 @@ class MagnetSortLookup:
         A MagnetSet instance with the desired values loaded from the .magsortlookup file.
         """
 
-        def read_file(file_handle : typing.BinaryIO) -> 'MagnetSortLookup':
-            """
-            Private helper function for reading data from a .magsortlookup file given an already open file handle.
-
-            Parameters
-            ----------
-            file_handle : open file handle
-                An open file handle to a .magsortlookup file.
-
-            Returns
-            -------
-            A MagnetSet instance with the desired values loaded from the .magsortlookup file.
-            """
-
-            # Unpack members from .magsortlookup file as a single tuple
-            (magnet_type, x_range, z_range, s_range, lookup) = pickle.load(file_handle)
-
-            # Offload object construction and validation to the MagnetSlots constructor
-            magnet_lookup = MagnetSortLookup(magnet_type=magnet_type, x_range=x_range,
-                                             z_range=z_range, s_range=s_range, lookup=lookup)
-
-            logger.info('Loaded magnet lookup [%s] with [%d] slots', magnet_type, magnet_lookup.count)
-
-            return magnet_lookup
-
-        if isinstance(file, (io.RawIOBase, io.BufferedIOBase, typing.BinaryIO)):
-            # Load directly from the already open file handle
-            logger.info('Loading magnet set from .magsortlookup file handle')
-            return read_file(file_handle=file)
-
-        elif isinstance(file, str):
-            # Open the .magsortlookup file in a closure to ensure it gets closed on error
-            with open(file, 'rb') as file_handle:
-                logger.info('Loading magnet set from .magsortlookup file [%s]', file)
-                return read_file(file_handle=file_handle)
-
-        else:
-            # Assert that the file object provided is an open file handle or can be used to open one
-            raise FileHandleError()
+        logger.info('Loading magnet sort lookup...')
+        return MagnetSortLookup(**optid.utils.io.from_file(file))

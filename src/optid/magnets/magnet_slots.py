@@ -13,40 +13,33 @@
 # language governing permissions and limitations under the License.
 
 
-import io
 import typing
-import nptyping as npt
-import pickle
-import numpy as np
 
 import optid
 from optid.utils import validate_tensor, validate_string, validate_string_list
-from optid.errors import FileHandleError
+from optid.utils.logging import get_logger
 
-logger = optid.utils.logging.get_logger('optid.magnets.MagnetSlots')
+logger = get_logger('optid.magnets.MagnetSlots')
 
 
 class MagnetSlots:
     """
-    Represents a set of magnet slots. Magnet slots are characterized by beam name, position, 3x3 direction matrix,
-    and flip vector. All magnet slots share a constant magnet size and type name allowing magnets from a MagnetSet
-    class to be placed in arbitrary orders and flips via a MagnetPermutation.
+    Represents a set of magnet slots of a common magnet type across all usages within an insertion device.
     """
 
     def __init__(self,
-                 magnet_type : str,
-                 beams : typing.List[str],
-                 slots : typing.List[str],
+                 mtype : str,
+                 beams : optid.types.ListStrings,
+                 slots : optid.types.ListStrings,
                  positions : optid.types.TensorPoints,
-                 direction_matrices : optid.types.TensorMatrices,
-                 size : optid.types.TensorVector,
-                 flip_matrix : optid.types.TensorMatrix):
+                 shim_vectors : optid.types.TensorVectors,
+                 direction_matrices : optid.types.TensorMatrices):
         """
         Constructs a MagnetSlots instance and validates the values are the correct types and consistent sizes.
 
         Parameters
         ----------
-        magnet_type : str
+        mtype : str
             A non-empty string name for this magnet type that should be unique in the context of the full insertion
             device. Names such as 'HH', 'VV', 'HE', 'VE', 'HT' are common.
 
@@ -61,22 +54,20 @@ class MagnetSlots:
             i.e. "{beam}:{slot}" must be unique.
 
         positions : float tensor (S, 3)
-            A float tensor of 3-dim positions for where to place each magnet slot within the device.
+            A float tensor of S 3-dim positions for where to place each magnet slot within the device. Represents the
+            centre of the AABB for the magnet slot.
+
+        shim_vectors : float tensor (S, 3)
+            A float tensor of S 3-dim unit vectors for the direction each slot should be moved in to represent
+            phase (height) shimming. Usually these will be +Z and -Z axis vectors.
 
         direction_matrices : float tensor (S, 3, 3)
             A float tensor of 3x3 rotation matrices for what direction the magnet is transformed into, both geometry
             and field direction.
-
-        size : float tensor (3,)
-            A float tensor of a single 3-dim size for the reference magnet that is common to all slots.
-
-        flip_matrix : float tensor (3, 3)
-            A float matrix of shape (3, 3) representing the flips that would be applied to a magnet in order to swap
-            the direction of its minor axis vectors while keeping its major (easy) axis vector.
         """
 
         try:
-            self._magnet_type = validate_string(magnet_type, assert_non_empty=True)
+            self._mtype = validate_string(mtype, assert_non_empty=True)
         except Exception as ex:
             logger.exception('name must be a non-empty string', exc_info=ex)
             raise ex
@@ -91,8 +82,8 @@ class MagnetSlots:
             raise ex
 
         try:
-            self._slots = validate_string_list(slots, shape=self.count,
-                                               assert_non_empty_list=True, assert_non_empty_strings=True)
+            self._slots = validate_string_list(slots, shape=self.count, assert_non_empty_list=True,
+                                               assert_non_empty_strings=True)
         except Exception as ex:
             logger.exception('slots must be a non-empty list of non-empty strings', exc_info=ex)
             raise ex
@@ -111,34 +102,27 @@ class MagnetSlots:
             raise ex
 
         try:
+            self._shim_vectors = validate_tensor(shim_vectors, shape=(self.count, 3))
+        except Exception as ex:
+            logger.exception('shim_vectors must be a float tensor of shape (S, 3)', exc_info=ex)
+            raise ex
+
+        try:
             self._direction_matrices = validate_tensor(direction_matrices, shape=(self.count, 3, 3))
         except Exception as ex:
             logger.exception('direction_matrices must be a float tensor of shape (S, 3, 3)', exc_info=ex)
             raise ex
 
-        try:
-            self._size = validate_tensor(size, shape=(3,))
-        except Exception as ex:
-            logger.exception('size must be a float tensor of shape (3,)', exc_info=ex)
-            raise ex
-
-        try:
-            self._flip_matrix = validate_tensor(flip_matrix, shape=(3, 3))
-            self._flippable = not np.allclose(self.flip_matrix, np.eye(3, dtype=np.float32))
-        except Exception as ex:
-            logger.exception('flip_matrix must be a float tensor of shape (3, 3)', exc_info=ex)
-            raise ex
+    @property
+    def mtype(self) -> str:
+        return self._mtype
 
     @property
-    def magnet_type(self) -> str:
-        return self._magnet_type
-
-    @property
-    def beams(self) -> typing.List[str]:
+    def beams(self) -> optid.types.ListStrings:
         return self._beams
 
     @property
-    def slots(self) -> typing.List[str]:
+    def slots(self) -> optid.types.ListStrings:
         return self._slots
 
     @property
@@ -146,26 +130,18 @@ class MagnetSlots:
         return self._positions
 
     @property
+    def shim_vectors(self) -> optid.types.TensorVectors:
+        return self._shim_vectors
+
+    @property
     def direction_matrices(self) -> optid.types.TensorMatrices:
         return self._direction_matrices
-
-    @property
-    def size(self) -> optid.types.TensorVector:
-        return self._size
-
-    @property
-    def flip_matrix(self) -> optid.types.TensorMatrix:
-        return self._flip_matrix
-
-    @property
-    def flippable(self) -> bool:
-        return self._flippable
 
     @property
     def count(self) -> int:
         return self._count
 
-    def save(self, file : typing.Union[str, typing.BinaryIO]):
+    def save(self, file : optid.types.BinaryFileHandle):
         """
         Saves a MagnetSlots instance to a .magslots file.
 
@@ -176,39 +152,18 @@ class MagnetSlots:
             a .magslots file.
         """
 
-        def write_file(file_handle : typing.BinaryIO):
-            """
-            Private helper function for writing data to a .magslots file given an already open file handle.
-
-            Parameters
-            ----------
-            file_handle : open writable file handle
-                An open writable file handle to a .magslots file.
-            """
-
-            # Pack members into .magslots file as a single tuple
-            pickle.dump((self.magnet_type, self.beams, self.slots, self.positions,
-                         self.direction_matrices, self.size, self.flip_matrix), file_handle)
-
-            logger.info('Saved magnet slots to .magslots file handle')
-
-        if isinstance(file, (io.RawIOBase, io.BufferedIOBase, typing.BinaryIO)):
-            # Load directly from the already open file handle
-            logger.info('Saving magnet slots to .magslots file handle')
-            write_file(file_handle=file)
-
-        elif isinstance(file, str):
-            # Open the .magslots file in a closure to ensure it gets closed on error
-            with open(file, 'wb') as file_handle:
-                logger.info('Saving magnet slots to .magslots file [%s]', file)
-                write_file(file_handle=file_handle)
-
-        else:
-            # Assert that the file object provided is an open file handle or can be used to open one
-            raise FileHandleError()
+        logger.info('Saving magnet slots...')
+        optid.utils.io.save(file, dict(
+            mtype=self.mtype,
+            beams=self.beams,
+            slots=self.slots,
+            positions=self.positions,
+            shim_vectors=self.shim_vectors,
+            direction_matrices=self.direction_matrices
+        ))
 
     @staticmethod
-    def from_file(file : typing.Union[str, typing.BinaryIO]) -> 'MagnetSlots':
+    def from_file(file : optid.types.BinaryFileHandle) -> 'MagnetSlots':
         """
         Constructs a MagnetSlots instance from a .magslots file.
 
@@ -222,42 +177,5 @@ class MagnetSlots:
         A MagnetSet instance with the desired values loaded from the .magslots file.
         """
 
-        def read_file(file_handle : typing.BinaryIO) -> 'MagnetSlots':
-            """
-            Private helper function for reading data from a .magslots file given an already open file handle.
-
-            Parameters
-            ----------
-            file_handle : open file handle
-                An open file handle to a .magslots file.
-
-            Returns
-            -------
-            A MagnetSet instance with the desired values loaded from the .magslots file.
-            """
-
-            # Unpack members from .magslots file as a single tuple
-            (magnet_type, beams, slots, positions, direction_matrices, size, flip_matrix) = pickle.load(file_handle)
-
-            # Offload object construction and validation to the MagnetSlots constructor
-            magnet_slots = MagnetSlots(magnet_type=magnet_type, beams=beams, slots=slots, positions=positions,
-                                       direction_matrices=direction_matrices, size=size, flip_matrix=flip_matrix)
-
-            logger.info('Loaded magnet slots [%s] with [%d] slots', magnet_type, magnet_slots.count)
-
-            return magnet_slots
-
-        if isinstance(file, (io.RawIOBase, io.BufferedIOBase, typing.BinaryIO)):
-            # Load directly from the already open file handle
-            logger.info('Loading magnet set from .magslots file handle')
-            return read_file(file_handle=file)
-
-        elif isinstance(file, str):
-            # Open the .magslots file in a closure to ensure it gets closed on error
-            with open(file, 'rb') as file_handle:
-                logger.info('Loading magnet set from .magslots file [%s]', file)
-                return read_file(file_handle=file_handle)
-
-        else:
-            # Assert that the file object provided is an open file handle or can be used to open one
-            raise FileHandleError()
+        logger.info('Loading magnet slots...')
+        return MagnetSlots(**optid.utils.io.from_file(file))

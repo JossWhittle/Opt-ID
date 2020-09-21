@@ -43,26 +43,31 @@ class MagnetSortGenomeMutationTest(unittest.TestCase):
         """
 
         count = 8
-        magnet_type = 'HH'
+        mtype = 'HH'
 
         # MagnetSet
+        reference_size = np.array([10, 10, 2], dtype=np.float32)
+        reference_field_vector = np.array([0, 0, 1], dtype=np.float32)
+        flip_matrix = np.ones((3, 3), dtype=np.float32)
         names = [f'{index + 1:03d}' for index in range(count*2)]
+        sizes = np.ones((count*2, 3)) * reference_size[np.newaxis, ...]
         field_vectors = np.random.uniform(size=(count*2, 3))
 
-        magnet_set = MagnetSet(magnet_type=magnet_type, names=names, field_vectors=field_vectors)
+        magnet_set = MagnetSet(mtype=mtype, reference_size=reference_size,
+                               reference_field_vector=reference_field_vector, flip_matrix=flip_matrix,
+                               names=names, sizes=sizes, field_vectors=field_vectors)
 
         # MagnetSlots
         beams = [f'B{((index % 2) + 1):d}' for index in range(count)]
         slots = [f'S{(((index - (index % 2)) // 2) + 1):03d}' for index in range(count)]
         positions = np.zeros((count, 3), dtype=np.float32)
+        shim_vectors = np.zeros((count, 3), dtype=np.float32)
+        shim_vectors[:, 1] = 1.0
         direction_matrices = np.zeros((count, 3, 3), dtype=np.float32)
         direction_matrices[:, ...] = np.eye(3, dtype=np.float32)[np.newaxis, ...]
-        size = np.ones((3,), dtype=np.float32)
-        flip_matrix = np.ones((3, 3), dtype=np.float32)
-        flippable = True
 
-        magnet_slots = MagnetSlots(magnet_type=magnet_type, beams=beams, slots=slots, positions=positions,
-                                   direction_matrices=direction_matrices, size=size, flip_matrix=flip_matrix)
+        magnet_slots = MagnetSlots(mtype=mtype, beams=beams, slots=slots, positions=positions,
+                                   shim_vectors=shim_vectors, direction_matrices=direction_matrices)
 
         # MagnetSortLookup
         x_range = Range(-1, 1, 5)
@@ -70,25 +75,20 @@ class MagnetSortGenomeMutationTest(unittest.TestCase):
         s_range = Range(-1, 1, 5)
         lookup = np.random.uniform(size=(count, x_range.steps, z_range.steps, s_range.steps, 3, 3))
 
-        magnet_lookup = MagnetSortLookup(magnet_type=magnet_type, x_range=x_range,
+        magnet_lookup = MagnetSortLookup(mtype=mtype, x_range=x_range,
                                          z_range=z_range, s_range=s_range, lookup=lookup)
 
         magnet_genome = MagnetSortGenome.from_random(seed=1234, magnet_set=magnet_set,
                                                      magnet_slots=magnet_slots, magnet_lookup=magnet_lookup)
 
-        return count, magnet_type, names, field_vectors, \
-               beams, slots, flip_matrix, flippable, \
-               x_range, z_range, s_range, lookup, \
-               magnet_set, magnet_slots, magnet_lookup, magnet_genome
+        return count, mtype, x_range, z_range, s_range, magnet_set, magnet_slots, magnet_lookup, magnet_genome
 
     def test_flip(self):
         """
         Tests the MagnetSortGenome class calculate bfield deltas consistently after mutations.
         """
 
-        count, magnet_type, names, field_vectors, \
-            beams, slots, flip_matrix, flippable, \
-            x_range, z_range, s_range, lookup, \
+        count, mtype, x_range, z_range, s_range, \
             magnet_set, magnet_slots, magnet_lookup, magnet_genome = self.dummy_values()
 
         index = 1
@@ -124,9 +124,7 @@ class MagnetSortGenomeMutationTest(unittest.TestCase):
         Tests the MagnetSortGenome class throws exception when flipping a magnet in an unused slot.
         """
 
-        count, magnet_type, names, field_vectors, \
-            beams, slots, flip_matrix, flippable, \
-            x_range, z_range, s_range, lookup, \
+        count, mtype, x_range, z_range, s_range, \
             magnet_set, magnet_slots, magnet_lookup, magnet_genome = self.dummy_values()
 
         self.assertRaisesRegex(Exception, '.*', magnet_genome.flip_mutation, index=(count + 1))
@@ -136,9 +134,7 @@ class MagnetSortGenomeMutationTest(unittest.TestCase):
         Tests the MagnetSortGenome class calculate bfield deltas consistently after mutations.
         """
 
-        count, magnet_type, names, field_vectors, \
-            beams, slots, flip_matrix, flippable, \
-            x_range, z_range, s_range, lookup, \
+        count, mtype, x_range, z_range, s_range, \
             magnet_set, magnet_slots, magnet_lookup, magnet_genome = self.dummy_values()
 
         # Current genome state
@@ -172,9 +168,7 @@ class MagnetSortGenomeMutationTest(unittest.TestCase):
         Tests the MagnetSortGenome class calculate bfield deltas consistently after mutations.
         """
 
-        count, magnet_type, names, field_vectors, \
-            beams, slots, flip_matrix, flippable, \
-            x_range, z_range, s_range, lookup, \
+        count, mtype, x_range, z_range, s_range, \
             magnet_set, magnet_slots, magnet_lookup, magnet_genome = self.dummy_values()
 
         index_a, index_b = 1, 3
@@ -207,9 +201,7 @@ class MagnetSortGenomeMutationTest(unittest.TestCase):
         Tests the MagnetSortGenome class throws exception when exchanging a bad pair of magnet slots.
         """
 
-        count, magnet_type, names, field_vectors, \
-            beams, slots, flip_matrix, flippable, \
-            x_range, z_range, s_range, lookup, \
+        count, mtype, x_range, z_range, s_range, \
             magnet_set, magnet_slots, magnet_lookup, magnet_genome = self.dummy_values()
 
         magnet_genome.exchange_mutation(index_a=1, index_b=2)
@@ -228,9 +220,7 @@ class MagnetSortGenomeMutationTest(unittest.TestCase):
         Tests the MagnetSortGenome class calculate bfield deltas consistently after mutations.
         """
 
-        count, magnet_type, names, field_vectors, \
-            beams, slots, flip_matrix, flippable, \
-            x_range, z_range, s_range, lookup, \
+        count, mtype, x_range, z_range, s_range, \
             magnet_set, magnet_slots, magnet_lookup, magnet_genome = self.dummy_values()
 
         # Current genome state
@@ -261,9 +251,7 @@ class MagnetSortGenomeMutationTest(unittest.TestCase):
         Tests the MagnetSortGenome class calculate bfield deltas consistently after mutations.
         """
 
-        count, magnet_type, names, field_vectors, \
-            beams, slots, flip_matrix, flippable, \
-            x_range, z_range, s_range, lookup, \
+        count, mtype, x_range, z_range, s_range, \
             magnet_set, magnet_slots, magnet_lookup, magnet_genome = self.dummy_values()
 
         index_a, index_b = 0, 1
@@ -321,9 +309,7 @@ class MagnetSortGenomeMutationTest(unittest.TestCase):
         Tests the MagnetSortGenome class throws exception when exchanging a bad pair of magnet slots.
         """
 
-        count, magnet_type, names, field_vectors, \
-            beams, slots, flip_matrix, flippable, \
-            x_range, z_range, s_range, lookup, \
+        count, mtype, x_range, z_range, s_range, \
             magnet_set, magnet_slots, magnet_lookup, magnet_genome = self.dummy_values()
 
         magnet_genome.insertion_mutation(index_a=1, index_b=2)
@@ -343,9 +329,7 @@ class MagnetSortGenomeMutationTest(unittest.TestCase):
         Tests the MagnetSortGenome class calculate bfield deltas consistently after mutations.
         """
 
-        count, magnet_type, names, field_vectors, \
-            beams, slots, flip_matrix, flippable, \
-            x_range, z_range, s_range, lookup, \
+        count, mtype, x_range, z_range, s_range, \
             magnet_set, magnet_slots, magnet_lookup, magnet_genome = self.dummy_values()
 
         # Current genome state
@@ -376,9 +360,7 @@ class MagnetSortGenomeMutationTest(unittest.TestCase):
         Tests the MagnetSortGenome class calculate bfield deltas consistently after mutations.
         """
 
-        count, magnet_type, names, field_vectors, \
-            beams, slots, flip_matrix, flippable, \
-            x_range, z_range, s_range, lookup, \
+        count, mtype, x_range, z_range, s_range, \
             magnet_set, magnet_slots, magnet_lookup, magnet_genome = self.dummy_values()
 
         num_mutations = 16
@@ -410,22 +392,20 @@ class MagnetSortGenomeMutationTest(unittest.TestCase):
         Tests the MagnetSortGenome class calculate bfield deltas consistently after mutations.
         """
 
-        count, magnet_type, names, field_vectors, \
-            beams, slots, flip_matrix, flippable, \
-            x_range, z_range, s_range, lookup, \
-            magnet_set, _, magnet_lookup, _ = self.dummy_values()
+        count, mtype, x_range, z_range, s_range, \
+            _, magnet_slots, magnet_lookup, magnet_genome = self.dummy_values()
 
-        # MagnetSlots
-        beams = [f'B{((index % 2) + 1):d}' for index in range(count)]
-        slots = [f'S{(((index - (index % 2)) // 2) + 1):03d}' for index in range(count)]
-        positions = np.zeros((count, 3), dtype=np.float32)
-        direction_matrices = np.zeros((count, 3, 3), dtype=np.float32)
-        direction_matrices[:, ...] = np.eye(3, dtype=np.float32)[np.newaxis, ...]
-        size = np.ones((3,), dtype=np.float32)
+        # MagnetSet
+        reference_size = np.array([10, 10, 2], dtype=np.float32)
+        reference_field_vector = np.array([0, 0, 1], dtype=np.float32)
         flip_matrix = np.eye(3, dtype=np.float32)
+        names = [f'{index + 1:03d}' for index in range(count * 2)]
+        sizes = np.ones((count * 2, 3)) * reference_size[np.newaxis, ...]
+        field_vectors = np.random.uniform(size=(count * 2, 3))
 
-        magnet_slots = MagnetSlots(magnet_type=magnet_type, beams=beams, slots=slots, positions=positions,
-                                   direction_matrices=direction_matrices, size=size, flip_matrix=flip_matrix)
+        magnet_set = MagnetSet(mtype=mtype, reference_size=reference_size,
+                               reference_field_vector=reference_field_vector, flip_matrix=flip_matrix,
+                               names=names, sizes=sizes, field_vectors=field_vectors)
 
         magnet_genome = MagnetSortGenome.from_random(seed=1234, magnet_set=magnet_set,
                                                      magnet_slots=magnet_slots, magnet_lookup=magnet_lookup)

@@ -28,5 +28,5 @@ from optid.utils.validate_string_list import \
     ValidateStringListElementTypeError, ValidateStringListElementEmptyError, \
     ValidateStringListElementUniquenessError
 
-from optid.errors.file_handle_error import \
+from optid.utils.io import \
     FileHandleError

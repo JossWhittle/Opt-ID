@@ -16,6 +16,9 @@
 import typing
 import nptyping as npt
 
+BinaryFileHandle  = typing.Union[str, typing.BinaryIO]
+
+ListStrings       = typing.List[str]
 
 TensorVector      = npt.NDArray[(3,), npt.Float]
 TensorVectors     = npt.NDArray[(typing.Any, 3), npt.Float]
