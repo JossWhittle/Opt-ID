@@ -17,9 +17,10 @@ import typing
 import nptyping as npt
 import numpy as np
 
+import optid
 from optid.utils.logging import get_logger
 
-logger = get_logger('optid.magnets.MagnetSortLookup')
+logger = get_logger('optid.utils.Range')
 
 
 class Range:
@@ -40,6 +41,7 @@ class Range:
             The number of steps between the two edges of the range. Must be positive and must be equal to 1 if the min
             is the same as the max.
         """
+
         try:
             self._min = float(min)
         except Exception as ex:
@@ -95,7 +97,7 @@ class Range:
                (self.steps == other.steps)
 
     @property
-    def linspace(self) -> npt.NDArray[(typing.Any,), npt.Float]:
+    def linspace(self) -> optid.types.TensorRange:
         return np.linspace(self.min, self.max, self.steps)
 
     def iter(self):
