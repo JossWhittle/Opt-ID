@@ -66,9 +66,15 @@ class Range:
             raise ex
 
         try:
-            assert (self.min <= self.max) or ((self.min == self.max) and (self.steps == 1))
+            assert (self.min < self.max) or ((self.min == self.max) and (self.steps == 1))
         except Exception as ex:
             logger.exception('if range is singular steps must be 1', exc_info=ex)
+            raise ex
+
+        try:
+            assert (self.min == self.max) or ((self.min < self.max) and (self.steps > 1))
+        except Exception as ex:
+            logger.exception('if min is less than max then steps must be greater than 1', exc_info=ex)
             raise ex
 
     @property
@@ -88,9 +94,10 @@ class Range:
                (self.max == other.max) and \
                (self.steps == other.steps)
 
+    @property
     def linspace(self) -> npt.NDArray[(typing.Any,), npt.Float]:
         return np.linspace(self.min, self.max, self.steps)
 
     def iter(self):
-        for step, value in enumerate(self.linspace()):
+        for step, value in enumerate(self.linspace):
             yield step, value
