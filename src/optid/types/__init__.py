@@ -34,3 +34,6 @@ TensorFlips       = npt.NDArray[(typing.Any,), npt.Bool]
 
 TensorBfield      = npt.NDArray[(typing.Any, typing.Any, typing.Any, 3), npt.Float]
 TensorSortLookup  = npt.NDArray[(typing.Any, typing.Any, typing.Any, typing.Any, 3, 3), npt.Float]
+
+TensorRange       = npt.NDArray[(typing.Any,), npt.Float]
+TensorGrid        = npt.NDArray[(typing.Any, typing.Any, typing.Any, 3), npt.Float]

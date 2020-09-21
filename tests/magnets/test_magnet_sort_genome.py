@@ -24,7 +24,7 @@ import numpy as np
 # Test imports
 import optid
 from optid.magnets import MagnetSortGenome, MagnetSet, MagnetSlots, MagnetSortLookup
-from optid.utils import Range
+from optid.utils import Range, Grid
 
 # Configure debug logging
 from optid.utils.logging import attach_console_logger
@@ -80,13 +80,12 @@ class MagnetSortGenomeTest(unittest.TestCase):
                                    shim_vectors=shim_vectors, direction_matrices=direction_matrices)
 
         # MagnetSortLookup
-        x_range = Range(-1, 1, 5)
-        z_range = Range(-1, 1, 5)
-        s_range = Range(-1, 1, 5)
-        lookup = np.random.uniform(size=(count, x_range.steps, z_range.steps, s_range.steps, 3, 3))
+        grid = Grid(x_range=Range(min=-1, max=1, steps=5),
+                    z_range=Range(min=-1, max=1, steps=5),
+                    s_range=Range(min=-1, max=1, steps=5))
+        lookup = np.random.uniform(size=(count, *grid.steps, 3, 3))
 
-        magnet_lookup = MagnetSortLookup(mtype=mtype, x_range=x_range,
-                                         z_range=z_range, s_range=s_range, lookup=lookup)
+        magnet_lookup = MagnetSortLookup(mtype=mtype, grid=grid, lookup=lookup)
 
         permutation = np.arange(count).astype(np.int32)
         flips = (np.arange(count) % 2).astype(np.bool)
