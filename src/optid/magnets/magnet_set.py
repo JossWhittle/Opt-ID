@@ -13,6 +13,7 @@
 # language governing permissions and limitations under the License.
 
 
+import io
 import typing
 import numpy as np
 
@@ -190,3 +191,92 @@ class MagnetSet:
 
         logger.info('Loading magnet set...')
         return MagnetSet(**optid.utils.io.from_file(file))
+
+    @staticmethod
+    def from_sim_file(mtype : str,
+                      reference_size : optid.types.TensorVector,
+                      reference_field_vector : optid.types.TensorVector,
+                      flip_matrix : optid.types.TensorMatrix,
+                      file : optid.types.ASCIIFileHandle) -> 'MagnetSet':
+        """
+        Constructs a MagnetSet instance using per magnet names and field vectors from a .sim file provided by
+        the magnet manufacturer.
+        Parameters
+        ----------
+        mtype : str
+            A non-empty string name for this magnet type that should be unique in the context of the full insertion
+            device. Names such as 'HH', 'VV', 'HE', 'VE', 'HT' are common.
+
+        reference_size : float tensor (3,)
+            A float tensor of a single 3-dim size for the AABB surrounding the reference magnet geometry.
+
+        reference_field_vector : float tensor (3,)
+            A float tensor of a single 3-dim field vector for the magnetization of the reference magnet.
+
+        flip_matrix : float tensor (3, 3)
+            A float matrix of shape (3, 3) representing the flips that would be applied to a magnet in order to swap
+            the direction of its minor axis vectors while keeping its major (easy) axis vector.
+
+        file : str or open file handle
+            A path to a .sim file or an open file handle to a .sim file containing per magnet names and field
+            vectors as provided by the magnet manufacturer.
+        Returns
+        -------
+        A MagnetSet instance with the desired values loaded from the .sim file.
+        """
+
+        def read_file(mtype : str,
+                      reference_size : optid.types.TensorVector,
+                      reference_field_vector : optid.types.TensorVector,
+                      flip_matrix : optid.types.TensorMatrix,
+                      file_handle : typing.TextIO) -> 'MagnetSet':
+
+            try:
+                # Load the data into python lists
+                names = []
+                sizes = []
+                field_vectors = []
+
+                for line_index, line in enumerate(file_handle):
+                    # Skip this line if it is blank
+                    line = line.strip()
+                    if len(line) == 0:
+                        continue
+
+                    logger.debug('Line [%d] : [%s]', line_index, line)
+
+                    # Unpack and parse values for the current magnet
+                    name, field_x, field_z, field_s = line.split()
+                    names += [name]
+                    sizes += [reference_size]
+                    field_vectors += [(float(field_x), float(field_z), float(field_s))]
+
+                sizes = np.stack(sizes, axis=0)
+                field_vectors = np.array(field_vectors, dtype=np.float32)
+
+            except Exception as ex:
+                logger.exception('Failed to load magnet set from .sim file', exc_info=ex)
+                raise ex
+
+            return MagnetSet(mtype=mtype, reference_size=reference_size,
+                             reference_field_vector=reference_field_vector, flip_matrix=flip_matrix,
+                             names=names, sizes=sizes, field_vectors=field_vectors)
+
+        if isinstance(file, io.TextIOWrapper):
+            # Load directly from the already open file handle
+            logger.info('Loading magnet set [%s] from open .sim file handle', mtype)
+            return read_file(mtype=mtype, reference_size=reference_size,
+                             reference_field_vector=reference_field_vector,
+                             flip_matrix=flip_matrix, file_handle=file)
+
+        elif isinstance(file, str):
+            # Open the .sim file in a closure to ensure it gets closed on error
+            with open(file, 'r') as file_handle:
+                logger.info('Loading magnet set [%s] from .sim file [%s]', mtype, file)
+                return read_file(mtype=mtype, reference_size=reference_size,
+                                 reference_field_vector=reference_field_vector,
+                                 flip_matrix=flip_matrix, file_handle=file_handle)
+
+        else:
+            # Assert that the file object provided is an open file handle or can be used to open one
+            raise optid.utils.io.FileHandleError()

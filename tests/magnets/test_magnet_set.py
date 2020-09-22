@@ -407,3 +407,123 @@ class MagnetSetTest(unittest.TestCase):
 
         # Attempt to load from to a bad file parameter
         self.assertRaisesRegex(optid.errors.FileHandleError, '.*', MagnetSet.from_file, file=None)
+
+    def test_static_from_sim_file(self):
+        """
+        Tests the MagnetSet class can be constructed from a .sim file using the static factory function.
+        """
+
+        # Construct absolute path to the data for this test function
+        data_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data',
+                                 os.path.splitext(os.path.basename(__file__))[0],
+                                 inspect.stack()[0][3])
+
+        # Inputs sub directory to load this tests input data from
+        inputs_path = os.path.join(data_path, 'inputs')
+
+        # Make dummy parameters
+        count, mtype, reference_size, reference_field_vector, flip_matrix, \
+            names, sizes, field_vectors = self.dummy_magnet_set_values()
+
+        # Construct MagnetSet instance
+        magnet_set = MagnetSet.from_sim_file(mtype=mtype, reference_size=reference_size,
+                                             reference_field_vector=reference_field_vector, flip_matrix=flip_matrix,
+                                             file=os.path.join(inputs_path, 'example.sim'))
+
+        # Assert object members have been correctly assigned
+        self.assertEqual(magnet_set.count, count)
+        self.assertEqual(magnet_set.mtype, mtype)
+        self.assertTrue(np.allclose(magnet_set.reference_size, reference_size))
+        self.assertTrue(np.allclose(magnet_set.reference_field_vector, reference_field_vector))
+        self.assertTrue(np.allclose(magnet_set.flip_matrix, flip_matrix))
+        self.assertEqual(magnet_set.names, names)
+        self.assertTrue(np.allclose(magnet_set.sizes, sizes))
+        self.assertTrue(np.allclose(magnet_set.field_vectors, field_vectors))
+
+    def test_static_from_sim_file_open_file_handle(self):
+        """
+        Tests the MagnetSet class can be constructed from an open handle to a .sim file using the static
+        factory function.
+        """
+
+        # Construct absolute path to the data for this test function
+        data_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data',
+                                 os.path.splitext(os.path.basename(__file__))[0],
+                                 inspect.stack()[0][3])
+
+        # Inputs sub directory to load this tests input data from
+        inputs_path = os.path.join(data_path, 'inputs')
+
+        # Make dummy parameters
+        count, mtype, reference_size, reference_field_vector, flip_matrix, \
+            names, sizes, field_vectors = self.dummy_magnet_set_values()
+
+        with open(os.path.join(inputs_path, 'example.sim'), 'r') as file_handle:
+            # Construct MagnetSet instance
+            magnet_set = MagnetSet.from_sim_file(mtype=mtype, reference_size=reference_size,
+                                                 reference_field_vector=reference_field_vector,
+                                                 flip_matrix=flip_matrix, file=file_handle)
+
+        # Assert object members have been correctly assigned
+        self.assertEqual(magnet_set.count, count)
+        self.assertEqual(magnet_set.mtype, mtype)
+        self.assertTrue(np.allclose(magnet_set.reference_size, reference_size))
+        self.assertTrue(np.allclose(magnet_set.reference_field_vector, reference_field_vector))
+        self.assertTrue(np.allclose(magnet_set.flip_matrix, flip_matrix))
+        self.assertEqual(magnet_set.names, names)
+        self.assertTrue(np.allclose(magnet_set.sizes, sizes))
+        self.assertTrue(np.allclose(magnet_set.field_vectors, field_vectors))
+
+    def test_static_from_sim_file_raises_on_bad_parameters(self):
+        """
+        Tests the MagnetSet class raises an error when the file parameter is neither
+        as string file path or an open file handle.
+        """
+
+        # Make dummy parameters
+        count, mtype, reference_size, reference_field_vector, flip_matrix, \
+            names, sizes, field_vectors = self.dummy_magnet_set_values()
+
+        # Assert from_sim_file throws error when file is not a string file path or an open file handle
+        self.assertRaisesRegex(optid.errors.FileHandleError, '.*', MagnetSet.from_sim_file,
+                               mtype=mtype, reference_size=reference_size,
+                               reference_field_vector=reference_field_vector,
+                               flip_matrix=flip_matrix, file=None)
+
+    def test_static_from_sim_file_raises_on_bad_sim_file(self):
+        """
+        Tests the MagnetSet class raises an error when constructed with incorrect data from a .sim file.
+        """
+
+        # Construct absolute path to the data for this test function
+        data_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data',
+                                 os.path.splitext(os.path.basename(__file__))[0],
+                                 inspect.stack()[0][3])
+
+        # Inputs sub directory to load this tests input data from
+        inputs_path = os.path.join(data_path, 'inputs')
+
+        # Make dummy parameters
+        count, mtype, reference_size, reference_field_vector, flip_matrix, \
+            names, sizes, field_vectors = self.dummy_magnet_set_values()
+
+        self.assertRaisesRegex(Exception, '.*', MagnetSet.from_sim_file,
+                               mtype=mtype, reference_size=reference_size,
+                               reference_field_vector=reference_field_vector, flip_matrix=flip_matrix,
+                               file=os.path.join(inputs_path, 'example_missing_name.sim'))
+
+        self.assertRaisesRegex(Exception, '.*', MagnetSet.from_sim_file,
+                               mtype=mtype, reference_size=reference_size,
+                               reference_field_vector=reference_field_vector, flip_matrix=flip_matrix,
+                               file=os.path.join(inputs_path, 'example_missing_field_vector.sim'))
+
+        self.assertRaisesRegex(Exception, '.*', MagnetSet.from_sim_file,
+                               mtype=mtype, reference_size=reference_size,
+                               reference_field_vector=reference_field_vector, flip_matrix=flip_matrix,
+                               file=os.path.join(inputs_path, 'example_invalid_field_vector.sim'))
+
+        self.assertRaisesRegex(Exception, '.*', MagnetSet.from_sim_file,
+                               mtype=mtype, reference_size=reference_size,
+                               reference_field_vector=reference_field_vector, flip_matrix=flip_matrix,
+                               file=os.path.join(inputs_path, 'example_duplicate_name.sim'))
+
