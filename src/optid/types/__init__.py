@@ -17,6 +17,7 @@ import typing
 import nptyping as npt
 
 BinaryFileHandle  = typing.Union[str, typing.BinaryIO]
+ASCIIFileHandle   = typing.Union[str, typing.TextIO]
 
 ListStrings       = typing.List[str]
 
