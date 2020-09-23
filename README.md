@@ -62,7 +62,7 @@ Opt-ID provides an extensible framework for modelling and simulating (figures 1 
 
 An ID will consist of repeating patterns of different types of magnets, such as horizontally or vertically aligned magnets, or magnet types with different physical dimensions (orange and purple “end” magnets in figure 3). These patterns of different magnet types will be constant and fixed, but any candidate magnet of a matching type can be potentially placed in any slot for magnets of that type, often in either a flipped or un-flipped orientation. 
 
-This means that a hypothetical ID with two types of magnets (horizontal and vertical), 100 candidate magnets of each type, 50 magnet slots for each type of magnet in the ID, where slots can accept each magnet in either a flipped or unflipped state, there are (100 choose 50)2+2511058possible magnet arrangements that could be constructed. 
+This means that a hypothetical ID with two types of magnets (horizontal and vertical), 100 candidate magnets of each type, 50 magnet slots for each type of magnet in the ID, where slots can accept each magnet in either a flipped or unflipped state, there are `(100 choose 50)^2 + 2^51 = 10^58` possible magnet arrangements that could be constructed. 
 
 It is intractable to simulate every possible magnet arrangement to find an optimal one, even for relatively small devices like the one described above. In practice, real IDs are often much larger than the one described above and contain more than two types of magnet. 
 
