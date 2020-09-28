@@ -207,7 +207,8 @@ class MagnetSet:
                       reference_size : optid.types.TensorVector,
                       reference_field_vector : optid.types.TensorVector,
                       flip_matrix : optid.types.TensorMatrix,
-                      file : optid.types.ASCIIFileHandle) -> 'MagnetSet':
+                      file : optid.types.ASCIIFileHandle,
+                      rescale_reference_field_vector : bool = False) -> 'MagnetSet':
         """
         Constructs a MagnetSet instance using per magnet names and field vectors from a .sim file provided by
         the magnet manufacturer.
@@ -230,6 +231,11 @@ class MagnetSet:
         file : str or open file handle
             A path to a .sim file or an open file handle to a .sim file containing per magnet names and field
             vectors as provided by the magnet manufacturer.
+
+        rescale_reference_field_vector : bool
+            If true then normalize the magnitude of the reference field vector by the average magnitude of the
+            per magnet field vectors.
+
         Returns
         -------
         A MagnetSet instance with the desired values loaded from the .sim file.
@@ -239,7 +245,8 @@ class MagnetSet:
                       reference_size : optid.types.TensorVector,
                       reference_field_vector : optid.types.TensorVector,
                       flip_matrix : optid.types.TensorMatrix,
-                      file_handle : typing.TextIO) -> 'MagnetSet':
+                      file_handle : typing.TextIO,
+                      rescale_reference_field_vector : bool) -> 'MagnetSet':
 
             try:
                 # Load the data into python lists
@@ -270,14 +277,16 @@ class MagnetSet:
 
             return MagnetSet(mtype=mtype, reference_size=reference_size,
                              reference_field_vector=reference_field_vector, flip_matrix=flip_matrix,
-                             names=names, sizes=sizes, field_vectors=field_vectors)
+                             names=names, sizes=sizes, field_vectors=field_vectors,
+                             rescale_reference_field_vector=rescale_reference_field_vector)
 
         if isinstance(file, io.TextIOWrapper):
             # Load directly from the already open file handle
             logger.info('Loading magnet set [%s] from open .sim file handle', mtype)
             return read_file(mtype=mtype, reference_size=reference_size,
                              reference_field_vector=reference_field_vector,
-                             flip_matrix=flip_matrix, file_handle=file)
+                             flip_matrix=flip_matrix, file_handle=file,
+                             rescale_reference_field_vector=rescale_reference_field_vector)
 
         elif isinstance(file, str):
             # Open the .sim file in a closure to ensure it gets closed on error
@@ -285,7 +294,8 @@ class MagnetSet:
                 logger.info('Loading magnet set [%s] from .sim file [%s]', mtype, file)
                 return read_file(mtype=mtype, reference_size=reference_size,
                                  reference_field_vector=reference_field_vector,
-                                 flip_matrix=flip_matrix, file_handle=file_handle)
+                                 flip_matrix=flip_matrix, file_handle=file_handle,
+                                 rescale_reference_field_vector=rescale_reference_field_vector)
 
         else:
             # Assert that the file object provided is an open file handle or can be used to open one
