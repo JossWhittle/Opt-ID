@@ -89,6 +89,33 @@ class MagnetSetTest(unittest.TestCase):
         self.assertTrue(np.allclose(magnet_set.sizes, sizes))
         self.assertTrue(np.allclose(magnet_set.field_vectors, field_vectors))
 
+    def test_constructor_rescale(self):
+        """
+        Tests the MagnetSet class can be constructed with correct parameters.
+        """
+
+        # Make dummy parameters
+        count, mtype, reference_size, reference_field_vector, flip_matrix, \
+            names, sizes, field_vectors = self.dummy_magnet_set_values()
+
+        # Construct MagnetSet instance
+        magnet_set = MagnetSet(mtype=mtype, reference_size=reference_size,
+                               reference_field_vector=reference_field_vector,
+                               flip_matrix=flip_matrix, names=names, sizes=sizes,
+                               field_vectors=field_vectors,
+                               rescale_reference_field_vector=True)
+
+        # Assert object members have been correctly assigned
+        self.assertEqual(magnet_set.count, count)
+        self.assertEqual(magnet_set.mtype, mtype)
+        self.assertTrue(np.allclose(magnet_set.reference_size, reference_size))
+        self.assertTrue(np.linalg.norm(magnet_set.reference_field_vector, axis=-1) >
+                        np.linalg.norm(reference_field_vector, axis=-1))
+        self.assertTrue(np.allclose(magnet_set.flip_matrix, flip_matrix))
+        self.assertEqual(magnet_set.names, names)
+        self.assertTrue(np.allclose(magnet_set.sizes, sizes))
+        self.assertTrue(np.allclose(magnet_set.field_vectors, field_vectors))
+
     def test_constructor_raises_on_bad_parameters_mtype(self):
         """
         Tests the MagnetSet class throws exceptions when constructed with incorrect parameters.
