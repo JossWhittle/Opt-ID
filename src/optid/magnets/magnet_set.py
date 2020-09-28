@@ -36,7 +36,8 @@ class MagnetSet:
                  flip_matrix : optid.types.TensorMatrix,
                  names : optid.types.ListStrings,
                  sizes : optid.types.TensorVectors,
-                 field_vectors : optid.types.TensorVectors):
+                 field_vectors : optid.types.TensorVectors,
+                 rescale_reference_field_vector : bool = False):
         """
         Constructs a MagnetSet instance and validates the values are the correct types and consistent sizes.
 
@@ -67,6 +68,10 @@ class MagnetSet:
         field_vectors : float tensor (M, 3)
             A tensor of M 3-dim float vectors of shape (M, 3) representing the average magnetic field strength
             measurements for each magnet in this set.
+
+        rescale_reference_field_vector : bool
+            If true then normalize the magnitude of the reference field vector by the average magnitude of the
+            per magnet field vectors.
         """
 
         try:
@@ -115,6 +120,11 @@ class MagnetSet:
         except Exception as ex:
             logger.exception('field_vectors must be a float tensor of shape (M, 3)', exc_info=ex)
             raise ex
+
+        if rescale_reference_field_vector:
+            reference_norm = np.linalg.norm(self.reference_field_vector, axis=-1)
+            average_norm = np.mean(np.linalg.norm(self.field_vectors, axis=-1))
+            self._reference_field_vector = (self.reference_field_vector / reference_norm) * average_norm
 
     @property
     def mtype(self) -> str:
