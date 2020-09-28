@@ -250,9 +250,7 @@ class MagnetSet:
 
             try:
                 # Load the data into python lists
-                names = []
-                sizes = []
-                field_vectors = []
+                names, sizes, field_vectors = [], [], []
 
                 for line_index, line in enumerate(file_handle):
                     # Skip this line if it is blank
