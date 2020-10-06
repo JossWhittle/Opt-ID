@@ -67,7 +67,7 @@ class MagnetSortLookup:
         try:
             self._mtype = validate_string(mtype, assert_non_empty=True)
         except Exception as ex:
-            logger.exception('name must be a non-empty string', exc_info=ex)
+            logger.exception('mtype must be a non-empty string', exc_info=ex)
             raise ex
 
         try:

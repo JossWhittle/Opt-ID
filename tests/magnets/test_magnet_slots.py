@@ -112,19 +112,15 @@ class MagnetSlotsTest(unittest.TestCase):
         fixed_params = dict(mtype=mtype, slots=slots, positions=positions,
                             shim_vectors=shim_vectors, direction_matrices=direction_matrices)
 
-        # Assert constructor throws error from wrong typed list of name strings for magnet beams
         self.assertRaisesRegex(optid.errors.ValidateStringListTypeError, '.*', MagnetSlots, **fixed_params,
                                beams=None)
 
-        # Assert constructor throws error from empty list of name strings for magnet beams
         self.assertRaisesRegex(optid.errors.ValidateStringListEmptyError, '.*', MagnetSlots, **fixed_params,
                                beams=[])
 
-        # Assert constructor throws error from empty name string in magnet beams
         self.assertRaisesRegex(optid.errors.ValidateStringListElementEmptyError, '.*', MagnetSlots, **fixed_params,
                                beams=['' if (index == 1) else beam for index, beam in enumerate(beams)])
 
-        # Assert constructor throws error from wrong typed string in magnet beams
         self.assertRaisesRegex(optid.errors.ValidateStringListElementTypeError, '.*', MagnetSlots, **fixed_params,
                                beams=[None if (index == 1) else beam for index, beam in enumerate(beams)])
 

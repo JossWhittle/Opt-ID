@@ -20,17 +20,18 @@ import optid
 
 
 MagnetTypeSpec = typing.NamedTuple('MagnetTypeSpec', [
-    ('name', str),
-    ('s_size', float),
+    ('mtype', str),
+    ('size', optid.types.TensorVector),
+    ('offset', optid.types.TensorPoint),
     ('field_vector', optid.types.TensorVector),
-    ('flip_matrix', optid.types.TensorMatrix)
+    ('flip_matrix', optid.types.TensorMatrix),
 ])
 
 MagnetSlotSpec = typing.NamedTuple('MagnetSlotSpec', [
-    ('beam', str), ('slot', str), ('magnet_type', str),
-    ('x_size',   float), ('z_size',   float), ('s_size',   float),
-    ('x_offset', float), ('z_offset', float), ('s_offset', float),
+    ('beam', str), ('slot', str), ('mtype', str),
+    ('size', optid.types.TensorVector),
+    ('position', optid.types.TensorPoint),
     ('field_vector', optid.types.TensorVector),
     ('direction_matrix', optid.types.TensorMatrix),
-    ('flip_matrix', optid.types.TensorMatrix)
+    ('flip_matrix', optid.types.TensorMatrix),
 ])
