@@ -15,9 +15,12 @@
 
 import typing
 import itertools
+import numpy as np
 
 import optid
-from optid.devices import BeamSpec, MagnetTypeSpec
+from optid.devices import BeamSpec
+from optid.magnets import MagnetSet, MagnetSlots
+from optid.utils import validate_string
 
 
 logger = optid.utils.logging.get_logger('optid.devices.DeviceSpec')
@@ -28,14 +31,39 @@ class DeviceSpec:
     Represents an insertion device composed of multiple magnet types in fixed arrangements.
     """
 
-    def __init__(self, name : str, x_size : float, z_size : float):
+    def __init__(self, name : str,
+                 beams : typing.Dict[str, BeamSpec],
+                 magnet_set : typing.Dict[str, MagnetSet]):
 
-        self._name : str = name
-        self._beams : typing.Dict[str, BeamSpec] = dict()
-        self._magnet_types : typing.Dict[str, MagnetTypeSpec] = dict()
+        try:
+            self._name = validate_string(name, assert_non_empty=True)
+        except Exception as ex:
+            logger.exception('name must be a non-empty string', exc_info=ex)
+            raise ex
 
-        self._x_size : float = x_size
-        self._z_size : float = z_size
+        try:
+            self._beams : typing.Dict[str, BeamSpec] = beams
+
+            for beam_name, beam in self.beams.items():
+                validate_string(beam_name, assert_non_empty=True)
+                assert beam_name == beam.name
+                assert isinstance(beam, BeamSpec)
+
+        except Exception as ex:
+            logger.exception('beams must be BeamSpecs with non empty and consistent names', exc_info=ex)
+            raise ex
+
+        try:
+            self._magnet_set : typing.Dict[str, MagnetSet] = magnet_set
+
+            for mtype, mset in self.magnet_set.items():
+                validate_string(mtype, assert_non_empty=True)
+                assert mtype == mset.mtype
+                assert isinstance(mset, MagnetSet)
+
+        except Exception as ex:
+            logger.exception('magnet sets must be MagnetSet with non empty and consistent mtype', exc_info=ex)
+            raise ex
 
     @property
     def name(self) -> str:
@@ -46,70 +74,44 @@ class DeviceSpec:
         return self._beams
 
     @property
-    def x_size(self) -> float:
-        return self._x_size
+    def magnet_set(self) -> typing.Dict[str, MagnetSet]:
+        return self._magnet_set
 
-    @property
-    def z_size(self) -> float:
-        return self._z_size
+    def calculate_slots(self, *args, **kargs):
+        raise NotImplementedError()
 
-    @property
-    def magnet_types(self) -> typing.Dict[str, MagnetTypeSpec]:
-        return self._magnet_types
+    def magnet_slots(self, *args, **kargs):
+        slots = list(itertools.chain.from_iterable(self.calculate_slots(*args, **kargs)))
 
-    @property
-    def length(self) -> float:
-        return max(self.beam_lengths.values())
+        for mtype in self.magnet_set.keys():
+            for slot in slots:
+                if slot.mtype != mtype:
+                    continue
 
-    @property
-    def beam_lengths(self) -> typing.Dict[str, float]:
-        return { beam.name: beam.calculate_length(magnet_types=self.magnet_types)
-                 for beam in self.beams.values() }
 
-    @property
-    def count(self) -> int:
-        return sum(self.beam_counts)
+class TwoBeamDeviceSpec(DeviceSpec):
+    """
+    Represents an insertion device composed of multiple magnet types in fixed arrangements.
+    """
 
-    @property
-    def beam_counts(self) -> typing.Dict[str, int]:
-        return { beam.name : beam.count for beam in self.beams.values() }
+    def calculate_slots(self, z_gap : typing.Union[typing.Tuple[float, float], float]):
+        assert 'TOP' in self.beams.keys()
+        assert 'BTM' in self.beams.keys()
 
-    @property
-    def slots(self):
-        return itertools.chain.from_iterable(self.beam_slots.values())
+        if isinstance(z_gap, tuple):
+            z_gap_top, z_gap_btm = z_gap
+        elif isinstance(z_gap, float):
+            z_gap_top, z_gap_btm = +(z_gap / 2.0), +(z_gap / 2.0)
+        else:
+            raise AssertionError('z_gap must be a float or tuple of two floats')
 
-    @property
-    def beam_slots(self):
-        return { beam.name : beam.calculate_slots(x_size=self.x_size, z_size=self.z_size,
-                                                  magnet_types=self.magnet_types)
-                 for beam in self.beams.values() }
+        assert z_gap_top >= 0
+        assert z_gap_btm >= 0
 
-    def register_beam(self, name : str, x_offset : float, z_offset : float):
+        offset_top = np.array([0, +z_gap_top, 0], dtype=np.float32)
+        offset_btm = np.array([0, -z_gap_btm, 0], dtype=np.float32)
 
-        assert isinstance(name, str)
-        assert name not in self.beams.keys()
-        self.beams[name] = BeamSpec(name=name, x_offset=x_offset, z_offset=z_offset)
-
-    def register_magnet_type(self, name : str, s_size : float,
-                             field_vector : optid.types.TensorVector,
-                             flip_matrix : optid.types.TensorMatrix):
-
-        assert isinstance(name, str)
-        assert name not in self.magnet_types.keys()
-        self.magnet_types[name] = MagnetTypeSpec(name=name, s_size=s_size, field_vector=field_vector,
-                                                 flip_matrix=flip_matrix)
-
-    def push_magnet(self, beam : str, magnet_type : str, direction_matrix : optid.types.TensorMatrix,
-                    spacing : float = 0.0):
-
-        assert isinstance(beam, str)
-        assert beam in self.beams.keys()
-        assert isinstance(magnet_type, str)
-        assert magnet_type in self.magnet_types.keys()
-        self.beams[beam].push_magnet(magnet_type=magnet_type, direction_matrix=direction_matrix, spacing=spacing)
-
-    def pop_magnet(self, beam : str):
-
-        assert isinstance(beam, str)
-        assert beam in self.beams.keys()
-        self.beams[beam].pop_magnet()
+        return [
+            self.beams['TOP'].calculate_slots(offset=offset_top),
+            self.beams['BTM'].calculate_slots(offset=offset_btm),
+        ]
