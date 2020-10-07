@@ -35,7 +35,7 @@ class Device:
         try:
             self._name = validate_string(name, assert_non_empty=True)
         except Exception as ex:
-            logger.exception('name must be a non-empty string', exc_info=ex)
+            logger.exception('mtype must be a non-empty string', exc_info=ex)
             raise ex
 
         try:

@@ -13,18 +13,9 @@
 # language governing permissions and limitations under the License.
 
 
-from optid import constants
-from optid import types
-from optid import magnets
-from optid import devices
-from optid import errors
-from optid import utils
+from optid.devices.magnet_spec import MagnetSlotSpec, MagnetTypeSpec
+from optid.devices.beam_spec import BeamSpec
+from optid.devices.device_spec import DeviceSpec, TwoBeamDeviceSpec
 
-# From the root of the optid namespace configure the base logger which attaches
-# a NullHandler to discard all logging messages.
-utils.logging.configure_base_logger()
-
-VERSION = 'v3.0a'
-"""
-str : Opt-ID version string.
-"""
+from optid.devices.ppm_antisymmetric import PPMAntisymmetricDeviceSpec
+# from optid.devices.hybrid_symmetric import hybrid_symmetric
