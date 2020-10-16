@@ -61,13 +61,13 @@ class MagnetSortGenomeMutationTest(unittest.TestCase):
         beams = [f'B{((index % 2) + 1):d}' for index in range(count)]
         slots = [f'S{(((index - (index % 2)) // 2) + 1):03d}' for index in range(count)]
         positions = np.zeros((count, 3), dtype=np.float32)
-        shim_vectors = np.zeros((count, 3), dtype=np.float32)
-        shim_vectors[:, 1] = 1.0
+        gap_vectors = np.zeros((count, 3), dtype=np.float32)
+        gap_vectors[:, 1] = 1.0
         direction_matrices = np.zeros((count, 3, 3), dtype=np.float32)
         direction_matrices[:, ...] = np.eye(3, dtype=np.float32)[np.newaxis, ...]
 
         magnet_slots = MagnetSlots(mtype=mtype, beams=beams, slots=slots, positions=positions,
-                                   shim_vectors=shim_vectors, direction_matrices=direction_matrices)
+                                   gap_vectors=gap_vectors, direction_matrices=direction_matrices)
 
         # MagnetSortLookup
         grid = Grid(x_range=Range(min=-1, max=1, steps=5),

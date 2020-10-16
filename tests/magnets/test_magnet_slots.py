@@ -53,13 +53,13 @@ class MagnetSlotsTest(unittest.TestCase):
         
         positions = np.zeros((count, 3), dtype=np.float32)
 
-        shim_vectors = np.zeros((count, 3), dtype=np.float32)
-        shim_vectors[:, 1] = 1.0
+        gap_vectors = np.zeros((count, 3), dtype=np.float32)
+        gap_vectors[:, 1] = 1.0
 
         direction_matrices = np.zeros((count, 3, 3), dtype=np.float32)
         direction_matrices[:, ...] = np.eye(3, dtype=np.float32)[np.newaxis, ...]
         
-        return count, mtype, beams, slots, positions, shim_vectors, direction_matrices
+        return count, mtype, beams, slots, positions, gap_vectors, direction_matrices
 
     def test_constructor(self):
         """
@@ -67,11 +67,11 @@ class MagnetSlotsTest(unittest.TestCase):
         """
 
         # Make dummy parameters
-        count, mtype, beams, slots, positions, shim_vectors, direction_matrices = self.dummy_magnet_slots_values()
+        count, mtype, beams, slots, positions, gap_vectors, direction_matrices = self.dummy_magnet_slots_values()
 
         # Construct MagnetSlots instance
         magnet_slots = MagnetSlots(mtype=mtype, beams=beams, slots=slots, positions=positions,
-                                   shim_vectors=shim_vectors, direction_matrices=direction_matrices)
+                                   gap_vectors=gap_vectors, direction_matrices=direction_matrices)
 
         # Assert object members have been correctly assigned
         self.assertEqual(magnet_slots.count, count)
@@ -79,7 +79,7 @@ class MagnetSlotsTest(unittest.TestCase):
         self.assertEqual(magnet_slots.beams, beams)
         self.assertEqual(magnet_slots.slots, slots)
         self.assertTrue(np.allclose(magnet_slots.positions, positions))
-        self.assertTrue(np.allclose(magnet_slots.shim_vectors, shim_vectors))
+        self.assertTrue(np.allclose(magnet_slots.gap_vectors, gap_vectors))
         self.assertTrue(np.allclose(magnet_slots.direction_matrices, direction_matrices))
 
     def test_constructor_raises_on_bad_parameters_mtype(self):
@@ -88,10 +88,10 @@ class MagnetSlotsTest(unittest.TestCase):
         """
 
         # Make dummy parameters
-        count, mtype, beams, slots, positions, shim_vectors, direction_matrices = self.dummy_magnet_slots_values()
+        count, mtype, beams, slots, positions, gap_vectors, direction_matrices = self.dummy_magnet_slots_values()
 
         fixed_params = dict(beams=beams, slots=slots, positions=positions,
-                            shim_vectors=shim_vectors, direction_matrices=direction_matrices)
+                            gap_vectors=gap_vectors, direction_matrices=direction_matrices)
 
         # Assert constructor throws error from empty magnet type string
         self.assertRaisesRegex(optid.errors.ValidateStringEmptyError, '.*', MagnetSlots, **fixed_params,
@@ -107,10 +107,10 @@ class MagnetSlotsTest(unittest.TestCase):
         """
 
         # Make dummy parameters
-        count, mtype, beams, slots, positions, shim_vectors, direction_matrices = self.dummy_magnet_slots_values()
+        count, mtype, beams, slots, positions, gap_vectors, direction_matrices = self.dummy_magnet_slots_values()
 
         fixed_params = dict(mtype=mtype, slots=slots, positions=positions,
-                            shim_vectors=shim_vectors, direction_matrices=direction_matrices)
+                            gap_vectors=gap_vectors, direction_matrices=direction_matrices)
 
         self.assertRaisesRegex(optid.errors.ValidateStringListTypeError, '.*', MagnetSlots, **fixed_params,
                                beams=None)
@@ -130,10 +130,10 @@ class MagnetSlotsTest(unittest.TestCase):
         """
 
         # Make dummy parameters
-        count, mtype, beams, slots, positions, shim_vectors, direction_matrices = self.dummy_magnet_slots_values()
+        count, mtype, beams, slots, positions, gap_vectors, direction_matrices = self.dummy_magnet_slots_values()
 
         fixed_params = dict(mtype=mtype, beams=beams, positions=positions,
-                            shim_vectors=shim_vectors, direction_matrices=direction_matrices)
+                            gap_vectors=gap_vectors, direction_matrices=direction_matrices)
 
         self.assertRaisesRegex(optid.errors.ValidateStringListTypeError, '.*', MagnetSlots, **fixed_params,
                                slots=None)
@@ -158,10 +158,10 @@ class MagnetSlotsTest(unittest.TestCase):
         """
 
         # Make dummy parameters
-        count, mtype, beams, slots, positions, shim_vectors, direction_matrices = self.dummy_magnet_slots_values()
+        count, mtype, beams, slots, positions, gap_vectors, direction_matrices = self.dummy_magnet_slots_values()
 
         fixed_params = dict(mtype=mtype, beams=beams, slots=slots,
-                            shim_vectors=shim_vectors, direction_matrices=direction_matrices)
+                            gap_vectors=gap_vectors, direction_matrices=direction_matrices)
 
         self.assertRaisesRegex(optid.errors.ValidateTensorShapeError, '.*', MagnetSlots, **fixed_params,
                                positions=positions[:-1])
@@ -172,25 +172,25 @@ class MagnetSlotsTest(unittest.TestCase):
         self.assertRaisesRegex(optid.errors.ValidateTensorTypeError, '.*', MagnetSlots, **fixed_params,
                                positions=None)
 
-    def test_constructor_raises_on_bad_parameters_shim_vectors(self):
+    def test_constructor_raises_on_bad_parameters_gap_vectors(self):
         """
         Tests the MagnetSlots class throws exceptions when constructed with incorrect parameters.
         """
 
         # Make dummy parameters
-        count, mtype, beams, slots, positions, shim_vectors, direction_matrices = self.dummy_magnet_slots_values()
+        count, mtype, beams, slots, positions, gap_vectors, direction_matrices = self.dummy_magnet_slots_values()
 
         fixed_params = dict(mtype=mtype, beams=beams, slots=slots, positions=positions,
                             direction_matrices=direction_matrices)
 
         self.assertRaisesRegex(optid.errors.ValidateTensorShapeError, '.*', MagnetSlots, **fixed_params,
-                               shim_vectors=shim_vectors[:-1])
+                               gap_vectors=gap_vectors[:-1])
 
         self.assertRaisesRegex(optid.errors.ValidateTensorElementTypeError, '.*', MagnetSlots, **fixed_params,
-                               shim_vectors=shim_vectors.astype(np.int32))
+                               gap_vectors=gap_vectors.astype(np.int32))
 
         self.assertRaisesRegex(optid.errors.ValidateTensorTypeError, '.*', MagnetSlots, **fixed_params,
-                               shim_vectors=None)
+                               gap_vectors=None)
 
     def test_constructor_raises_on_bad_parameters_direction_matrices(self):
         """
@@ -198,9 +198,9 @@ class MagnetSlotsTest(unittest.TestCase):
         """
 
         # Make dummy parameters
-        count, mtype, beams, slots, positions, shim_vectors, direction_matrices = self.dummy_magnet_slots_values()
+        count, mtype, beams, slots, positions, gap_vectors, direction_matrices = self.dummy_magnet_slots_values()
 
-        fixed_params = dict(mtype=mtype, beams=beams, slots=slots, positions=positions, shim_vectors=shim_vectors)
+        fixed_params = dict(mtype=mtype, beams=beams, slots=slots, positions=positions, gap_vectors=gap_vectors)
 
         self.assertRaisesRegex(optid.errors.ValidateTensorShapeError, '.*', MagnetSlots, **fixed_params,
                                direction_matrices=direction_matrices[:-1])
@@ -218,7 +218,7 @@ class MagnetSlotsTest(unittest.TestCase):
         """
 
         # Make dummy parameters
-        count, mtype, beams, slots, positions, shim_vectors, direction_matrices = self.dummy_magnet_slots_values()
+        count, mtype, beams, slots, positions, gap_vectors, direction_matrices = self.dummy_magnet_slots_values()
 
         # Run the round trip file save + load in a temporary directory
         with tempfile.TemporaryDirectory() as tmp_path:
@@ -226,7 +226,7 @@ class MagnetSlotsTest(unittest.TestCase):
 
             # Construct MagnetSlots instance
             magnet_slots = MagnetSlots(mtype=mtype, beams=beams, slots=slots, positions=positions,
-                                       shim_vectors=shim_vectors, direction_matrices=direction_matrices)
+                                       gap_vectors=gap_vectors, direction_matrices=direction_matrices)
 
             # Save the MagnetSlots to the temporary directory
             magnet_slots.save(file=tmp_file_path)
@@ -243,7 +243,7 @@ class MagnetSlotsTest(unittest.TestCase):
         self.assertEqual(magnet_slots.beams, beams)
         self.assertEqual(magnet_slots.slots, slots)
         self.assertTrue(np.allclose(magnet_slots.positions, positions))
-        self.assertTrue(np.allclose(magnet_slots.shim_vectors, shim_vectors))
+        self.assertTrue(np.allclose(magnet_slots.gap_vectors, gap_vectors))
         self.assertTrue(np.allclose(magnet_slots.direction_matrices, direction_matrices))
 
     def test_save_open_file_handle(self):
@@ -253,7 +253,7 @@ class MagnetSlotsTest(unittest.TestCase):
         """
 
         # Make dummy parameters
-        count, mtype, beams, slots, positions, shim_vectors, direction_matrices = self.dummy_magnet_slots_values()
+        count, mtype, beams, slots, positions, gap_vectors, direction_matrices = self.dummy_magnet_slots_values()
 
         # Run the round trip file save + load in a temporary directory
         with tempfile.TemporaryDirectory() as tmp_path:
@@ -261,7 +261,7 @@ class MagnetSlotsTest(unittest.TestCase):
 
             # Construct MagnetSlots instance
             magnet_slots = MagnetSlots(mtype=mtype, beams=beams, slots=slots, positions=positions,
-                                       shim_vectors=shim_vectors, direction_matrices=direction_matrices)
+                                       gap_vectors=gap_vectors, direction_matrices=direction_matrices)
 
             with open(tmp_file_path, 'wb') as tmp_file_handle:
                 # Save the MagnetSlots to the temporary directory
@@ -279,7 +279,7 @@ class MagnetSlotsTest(unittest.TestCase):
         self.assertEqual(magnet_slots.beams, beams)
         self.assertEqual(magnet_slots.slots, slots)
         self.assertTrue(np.allclose(magnet_slots.positions, positions))
-        self.assertTrue(np.allclose(magnet_slots.shim_vectors, shim_vectors))
+        self.assertTrue(np.allclose(magnet_slots.gap_vectors, gap_vectors))
         self.assertTrue(np.allclose(magnet_slots.direction_matrices, direction_matrices))
 
     def test_save_raises_on_bad_parameters(self):
@@ -289,11 +289,11 @@ class MagnetSlotsTest(unittest.TestCase):
         """
 
         # Make dummy parameters
-        count, mtype, beams, slots, positions, shim_vectors, direction_matrices = self.dummy_magnet_slots_values()
+        count, mtype, beams, slots, positions, gap_vectors, direction_matrices = self.dummy_magnet_slots_values()
 
         # Construct MagnetSlots instance
         magnet_slots = MagnetSlots(mtype=mtype, beams=beams, slots=slots, positions=positions,
-                                   shim_vectors=shim_vectors, direction_matrices=direction_matrices)
+                                   gap_vectors=gap_vectors, direction_matrices=direction_matrices)
 
         # Attempt to save to a bad file parameter
         self.assertRaisesRegex(optid.errors.FileHandleError, '.*', magnet_slots.save, file=None)
@@ -312,7 +312,7 @@ class MagnetSlotsTest(unittest.TestCase):
         inputs_path = os.path.join(data_path, 'inputs')
 
         # Make dummy parameters
-        count, mtype, beams, slots, positions, shim_vectors, direction_matrices = self.dummy_magnet_slots_values()
+        count, mtype, beams, slots, positions, gap_vectors, direction_matrices = self.dummy_magnet_slots_values()
 
         # Construct MagnetSlots instance
         magnet_slots = MagnetSlots.from_file(file=os.path.join(inputs_path, 'example.magslots'))
@@ -323,7 +323,7 @@ class MagnetSlotsTest(unittest.TestCase):
         self.assertEqual(magnet_slots.beams, beams)
         self.assertEqual(magnet_slots.slots, slots)
         self.assertTrue(np.allclose(magnet_slots.positions, positions))
-        self.assertTrue(np.allclose(magnet_slots.shim_vectors, shim_vectors))
+        self.assertTrue(np.allclose(magnet_slots.gap_vectors, gap_vectors))
         self.assertTrue(np.allclose(magnet_slots.direction_matrices, direction_matrices))
 
     def test_static_from_file_open_file_handle(self):
@@ -341,7 +341,7 @@ class MagnetSlotsTest(unittest.TestCase):
         inputs_path = os.path.join(data_path, 'inputs')
 
         # Make dummy parameters
-        count, mtype, beams, slots, positions, shim_vectors, direction_matrices = self.dummy_magnet_slots_values()
+        count, mtype, beams, slots, positions, gap_vectors, direction_matrices = self.dummy_magnet_slots_values()
 
         with open(os.path.join(inputs_path, 'example.magslots'), 'rb') as file_handle:
             # Construct MagnetSlots instance
@@ -353,7 +353,7 @@ class MagnetSlotsTest(unittest.TestCase):
         self.assertEqual(magnet_slots.beams, beams)
         self.assertEqual(magnet_slots.slots, slots)
         self.assertTrue(np.allclose(magnet_slots.positions, positions))
-        self.assertTrue(np.allclose(magnet_slots.shim_vectors, shim_vectors))
+        self.assertTrue(np.allclose(magnet_slots.gap_vectors, gap_vectors))
         self.assertTrue(np.allclose(magnet_slots.direction_matrices, direction_matrices))
 
     def test_static_from_file_raises_on_bad_parameters(self):
