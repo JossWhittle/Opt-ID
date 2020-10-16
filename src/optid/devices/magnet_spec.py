@@ -34,4 +34,6 @@ MagnetSlotSpec = typing.NamedTuple('MagnetSlotSpec', [
     ('field_vector', optid.types.TensorVector),
     ('direction_matrix', optid.types.TensorMatrix),
     ('flip_matrix', optid.types.TensorMatrix),
+    ('gap_vector', optid.types.TensorVector),
+    ('phase_vector', optid.types.TensorVector),
 ])

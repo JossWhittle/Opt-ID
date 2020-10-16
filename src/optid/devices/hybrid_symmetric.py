@@ -13,59 +13,132 @@
 # language governing permissions and limitations under the License.
 
 
+# Copyright 2017 Diamond Light Source
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+# either express or implied. See the License for the specific
+# language governing permissions and limitations under the License.
+
+
+import numpy as np
+
+import optid
+from optid.magnets import MagnetSet
 from optid.devices import DeviceSpec
-from optid.constants import VECTOR_S, MATRIX_IDENTITY, MATRIX_ROTS_180, MATRIX_ROTZ_180
+from optid.constants import VECTOR_Z, VECTOR_S, MATRIX_IDENTITY, MATRIX_ROTZ_180
+
+logger = optid.utils.logging.get_logger('optid.devices.HybridSymmetricDeviceSpec')
 
 
-def hybrid_symmetric(device_name : str,
-                     periods : int, interstice : float, terminal_gap : float, minimum_gap : float,
-                     x_size : float, z_size : float,
-                     hh_s_size : float, he_s_size : float, ht_s_size : float, pole_s_size : float):
+class HybridSymmetricDeviceSpec(DeviceSpec):
 
-    # Define the Device
-    device = DeviceSpec(device_name, x_size=x_size, z_size=z_size)
+    def __init__(self, name : str, periods : int, interstice : float, pole_size : float, terminal_size : float,
+                 hh : MagnetSet, he : MagnetSet, ht : MagnetSet):
+        super().__init__(name=name)
 
-    # Register Beams
-    device.register_beam('TOP', x_offset=(x_size / 2), z_offset=(minimum_gap / 2))
-    device.register_beam('BTM', x_offset=(x_size / 2), z_offset=((-z_size) - (minimum_gap / 2)))
+        try:
+            self._periods = periods
+            assert isinstance(self.periods, int)
+            assert self.periods > 0
 
-    # Register Magnet Types
-    device.register_magnet_type('HH', s_size=hh_s_size, field_vector=VECTOR_S, flip_matrix=MATRIX_ROTS_180)
-    device.register_magnet_type('HE', s_size=he_s_size, field_vector=VECTOR_S, flip_matrix=MATRIX_ROTS_180)
-    device.register_magnet_type('HT', s_size=ht_s_size, field_vector=VECTOR_S, flip_matrix=MATRIX_ROTS_180)
+        except Exception as ex:
+            logger.exception('periods must be a positive integer', exc_info=ex)
+            raise ex
 
-    # Determine magnet spacings
-    terminal_spacing = ((pole_s_size / 2) + terminal_gap)
-    pole_spacing = (pole_s_size + (interstice * 2))
+        try:
+            self._interstice = interstice
+            assert isinstance(self.interstice, float)
+            assert self.interstice > 0
 
-    # Top Beam Prefix
-    device.push_magnet(beam='TOP', magnet_type='HT', direction_matrix=MATRIX_ROTZ_180, spacing=terminal_spacing)
-    device.push_magnet(beam='TOP', magnet_type='HE', direction_matrix=MATRIX_IDENTITY, spacing=pole_spacing)
+        except Exception as ex:
+            logger.exception('interstice must be a positive float', exc_info=ex)
+            raise ex
 
-    # Bottom Beam Prefix
-    device.push_magnet(beam='BTM', magnet_type='HT', direction_matrix=MATRIX_IDENTITY, spacing=terminal_spacing)
-    device.push_magnet(beam='BTM', magnet_type='HE', direction_matrix=MATRIX_ROTZ_180, spacing=pole_spacing)
+        try:
+            self._pole_size = pole_size
+            assert isinstance(self.pole_size, float)
+            assert self.pole_size > 0
 
-    for period in range(periods):
-        # Top Beam Period
-        device.push_magnet(beam='TOP', magnet_type='HH', direction_matrix=MATRIX_ROTZ_180, spacing=pole_spacing)
-        device.push_magnet(beam='TOP', magnet_type='HH', direction_matrix=MATRIX_IDENTITY, spacing=pole_spacing)
+        except Exception as ex:
+            logger.exception('pole_size must be a positive float', exc_info=ex)
+            raise ex
 
-        # Bottom Beam Period
-        device.push_magnet(beam='BTM', magnet_type='HH', direction_matrix=MATRIX_IDENTITY, spacing=pole_spacing)
-        device.push_magnet(beam='BTM', magnet_type='HH', direction_matrix=MATRIX_ROTZ_180, spacing=pole_spacing)
+        try:
+            self._terminal_size = terminal_size
+            assert isinstance(self.terminal_size, float)
+            assert self.terminal_size > 0
 
-    # Top Beam Suffix
-    device.push_magnet(beam='TOP', magnet_type='HE', direction_matrix=MATRIX_ROTZ_180, spacing=terminal_spacing)
-    device.push_magnet(beam='TOP', magnet_type='HT', direction_matrix=MATRIX_IDENTITY)
+        except Exception as ex:
+            logger.exception('terminal_size must be a positive float', exc_info=ex)
+            raise ex
 
-    # Bottom Beam Suffix
-    device.push_magnet(beam='BTM', magnet_type='HE', direction_matrix=MATRIX_IDENTITY, spacing=terminal_spacing)
-    device.push_magnet(beam='BTM', magnet_type='HT', direction_matrix=MATRIX_ROTZ_180)
+        # Register all the magnet sets
+        self.register_magnet_sets(hh, he, ht)
 
-    # Assert all Beams contain the same number of magnets
-    assert len(set(device.beam_counts.values())) == 1
-    # Assert all Beams are the same length along the s-axis
-    assert len(set(device.beam_lengths.values())) == 1
+        # Register each beam to position them and define their directions of movement
+        self.register_beam('TOP', offset=np.zeros((3,)), gap_vector=+(VECTOR_Z / 2))
+        self.register_beam('BTM', offset=np.zeros((3,)), gap_vector=-(VECTOR_Z / 2))
 
-    return device
+        # Register each magnet type with each beam to set relative offsets
+        rel_offset_top = (VECTOR_S + VECTOR_Z) * 0.5
+        self.register_magnet_type(beam='TOP', mtype='HH', rel_offset=rel_offset_top)
+        self.register_magnet_type(beam='TOP', mtype='HE', rel_offset=rel_offset_top)
+        self.register_magnet_type(beam='TOP', mtype='HT', rel_offset=rel_offset_top)
+
+        rel_offset_btm = (VECTOR_S - VECTOR_Z) * 0.5
+        self.register_magnet_type(beam='BTM', mtype='HH', rel_offset=rel_offset_btm)
+        self.register_magnet_type(beam='BTM', mtype='HE', rel_offset=rel_offset_btm)
+        self.register_magnet_type(beam='BTM', mtype='HT', rel_offset=rel_offset_btm)
+
+        # Determine magnet spacings
+        spacing_term = ((pole_size / 2) + terminal_size)
+        spacing_pole = (pole_size + (interstice * 2))
+
+        # Top Beam Prefix
+        self.push_magnet(beam='TOP', mtype='HT', direction_matrix=MATRIX_ROTZ_180, spacing=spacing_term)
+        self.push_magnet(beam='TOP', mtype='HE', direction_matrix=MATRIX_IDENTITY, spacing=spacing_pole)
+
+        # Bottom Beam Prefix
+        self.push_magnet(beam='BTM', mtype='HT', direction_matrix=MATRIX_IDENTITY, spacing=spacing_term)
+        self.push_magnet(beam='BTM', mtype='HE', direction_matrix=MATRIX_ROTZ_180, spacing=spacing_pole)
+
+        for period in range(periods):
+            # Top Beam Period
+            self.push_magnet(beam='TOP', mtype='HH', direction_matrix=MATRIX_ROTZ_180, spacing=spacing_pole)
+            self.push_magnet(beam='TOP', mtype='HH', direction_matrix=MATRIX_IDENTITY, spacing=spacing_pole)
+
+            # Bottom Beam Period
+            self.push_magnet(beam='BTM', mtype='HH', direction_matrix=MATRIX_IDENTITY, spacing=spacing_pole)
+            self.push_magnet(beam='BTM', mtype='HH', direction_matrix=MATRIX_ROTZ_180, spacing=spacing_pole)
+
+        # Top Beam Suffix
+        self.push_magnet(beam='TOP', mtype='HE', direction_matrix=MATRIX_ROTZ_180, spacing=spacing_term)
+        self.push_magnet(beam='TOP', mtype='HT', direction_matrix=MATRIX_IDENTITY)
+
+        # Bottom Beam Suffix
+        self.push_magnet(beam='BTM', mtype='HE', direction_matrix=MATRIX_IDENTITY, spacing=spacing_term)
+        self.push_magnet(beam='BTM', mtype='HT', direction_matrix=MATRIX_ROTZ_180)
+
+    @property
+    def periods(self) -> int:
+        return self._periods
+
+    @property
+    def interstice(self) -> float:
+        return self._interstice
+
+    @property
+    def pole_size(self) -> float:
+        return self._pole_size
+
+    @property
+    def terminal_size(self) -> float:
+        return self._terminal_size

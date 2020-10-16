@@ -15,7 +15,7 @@
 
 from optid.devices.magnet_spec import MagnetSlotSpec, MagnetTypeSpec
 from optid.devices.beam_spec import BeamSpec
-from optid.devices.device_spec import DeviceSpec, TwoBeamDeviceSpec
+from optid.devices.device_spec import DeviceSpec
 
 from optid.devices.ppm_antisymmetric import PPMAntisymmetricDeviceSpec
-# from optid.devices.hybrid_symmetric import hybrid_symmetric
+from optid.devices.hybrid_symmetric import HybridSymmetricDeviceSpec

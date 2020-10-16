@@ -26,7 +26,7 @@ logger = optid.utils.logging.get_logger('optid.devices.BeamSpec')
 BeamSlotSpec = typing.NamedTuple('BeamSlotSpec', [
     ('mtype', str),
     ('direction_matrix', optid.types.TensorMatrix),
-    ('spacing', float)
+    ('spacing', float),
 ])
 
 
@@ -35,12 +35,18 @@ class BeamSpec:
     Represents an insertion device composed of multiple magnet types in fixed arrangements.
     """
 
-    def __init__(self, name : str, offset : optid.types.TensorPoint):
+    def __init__(self,
+                 beam : str,
+                 offset : optid.types.TensorPoint,
+                 gap_vector : optid.types.TensorVector,
+                 phase_vector : optid.types.TensorVector):
 
-        self._name : str = name
-        self._offset : optid.types.TensorPoint = offset
-        self._elements : typing.List[BeamSlotSpec] = list()
-        self._magnet_types : typing.Dict[str, MagnetTypeSpec] = dict()
+        self._name = beam
+        self._offset = offset
+        self._gap_vector = gap_vector
+        self._phase_vector = phase_vector
+        self._elements = list()
+        self._magnet_types = dict()
 
     @property
     def name(self) -> str:
@@ -57,6 +63,14 @@ class BeamSpec:
     @property
     def offset(self) -> optid.types.TensorPoint:
         return self._offset
+
+    @property
+    def gap_vector(self) -> optid.types.TensorVector:
+        return self._gap_vector
+
+    @property
+    def phase_vector(self) -> optid.types.TensorVector:
+        return self._phase_vector
 
     @property
     def count(self) -> int:
@@ -78,9 +92,16 @@ class BeamSpec:
                            self.name, len(self.elements), spacing)
         return s_offset
 
-    def calculate_slots(self, offset : optid.types.TensorPoint) -> typing.List[MagnetSlotSpec]:
+    def calculate_slot_specs(self, gap : float, phase : float = 0.0,
+                             offset : optid.types.TensorVector = optid.constants.VECTOR_ZERO) \
+                             -> typing.List[MagnetSlotSpec]:
 
-        slots : typing.List[MagnetSlotSpec] = list()
+        # Compute dynamic offsets
+        gap_offset   = self.gap_vector   * gap
+        phase_offset = self.phase_vector * phase
+
+        # List of all slot specs
+        slots = list()
 
         # Compute the length of this beam and compute the offset to centre it around 0 on the s-axis
         s_centre = (self.calculate_length() / 2)
@@ -91,19 +112,18 @@ class BeamSpec:
             # Apply spacing from the previous magnet
             s_relative_offset += spacing
             # Yield a fully specified device slot by merging per slot and slot global parameters
-            type_spec = self.magnet_types[slot_spec.mtype]
+            mtype_spec = self.magnet_types[slot_spec.mtype]
 
-            position = ((self.offset + offset) + type_spec.offset)
+            position = sum([self.offset, mtype_spec.offset, offset, gap_offset, phase_offset])
             position[2] += (s_relative_offset - s_centre)
 
             slots.append(MagnetSlotSpec(beam=self.name, slot=f'S{slot_index:03d}', mtype=slot_spec.mtype,
-                                        size=type_spec.size, position=position,
-                                        field_vector=type_spec.field_vector,
-                                        direction_matrix=slot_spec.direction_matrix,
-                                        flip_matrix=type_spec.flip_matrix))
+                                        size=mtype_spec.size, position=position, field_vector=mtype_spec.field_vector,
+                                        direction_matrix=slot_spec.direction_matrix, flip_matrix=mtype_spec.flip_matrix,
+                                        gap_vector=self.gap_vector, phase_vector=self.phase_vector))
 
             # March forward by the depth of the magnet
-            s_relative_offset += type_spec.size[2]
+            s_relative_offset += mtype_spec.size[2]
             # Note the after magnet spacing to be applied if there is a magnet after this one
             spacing = slot_spec.spacing
 
@@ -124,6 +144,9 @@ class BeamSpec:
     def push_magnet(self, mtype : str,
                     direction_matrix : optid.types.TensorMatrix,
                     spacing : float = 0.0):
+
+        assert isinstance(mtype, str)
+        assert mtype in self.magnet_types.keys()
 
         assert spacing >= 0.0
         self.elements.append(BeamSlotSpec(mtype=mtype, direction_matrix=direction_matrix, spacing=spacing))

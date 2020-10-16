@@ -18,6 +18,8 @@ import numpy as np
 
 MAX_RAND_INT = (np.iinfo(np.int32).max - 1)
 
+VECTOR_ZERO = np.array([0, 0, 0], dtype=np.float32)
+
 VECTOR_X = np.array([1, 0, 0], dtype=np.float32)
 VECTOR_Z = np.array([0, 1, 0], dtype=np.float32)
 VECTOR_S = np.array([0, 0, 1], dtype=np.float32)

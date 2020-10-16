@@ -32,7 +32,7 @@ class MagnetSlots:
                  beams : optid.types.ListStrings,
                  slots : optid.types.ListStrings,
                  positions : optid.types.TensorPoints,
-                 shim_vectors : optid.types.TensorVectors,
+                 gap_vectors : optid.types.TensorVectors,
                  direction_matrices : optid.types.TensorMatrices):
         """
         Constructs a MagnetSlots instance and validates the values are the correct types and consistent sizes.
@@ -57,7 +57,7 @@ class MagnetSlots:
             A float tensor of S 3-dim positions for where to place each magnet slot within the device. Represents the
             centre of the AABB for the magnet slot.
 
-        shim_vectors : float tensor (S, 3)
+        gap_vectors : float tensor (S, 3)
             A float tensor of S 3-dim unit vectors for the direction each slot should be moved in to represent
             phase (height) shimming. Usually these will be +Z and -Z axis vectors.
 
@@ -102,9 +102,9 @@ class MagnetSlots:
             raise ex
 
         try:
-            self._shim_vectors = validate_tensor(shim_vectors, shape=(self.count, 3))
+            self._gap_vectors = validate_tensor(gap_vectors, shape=(self.count, 3))
         except Exception as ex:
-            logger.exception('shim_vectors must be a float tensor of shape (S, 3)', exc_info=ex)
+            logger.exception('gap_vectors must be a float tensor of shape (S, 3)', exc_info=ex)
             raise ex
 
         try:
@@ -130,8 +130,8 @@ class MagnetSlots:
         return self._positions
 
     @property
-    def shim_vectors(self) -> optid.types.TensorVectors:
-        return self._shim_vectors
+    def gap_vectors(self) -> optid.types.TensorVectors:
+        return self._gap_vectors
 
     @property
     def direction_matrices(self) -> optid.types.TensorMatrices:
@@ -158,7 +158,7 @@ class MagnetSlots:
             beams=self.beams,
             slots=self.slots,
             positions=self.positions,
-            shim_vectors=self.shim_vectors,
+            gap_vectors=self.gap_vectors,
             direction_matrices=self.direction_matrices
         ))
 
