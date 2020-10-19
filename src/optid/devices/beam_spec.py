@@ -155,7 +155,7 @@ class BeamSpec:
                              field_vector : optid.types.TensorVector,
                              flip_matrix : optid.types.TensorMatrix):
 
-        assert isinstance(mtype, str)
+        validate_string(mtype, assert_non_empty=True)
         assert mtype not in self.magnet_types.keys()
 
         self.magnet_types[mtype] = MagnetTypeSpec(mtype=mtype, size=size, offset=offset,
@@ -165,7 +165,7 @@ class BeamSpec:
                     direction_matrix : optid.types.TensorMatrix,
                     spacing : float = 0.0):
 
-        assert isinstance(mtype, str)
+        validate_string(mtype, assert_non_empty=True)
         assert mtype in self.magnet_types.keys()
 
         assert spacing >= 0.0

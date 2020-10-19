@@ -69,7 +69,7 @@ class DeviceSpec:
                       offset : optid.types.TensorPoint, gap_vector : optid.types.TensorVector,
                       phase_vector : optid.types.TensorVector = optid.constants.VECTOR_ZERO) -> BeamSpec:
 
-        assert isinstance(beam, str)
+        validate_string(beam, assert_non_empty=True)
         assert beam not in self.beams.keys()
 
         self.beams[beam] = BeamSpec(beam=beam, offset=offset, gap_vector=gap_vector, phase_vector=phase_vector)
@@ -78,10 +78,10 @@ class DeviceSpec:
     def register_magnet_type(self, beam : str, mtype : str,
                              rel_offset : optid.types.TensorPoint):
 
-        assert isinstance(beam, str)
+        validate_string(beam, assert_non_empty=True)
         assert beam in self.beams.keys()
 
-        assert isinstance(mtype, str)
+        validate_string(mtype, assert_non_empty=True)
         assert mtype in self.device_set.keys()
 
         magnet_set = self.device_set[mtype]
@@ -94,17 +94,17 @@ class DeviceSpec:
                     direction_matrix : optid.types.TensorMatrix,
                     spacing : float = 0.0):
 
-        assert isinstance(beam, str)
+        validate_string(beam, assert_non_empty=True)
         assert beam in self.beams.keys()
 
-        assert isinstance(mtype, str)
+        validate_string(mtype, assert_non_empty=True)
         assert mtype in self.device_set.keys()
 
         self.beams[beam].push_magnet(mtype=mtype, direction_matrix=direction_matrix, spacing=spacing)
 
     def pop_magnet(self, beam : str):
 
-        assert isinstance(beam, str)
+        validate_string(beam, assert_non_empty=True)
         assert beam in self.beams.keys()
 
         self.beams[beam].pop_magnet()
