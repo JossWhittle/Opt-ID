@@ -49,6 +49,10 @@ class PPMAntisymmetricDeviceSpec(DeviceSpec):
 
         # Register all the magnet sets
         self.register_magnet_sets(hh, he, vv, ve)
+        assert hh.mtype == 'HH'
+        assert he.mtype == 'HE'
+        assert vv.mtype == 'VV'
+        assert ve.mtype == 'VE'
 
         # Register each beam to position them and define their directions of movement
         self.register_beam('TOP', offset=np.zeros((3,)), gap_vector=+(VECTOR_Z / 2))

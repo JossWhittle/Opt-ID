@@ -82,6 +82,9 @@ class HybridSymmetricDeviceSpec(DeviceSpec):
 
         # Register all the magnet sets
         self.register_magnet_sets(hh, he, ht)
+        assert hh.mtype == 'HH'
+        assert he.mtype == 'HE'
+        assert ht.mtype == 'HT'
 
         # Register each beam to position them and define their directions of movement
         self.register_beam('TOP', offset=np.zeros((3,)), gap_vector=+(VECTOR_Z / 2))
