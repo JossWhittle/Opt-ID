@@ -18,7 +18,7 @@ import numpy as np
 
 import optid
 from optid.devices import MagnetSlotSpec, MagnetTypeSpec
-
+from optid.utils import validate_string, validate_tensor
 
 logger = optid.utils.logging.get_logger('optid.devices.BeamSpec')
 
@@ -41,10 +41,30 @@ class BeamSpec:
                  gap_vector : optid.types.TensorVector,
                  phase_vector : optid.types.TensorVector):
 
-        self._name = beam
-        self._offset = offset
-        self._gap_vector = gap_vector
-        self._phase_vector = phase_vector
+        try:
+            self._name = validate_string(beam, assert_non_empty=True)
+        except Exception as ex:
+            logger.exception('name must be a non-empty string', exc_info=ex)
+            raise ex
+
+        try:
+            self._offset = validate_tensor(offset, shape=(3,))
+        except Exception as ex:
+            logger.exception('offset must be a float tensor of shape (3,)', exc_info=ex)
+            raise ex
+
+        try:
+            self._gap_vector = validate_tensor(gap_vector, shape=(3,))
+        except Exception as ex:
+            logger.exception('gap_vector must be a float tensor of shape (3,)', exc_info=ex)
+            raise ex
+
+        try:
+            self._phase_vector = validate_tensor(phase_vector, shape=(3,))
+        except Exception as ex:
+            logger.exception('phase_vector must be a float tensor of shape (3,)', exc_info=ex)
+            raise ex
+
         self._elements = list()
         self._magnet_types = dict()
 
