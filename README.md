@@ -103,5 +103,5 @@ Opt-ID is released Open Source under the Apache-2.0 License, the code can be fou
 
 ## Collaborators
 
-Development of Opt-ID began as a project at DLS and is now continued as a collaboration between the AI team at RFI (Dr Joss Whittle, Dr Mark Basham) and the ID build team at DLS (Dr Zena Patel, Dr Geetanjali Sharma, Dr Stephen Milward) with additional collaboration with BESSY II (Ed Rial).
+Development of Opt-ID began as a project at DLS and is now continued as a collaboration between the AI team at RFI (Dr Joss Whittle, Dr Mark Basham) and the ID build team at DLS (Dr Zena Patel, Dr Geetanjali Sharma, Dr Stephen Milward) with additional collaboration with Helmholtz Zentrum Berlin (Ed Rial).
 
