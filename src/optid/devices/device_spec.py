@@ -39,26 +39,51 @@ class DeviceSpec:
             logger.exception('beam must be a non-empty string', exc_info=ex)
             raise ex
 
-        self._device_set = dict()
-        self._beams = dict()
+        self._compiled           = False
+        self._beam_specs         = dict()
+        self._device_set         = dict()
+        self._device_slots       = None
+
+    @property
+    def compiled(self) -> bool:
+        return self._compiled
+
+    def assert_compiled(self):
+        try:
+            assert self.compiled
+        except Exception as ex:
+            logger.exception('device [%s] is not compiled', self.name, exc_info=ex)
+            raise ex
+
+    def invalidate_compilation(self):
+        self._compiled     = False
+        self._device_slots = None
 
     @property
     def name(self) -> str:
         return self._name
 
     @property
-    def beams(self) -> typing.Dict[str, BeamSpec]:
-        return self._beams
+    def beam_specs(self) -> typing.Dict[str, BeamSpec]:
+        return self._beam_specs
 
     @property
     def device_set(self) -> typing.Dict[str, MagnetSet]:
         return self._device_set
 
+    @property
+    def device_slots(self) -> typing.Dict[str, MagnetSlots]:
+        self.assert_compiled()
+        return self._device_slots
+
     def register_magnet_sets(self, *args):
+        self.invalidate_compilation()
+
         for arg in args:
             self.register_magnet_set(arg)
 
     def register_magnet_set(self, magnet_set : MagnetSet):
+        self.invalidate_compilation()
 
         assert isinstance(magnet_set, MagnetSet)
         assert magnet_set.mtype not in self.device_set.keys()
@@ -67,59 +92,63 @@ class DeviceSpec:
 
     def register_beam(self, beam : str,
                       offset : optid.types.TensorPoint, gap_vector : optid.types.TensorVector,
-                      phase_vector : optid.types.TensorVector = optid.constants.VECTOR_ZERO) -> BeamSpec:
+                      phase_vector : optid.types.TensorVector = optid.constants.VECTOR_ZERO):
+        self.invalidate_compilation()
 
         validate_string(beam, assert_non_empty=True)
-        assert beam not in self.beams.keys()
+        assert beam not in self.beam_specs.keys()
 
-        self.beams[beam] = BeamSpec(beam=beam, offset=offset, gap_vector=gap_vector, phase_vector=phase_vector)
-        return self.beams[beam]
+        self.beam_specs[beam] = BeamSpec(beam=beam, offset=offset, gap_vector=gap_vector, phase_vector=phase_vector)
 
     def register_magnet_type(self, beam : str, mtype : str,
                              rel_offset : optid.types.TensorPoint):
+        self.invalidate_compilation()
 
         validate_string(beam, assert_non_empty=True)
-        assert beam in self.beams.keys()
+        assert beam in self.beam_specs.keys()
 
         validate_string(mtype, assert_non_empty=True)
         assert mtype in self.device_set.keys()
 
         magnet_set = self.device_set[mtype]
-        self.beams[beam].register_magnet_type(mtype=magnet_set.mtype, size=magnet_set.reference_size,
-                                              offset=(magnet_set.reference_size * rel_offset),
-                                              field_vector=magnet_set.reference_field_vector,
-                                              flip_matrix=magnet_set.flip_matrix)
+        self.beam_specs[beam].register_magnet_type(mtype=magnet_set.mtype, size=magnet_set.reference_size,
+                                                   offset=(magnet_set.reference_size * rel_offset),
+                                                   field_vector=magnet_set.reference_field_vector,
+                                                   flip_matrix=magnet_set.flip_matrix)
 
     def push_magnet(self, beam : str, mtype : str,
                     direction_matrix : optid.types.TensorMatrix,
                     spacing : float = 0.0):
+        self.invalidate_compilation()
 
         validate_string(beam, assert_non_empty=True)
-        assert beam in self.beams.keys()
+        assert beam in self.beam_specs.keys()
 
         validate_string(mtype, assert_non_empty=True)
         assert mtype in self.device_set.keys()
 
-        self.beams[beam].push_magnet(mtype=mtype, direction_matrix=direction_matrix, spacing=spacing)
+        self.beam_specs[beam].push_magnet(mtype=mtype, direction_matrix=direction_matrix, spacing=spacing)
 
     def pop_magnet(self, beam : str):
+        self.invalidate_compilation()
 
         validate_string(beam, assert_non_empty=True)
-        assert beam in self.beams.keys()
+        assert beam in self.beam_specs.keys()
 
-        self.beams[beam].pop_magnet()
+        self.beam_specs[beam].pop_magnet()
 
     def calculate_slot_specs(self, gap : float, phase : float = 0.0,
                              offset : optid.types.TensorVector = optid.constants.VECTOR_ZERO):
 
-        return { beam.name : beam.calculate_slot_specs(gap=gap, phase=phase, offset=offset)
-                 for beam in self.beams.values() }
+        beam_keys = sorted(self.beam_specs.keys())
+        return { beam : self.beam_specs[beam].calculate_slot_specs(gap=gap, phase=phase, offset=offset)
+                 for beam in beam_keys }
 
-    def device_slots(self, gap : float, phase : float = 0.0,
-                     offset : optid.types.TensorVector = optid.constants.VECTOR_ZERO):
+    def calculate_device_slots(self, gap : float, phase : float = 0.0,
+                               offset : optid.types.TensorVector = optid.constants.VECTOR_ZERO):
 
         slots_specs = list(itertools.chain.from_iterable(
-            self.calculate_slot_specs(gap=gap, phase=phase, offset=offset)))
+            self.calculate_slot_specs(gap=gap, phase=phase, offset=offset).values()))
 
         device_slots = dict()
         for mtype in self.device_set.keys():
@@ -135,6 +164,12 @@ class DeviceSpec:
                                               gap_vectors=gap_vectors, direction_matrices=direction_matrices)
 
         # Assert that we extracted every magnet slot spec
-        assert len(slots_specs) == sum(magnet_slots.count for magnet_slots in device_slots)
+        assert len(slots_specs) == sum(magnet_slots.count for magnet_slots in device_slots.values())
 
         return device_slots
+
+    def compile(self, gap : float, phase : float = 0.0,
+                offset : optid.types.TensorVector = optid.constants.VECTOR_ZERO):
+        self.invalidate_compilation()
+        self._device_slots = self.calculate_device_slots(gap=gap, phase=phase, offset=offset)
+        self._compiled = True

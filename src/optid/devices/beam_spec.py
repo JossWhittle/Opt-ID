@@ -137,7 +137,7 @@ class BeamSpec:
             position = sum([self.offset, mtype_spec.offset, offset, gap_offset, phase_offset])
             position[2] += (s_relative_offset - s_centre)
 
-            slots.append(MagnetSlotSpec(beam=self.name, slot=f'S{slot_index:03d}', mtype=slot_spec.mtype,
+            slots.append(MagnetSlotSpec(beam=self.name, slot=f'S{slot_index:06d}', mtype=slot_spec.mtype,
                                         size=mtype_spec.size, position=position, field_vector=mtype_spec.field_vector,
                                         direction_matrix=slot_spec.direction_matrix, flip_matrix=mtype_spec.flip_matrix,
                                         gap_vector=self.gap_vector, phase_vector=self.phase_vector))

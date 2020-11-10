@@ -18,7 +18,7 @@ import numpy as np
 import optid
 from optid.magnets import MagnetSet
 from optid.devices import DeviceSpec
-from optid.constants import VECTOR_Z, VECTOR_S, MATRIX_IDENTITY, MATRIX_ROTS_180, MATRIX_ROTZ_180
+from optid.constants import VECTOR_ZERO, VECTOR_Z, VECTOR_S, MATRIX_IDENTITY, MATRIX_ROTS_180, MATRIX_ROTZ_180
 
 logger = optid.utils.logging.get_logger('optid.devices.PPMAntisymmetricDeviceSpec')
 
@@ -55,8 +55,8 @@ class PPMAntisymmetricDeviceSpec(DeviceSpec):
         assert ve.mtype == 'VE'
 
         # Register each beam to position them and define their directions of movement
-        self.register_beam('TOP', offset=np.zeros((3,)), gap_vector=+(VECTOR_Z / 2))
-        self.register_beam('BTM', offset=np.zeros((3,)), gap_vector=-(VECTOR_Z / 2))
+        self.register_beam('TOP', offset=VECTOR_ZERO, gap_vector=+(VECTOR_Z / 2))
+        self.register_beam('BTM', offset=VECTOR_ZERO, gap_vector=-(VECTOR_Z / 2))
 
         # Register each magnet type with each beam to set relative offsets
         rel_offset_top = (VECTOR_S + VECTOR_Z) * 0.5
