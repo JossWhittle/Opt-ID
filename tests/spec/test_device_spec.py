@@ -23,7 +23,7 @@ import numpy as np
 
 # Test imports
 import optid
-from optid.devices import DeviceSpec
+from optid.spec import DeviceSpec
 
 # Configure debug logging
 from optid.utils.logging import attach_console_logger

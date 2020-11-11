@@ -18,12 +18,12 @@ import itertools
 import numpy as np
 
 import optid
-from optid.devices import BeamSpec
+from optid.spec import BeamSpec
 from optid.magnets import MagnetSet, MagnetSlots
 from optid.utils import validate_string
 
 
-logger = optid.utils.logging.get_logger('optid.devices.DeviceSpec')
+logger = optid.utils.logging.get_logger('optid.spec.DeviceSpec')
 
 
 class DeviceSpec:
@@ -173,3 +173,22 @@ class DeviceSpec:
         self.invalidate_compilation()
         self._device_slots = self.calculate_device_slots(gap=gap, phase=phase, offset=offset)
         self._compiled = True
+
+
+class PeriodicDeviceSpec(DeviceSpec):
+
+    def __init__(self, name : str, periods : int):
+        super().__init__(name=name)
+
+        try:
+            self._periods = periods
+            assert isinstance(self.periods, int)
+            assert self.periods > 0
+
+        except Exception as ex:
+            logger.exception('periods must be a positive integer', exc_info=ex)
+            raise ex
+
+    @property
+    def periods(self) -> int:
+        return self._periods

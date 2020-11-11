@@ -12,73 +12,22 @@
 # either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 
-
-# Copyright 2017 Diamond Light Source
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-# http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing,
-# software distributed under the License is distributed on an
-# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
-# either express or implied. See the License for the specific
-# language governing permissions and limitations under the License.
-
-
+from functools import partial
 import numpy as np
 
 import optid
 from optid.magnets import MagnetSet
-from optid.devices import DeviceSpec
-from optid.constants import VECTOR_ZERO, VECTOR_Z, VECTOR_S, MATRIX_IDENTITY, MATRIX_ROTZ_180
+from optid.spec import PeriodicDeviceSpec
+from optid.constants import VECTOR_ZERO, VECTOR_Z, VECTOR_S, MATRIX_IDENTITY, MATRIX_ROTZ_180, MATRIX_ROTS_180
 
 logger = optid.utils.logging.get_logger('optid.devices.HybridSymmetricDeviceSpec')
 
 
-class HybridSymmetricDeviceSpec(DeviceSpec):
+class HybridSymmetricDeviceSpec(PeriodicDeviceSpec):
 
     def __init__(self, name : str, periods : int, interstice : float, pole_size : float, terminal_size : float,
                  hh : MagnetSet, he : MagnetSet, ht : MagnetSet):
-        super().__init__(name=name)
-
-        try:
-            self._periods = periods
-            assert isinstance(self.periods, int)
-            assert self.periods > 0
-
-        except Exception as ex:
-            logger.exception('periods must be a positive integer', exc_info=ex)
-            raise ex
-
-        try:
-            self._interstice = interstice
-            assert isinstance(self.interstice, float)
-            assert self.interstice > 0
-
-        except Exception as ex:
-            logger.exception('interstice must be a positive float', exc_info=ex)
-            raise ex
-
-        try:
-            self._pole_size = pole_size
-            assert isinstance(self.pole_size, float)
-            assert self.pole_size > 0
-
-        except Exception as ex:
-            logger.exception('pole_size must be a positive float', exc_info=ex)
-            raise ex
-
-        try:
-            self._terminal_size = terminal_size
-            assert isinstance(self.terminal_size, float)
-            assert self.terminal_size > 0
-
-        except Exception as ex:
-            logger.exception('terminal_size must be a positive float', exc_info=ex)
-            raise ex
+        super().__init__(name=name, periods=periods)
 
         # Register all the magnet sets
         self.register_magnet_sets(hh, he, ht)
@@ -130,18 +79,13 @@ class HybridSymmetricDeviceSpec(DeviceSpec):
         self.push_magnet(beam='BTM', mtype='HE', direction_matrix=MATRIX_IDENTITY, spacing=spacing_term)
         self.push_magnet(beam='BTM', mtype='HT', direction_matrix=MATRIX_ROTZ_180)
 
-    @property
-    def periods(self) -> int:
-        return self._periods
 
-    @property
-    def interstice(self) -> float:
-        return self._interstice
+MagnetSetHorizontal = partial(optid.magnets.MagnetSet,
+                              reference_field_vector=VECTOR_S,
+                              flip_matrix=MATRIX_ROTS_180)
 
-    @property
-    def pole_size(self) -> float:
-        return self._pole_size
+MagnetSetHH = partial(MagnetSetHorizontal, mtype='HH')
 
-    @property
-    def terminal_size(self) -> float:
-        return self._terminal_size
+MagnetSetHE = partial(MagnetSetHorizontal, mtype='HE')
+
+MagnetSetHT = partial(MagnetSetHorizontal, mtype='HT')

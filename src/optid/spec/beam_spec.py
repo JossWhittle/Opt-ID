@@ -17,10 +17,10 @@ import typing
 import numpy as np
 
 import optid
-from optid.devices import MagnetSlotSpec, MagnetTypeSpec
+from optid.spec import MagnetSlotSpec, MagnetTypeSpec
 from optid.utils import validate_string, validate_tensor
 
-logger = optid.utils.logging.get_logger('optid.devices.BeamSpec')
+logger = optid.utils.logging.get_logger('optid.spec.BeamSpec')
 
 
 BeamSlotSpec = typing.NamedTuple('BeamSlotSpec', [

@@ -13,39 +13,22 @@
 # language governing permissions and limitations under the License.
 
 
+from functools import partial
 import numpy as np
 
 import optid
 from optid.magnets import MagnetSet
-from optid.devices import DeviceSpec
+from optid.spec import PeriodicDeviceSpec
 from optid.constants import VECTOR_ZERO, VECTOR_Z, VECTOR_S, MATRIX_IDENTITY, MATRIX_ROTS_180, MATRIX_ROTZ_180
 
 logger = optid.utils.logging.get_logger('optid.devices.PPMAntisymmetricDeviceSpec')
 
 
-class PPMAntisymmetricDeviceSpec(DeviceSpec):
+class PPMAntisymmetricDeviceSpec(PeriodicDeviceSpec):
 
     def __init__(self, name : str, periods : int, interstice : float,
                  hh : MagnetSet, he : MagnetSet, vv : MagnetSet, ve : MagnetSet):
-        super().__init__(name=name)
-
-        try:
-            self._periods = periods
-            assert isinstance(self.periods, int)
-            assert self.periods > 0
-
-        except Exception as ex:
-            logger.exception('periods must be a positive integer', exc_info=ex)
-            raise ex
-
-        try:
-            self._interstice = interstice
-            assert isinstance(self.interstice, float)
-            assert self.interstice > 0
-
-        except Exception as ex:
-            logger.exception('interstice must be a positive float', exc_info=ex)
-            raise ex
+        super().__init__(name=name, periods=periods)
 
         # Register all the magnet sets
         self.register_magnet_sets(hh, he, vv, ve)
@@ -102,10 +85,19 @@ class PPMAntisymmetricDeviceSpec(DeviceSpec):
         self.push_magnet(beam='BTM', mtype='VE', direction_matrix=MATRIX_ROTS_180, spacing=interstice)
         self.push_magnet(beam='BTM', mtype='HE', direction_matrix=MATRIX_IDENTITY)
 
-    @property
-    def periods(self) -> int:
-        return self._periods
 
-    @property
-    def interstice(self) -> float:
-        return self._interstice
+MagnetSetHorizontal = partial(optid.magnets.MagnetSet,
+                              reference_field_vector=VECTOR_S,
+                              flip_matrix=MATRIX_ROTS_180)
+
+MagnetSetHH = partial(MagnetSetHorizontal, mtype='HH')
+
+MagnetSetHE = partial(MagnetSetHorizontal, mtype='HE')
+
+MagnetSetVertical = partial(optid.magnets.MagnetSet,
+                            reference_field_vector=VECTOR_Z,
+                            flip_matrix=MATRIX_ROTZ_180)
+
+MagnetSetVV = partial(MagnetSetVertical, mtype='VV')
+
+MagnetSetVE = partial(MagnetSetVertical, mtype='VE')

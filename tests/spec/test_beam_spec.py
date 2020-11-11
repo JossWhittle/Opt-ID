@@ -19,7 +19,7 @@ import numpy as np
 
 # Test imports
 import optid
-from optid.devices import BeamSpec, MagnetSlotSpec
+from optid.spec import BeamSpec, MagnetSlotSpec
 from optid.utils import validate_string, validate_tensor
 
 # Configure debug logging
