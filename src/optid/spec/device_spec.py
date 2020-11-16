@@ -18,7 +18,7 @@ import itertools
 import numpy as np
 
 import optid
-from optid.spec import BeamSpec
+from optid.spec import BeamSpec, MagnetSlotSpec
 from optid.magnets import MagnetSet, MagnetSlots
 from optid.utils import validate_string
 
@@ -39,10 +39,11 @@ class DeviceSpec:
             logger.exception('beam must be a non-empty string', exc_info=ex)
             raise ex
 
-        self._compiled           = False
-        self._beam_specs         = dict()
-        self._device_set         = dict()
-        self._device_slots       = None
+        self._compiled     = False
+        self._beam_specs   = dict()
+        self._device_set   = dict()
+        self._device_slots = None
+        self._slot_specs   = None
 
     @property
     def compiled(self) -> bool:
@@ -58,6 +59,7 @@ class DeviceSpec:
     def invalidate_compilation(self):
         self._compiled     = False
         self._device_slots = None
+        self._slot_specs   = None
 
     @property
     def name(self) -> str:
@@ -75,6 +77,11 @@ class DeviceSpec:
     def device_slots(self) -> typing.Dict[str, MagnetSlots]:
         self.assert_compiled()
         return self._device_slots
+
+    @property
+    def slot_specs(self) -> typing.Dict[str, typing.List[MagnetSlotSpec]]:
+        self.assert_compiled()
+        return self._slot_specs
 
     def register_magnet_sets(self, *args):
         self.invalidate_compilation()
@@ -171,6 +178,7 @@ class DeviceSpec:
     def compile(self, gap : float, phase : float = 0.0,
                 offset : optid.types.TensorVector = optid.constants.VECTOR_ZERO):
         self.invalidate_compilation()
+        self._slot_specs   = self.calculate_slot_specs(gap=gap, phase=phase, offset=offset)
         self._device_slots = self.calculate_device_slots(gap=gap, phase=phase, offset=offset)
         self._compiled = True
 
