@@ -13,7 +13,6 @@
 # language governing permissions and limitations under the License.
 
 from functools import partial
-import numpy as np
 
 import optid
 from optid.magnets import MagnetSet
@@ -80,12 +79,7 @@ class HybridSymmetricDeviceSpec(PeriodicDeviceSpec):
         self.push_magnet(beam='BTM', mtype='HT', direction_matrix=MATRIX_ROTZ_180)
 
 
-MagnetSetHorizontal = partial(optid.magnets.MagnetSet,
-                              reference_field_vector=VECTOR_S,
-                              flip_matrix=MATRIX_ROTS_180)
-
-MagnetSetHH = partial(MagnetSetHorizontal, mtype='HH')
-
-MagnetSetHE = partial(MagnetSetHorizontal, mtype='HE')
-
-MagnetSetHT = partial(MagnetSetHorizontal, mtype='HT')
+MagnetSetH  = partial(optid.magnets.MagnetSet, reference_field_vector=VECTOR_S, flip_matrix=MATRIX_ROTS_180)
+MagnetSetHH = partial(MagnetSetH, mtype='HH')
+MagnetSetHE = partial(MagnetSetH, mtype='HE')
+MagnetSetHT = partial(MagnetSetH, mtype='HT')

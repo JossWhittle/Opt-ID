@@ -14,7 +14,6 @@
 
 
 from functools import partial
-import numpy as np
 
 import optid
 from optid.magnets import MagnetSet
@@ -86,18 +85,10 @@ class PPMAntisymmetricDeviceSpec(PeriodicDeviceSpec):
         self.push_magnet(beam='BTM', mtype='HE', direction_matrix=MATRIX_IDENTITY)
 
 
-MagnetSetHorizontal = partial(optid.magnets.MagnetSet,
-                              reference_field_vector=VECTOR_S,
-                              flip_matrix=MATRIX_ROTS_180)
+MagnetSetH  = partial(optid.magnets.MagnetSet, reference_field_vector=VECTOR_S, flip_matrix=MATRIX_ROTS_180)
+MagnetSetHH = partial(MagnetSetH, mtype='HH')
+MagnetSetHE = partial(MagnetSetH, mtype='HE')
 
-MagnetSetHH = partial(MagnetSetHorizontal, mtype='HH')
-
-MagnetSetHE = partial(MagnetSetHorizontal, mtype='HE')
-
-MagnetSetVertical = partial(optid.magnets.MagnetSet,
-                            reference_field_vector=VECTOR_Z,
-                            flip_matrix=MATRIX_ROTZ_180)
-
-MagnetSetVV = partial(MagnetSetVertical, mtype='VV')
-
-MagnetSetVE = partial(MagnetSetVertical, mtype='VE')
+MagnetSetV  = partial(optid.magnets.MagnetSet, reference_field_vector=VECTOR_Z, flip_matrix=MATRIX_ROTZ_180)
+MagnetSetVV = partial(MagnetSetV, mtype='VV')
+MagnetSetVE = partial(MagnetSetV, mtype='VE')
