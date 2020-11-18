@@ -30,11 +30,11 @@ class PPMAntisymmetricDeviceSpec(PeriodicDeviceSpec):
         super().__init__(name=name, periods=periods)
 
         # Register all the magnet sets
-        self.register_magnet_sets(hh, he, vv, ve)
         assert hh.mtype == 'HH'
         assert he.mtype == 'HE'
         assert vv.mtype == 'VV'
         assert ve.mtype == 'VE'
+        self.register_magnet_sets(hh, he, vv, ve)
 
         # Register each beam to position them and define their directions of movement
         self.register_beam('TOP', offset=VECTOR_ZERO, gap_vector=+(VECTOR_Z / 2))

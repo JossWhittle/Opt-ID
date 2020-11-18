@@ -32,11 +32,11 @@ class APPLESymmetricDeviceSpec(PeriodicDeviceSpec):
         super().__init__(name=name, periods=periods)
 
         # Register all the magnet sets
-        self.register_magnet_sets(hh, he, vv, ve)
         assert hh.mtype == 'HH'
         assert he.mtype == 'HE'
         assert vv.mtype == 'VV'
         assert ve.mtype == 'VE'
+        self.register_magnet_sets(hh, he, vv, ve)
 
         # Register each beam to position them and define their directions of movement
         abs_offset_left  = VECTOR_X *  (phasing_interstice / 2)

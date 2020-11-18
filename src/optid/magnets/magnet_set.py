@@ -37,7 +37,7 @@ class MagnetSet:
                  names : optid.types.ListStrings,
                  sizes : optid.types.TensorVectors,
                  field_vectors : optid.types.TensorVectors,
-                 rescale_reference_field_vector : bool = False):
+                 rescale_reference_field_vector : bool = True):
         """
         Constructs a MagnetSet instance and validates the values are the correct types and consistent sizes.
 
@@ -200,7 +200,7 @@ class MagnetSet:
         """
 
         logger.info('Loading magnet set...')
-        return MagnetSet(**optid.utils.io.from_file(file))
+        return MagnetSet(**optid.utils.io.from_file(file), rescale_reference_field_vector=False)
 
     @staticmethod
     def from_sim_file(mtype : str,
@@ -208,7 +208,7 @@ class MagnetSet:
                       reference_field_vector : optid.types.TensorVector,
                       flip_matrix : optid.types.TensorMatrix,
                       file : optid.types.ASCIIFileHandle,
-                      rescale_reference_field_vector : bool = False) -> 'MagnetSet':
+                      rescale_reference_field_vector : bool = True) -> 'MagnetSet':
         """
         Constructs a MagnetSet instance using per magnet names and field vectors from a .sim file provided by
         the magnet manufacturer.

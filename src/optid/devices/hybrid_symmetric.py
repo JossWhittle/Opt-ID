@@ -29,10 +29,10 @@ class HybridSymmetricDeviceSpec(PeriodicDeviceSpec):
         super().__init__(name=name, periods=periods)
 
         # Register all the magnet sets
-        self.register_magnet_sets(hh, he, ht)
         assert hh.mtype == 'HH'
         assert he.mtype == 'HE'
         assert ht.mtype == 'HT'
+        self.register_magnet_sets(hh, he, ht)
 
         # Register each beam to position them and define their directions of movement
         self.register_beam('TOP', offset=VECTOR_ZERO, gap_vector=+(VECTOR_Z / 2))
@@ -83,3 +83,10 @@ MagnetSetH  = partial(optid.magnets.MagnetSet, reference_field_vector=VECTOR_S, 
 MagnetSetHH = partial(MagnetSetH, mtype='HH')
 MagnetSetHE = partial(MagnetSetH, mtype='HE')
 MagnetSetHT = partial(MagnetSetH, mtype='HT')
+
+MagnetSetH_from_sim_file  = partial(optid.magnets.MagnetSet.from_sim_file,
+                                    reference_field_vector=VECTOR_S,
+                                    flip_matrix=MATRIX_ROTS_180)
+MagnetSetHH_from_sim_file = partial(MagnetSetH_from_sim_file, mtype='HH')
+MagnetSetHE_from_sim_file = partial(MagnetSetH_from_sim_file, mtype='HE')
+MagnetSetHT_from_sim_file = partial(MagnetSetH_from_sim_file, mtype='HT')

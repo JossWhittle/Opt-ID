@@ -77,7 +77,8 @@ class MagnetSetTest(unittest.TestCase):
         magnet_set = MagnetSet(mtype=mtype, reference_size=reference_size,
                                reference_field_vector=reference_field_vector,
                                flip_matrix=flip_matrix, names=names, sizes=sizes,
-                               field_vectors=field_vectors)
+                               field_vectors=field_vectors,
+                               rescale_reference_field_vector=False)
 
         # Assert object members have been correctly assigned
         self.assertEqual(magnet_set.count, count)
@@ -284,7 +285,8 @@ class MagnetSetTest(unittest.TestCase):
             magnet_set = MagnetSet(mtype=mtype, reference_size=reference_size,
                                    reference_field_vector=reference_field_vector,
                                    flip_matrix=flip_matrix, names=names, sizes=sizes,
-                                   field_vectors=field_vectors)
+                                   field_vectors=field_vectors,
+                                   rescale_reference_field_vector=False)
 
             # Save the MagnetSet to the temporary directory
             magnet_set.save(file=tmp_file_path)
@@ -323,7 +325,8 @@ class MagnetSetTest(unittest.TestCase):
             magnet_set = MagnetSet(mtype=mtype, reference_size=reference_size,
                                    reference_field_vector=reference_field_vector,
                                    flip_matrix=flip_matrix, names=names, sizes=sizes,
-                                   field_vectors=field_vectors)
+                                   field_vectors=field_vectors,
+                                   rescale_reference_field_vector=False)
 
             with open(tmp_file_path, 'wb') as tmp_file_handle:
                 # Save the MagnetSet to the temporary directory
@@ -455,7 +458,8 @@ class MagnetSetTest(unittest.TestCase):
         # Construct MagnetSet instance
         magnet_set = MagnetSet.from_sim_file(mtype=mtype, reference_size=reference_size,
                                              reference_field_vector=reference_field_vector, flip_matrix=flip_matrix,
-                                             file=os.path.join(inputs_path, 'example.sim'))
+                                             file=os.path.join(inputs_path, 'example.sim'),
+                                             rescale_reference_field_vector=False)
 
         # Assert object members have been correctly assigned
         self.assertEqual(magnet_set.count, count)
@@ -489,7 +493,8 @@ class MagnetSetTest(unittest.TestCase):
             # Construct MagnetSet instance
             magnet_set = MagnetSet.from_sim_file(mtype=mtype, reference_size=reference_size,
                                                  reference_field_vector=reference_field_vector,
-                                                 flip_matrix=flip_matrix, file=file_handle)
+                                                 flip_matrix=flip_matrix, file=file_handle,
+                                                 rescale_reference_field_vector=False)
 
         # Assert object members have been correctly assigned
         self.assertEqual(magnet_set.count, count)
