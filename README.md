@@ -26,7 +26,7 @@ Modern IDs contain many hundreds (sometimes thousands) of individual and high-st
 
 Due to the long turnaround for trying out and measuring different magnet configurations, it is desirable to simulate the ID computationally to help determine an approximate magnet ordering before construction begins, significantly reducing the time needed to build and tune an ID. 
 
-The Opt-ID software developed by RFI and Diamond Light Source (DLS) in collaboration with physicists at BESSY II (the Berlin synchrotron facility) allows for efficient simulation of the magnetic fields produced by different candidate arrangements of magnets in an ID (figure 1) and provides an optimization framework for swapping and adjusting magnets within the ID to efficiently see how these changes would affect the magnetic field of the real device.
+The Opt-ID software developed by RFI and Diamond Light Source (DLS) in collaboration with physicists at Helmholtz Zentrum Berlin (HZB) allows for efficient simulation of the magnetic fields produced by different candidate arrangements of magnets in an ID (figure 1) and provides an optimization framework for swapping and adjusting magnets within the ID to efficiently see how these changes would affect the magnetic field of the real device.
 
 ## Synchrotrons, Insertion Devices, and Magnets
 
@@ -103,5 +103,5 @@ Opt-ID is released Open Source under the Apache-2.0 License, the code can be fou
 
 ## Collaborators
 
-Development of Opt-ID began as a project at DLS and is now continued as a collaboration between the AI team at RFI (Dr Joss Whittle, Dr Mark Basham) and the ID build team at DLS (Dr Zena Patel, Dr Geetanjali Sharma, Dr Stephen Milward) with additional collaboration with BESSY II (Dr Ed Rial).
+Development of Opt-ID began as a project at DLS and is now continued as a collaboration between the AI team at RFI (Dr Joss Whittle, Dr Mark Basham) and the ID build team at DLS (Dr Zena Patel, Dr Geetanjali Sharma, Dr Stephen Milward) with additional collaboration with HZB (Ed Rial).
 
