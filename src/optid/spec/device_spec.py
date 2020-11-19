@@ -83,6 +83,11 @@ class DeviceSpec:
         self.assert_compiled()
         return self._slot_specs
 
+    @property
+    def mtype_counts(self) -> typing.Dict[str, typing.List[MagnetSlotSpec]]:
+        self.assert_compiled()
+        return { magnet_slots.mtype : magnet_slots.count for magnet_slots in self.device_slots.values() }
+
     def register_magnet_sets(self, *args):
         self.invalidate_compilation()
 
@@ -181,6 +186,7 @@ class DeviceSpec:
         self._slot_specs   = self.calculate_slot_specs(gap=gap, phase=phase, offset=offset)
         self._device_slots = self.calculate_device_slots(gap=gap, phase=phase, offset=offset)
         self._compiled = True
+        return self
 
 
 class PeriodicDeviceSpec(DeviceSpec):
