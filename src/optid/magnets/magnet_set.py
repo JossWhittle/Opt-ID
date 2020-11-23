@@ -31,13 +31,13 @@ class MagnetSet:
 
     def __init__(self,
                  mtype : str,
-                 reference_size : optid.types.TensorVector,
-                 reference_field_vector : optid.types.TensorVector,
+                 size : optid.types.TensorVector,
+                 field_vector : optid.types.TensorVector,
                  flip_matrix : optid.types.TensorMatrix,
                  names : optid.types.ListStrings,
                  sizes : optid.types.TensorVectors,
                  field_vectors : optid.types.TensorVectors,
-                 rescale_reference_field_vector : bool = True):
+                 rescale_field_vector : bool = True):
         """
         Constructs a MagnetSet instance and validates the values are the correct types and consistent sizes.
 
@@ -47,10 +47,10 @@ class MagnetSet:
             A non-empty string name for this magnet type that should be unique in the context of the full insertion
             device. Names such as 'HH', 'VV', 'HE', 'VE', 'HT' are common.
 
-        reference_size : float tensor (3,)
+        size : float tensor (3,)
             A float tensor of a single 3-dim size for the AABB surrounding the reference magnet geometry.
 
-        reference_field_vector : float tensor (3,)
+        field_vector : float tensor (3,)
             A float tensor of a single 3-dim field vector for the magnetization of the reference magnet.
 
         flip_matrix : float tensor (3, 3)
@@ -69,7 +69,7 @@ class MagnetSet:
             A tensor of M 3-dim float vectors of shape (M, 3) representing the average magnetic field strength
             measurements for each magnet in this set.
 
-        rescale_reference_field_vector : bool
+        rescale_field_vector : bool
             If true then normalize the magnitude of the reference field vector by the average magnitude of the
             per magnet field vectors.
         """
@@ -81,15 +81,15 @@ class MagnetSet:
             raise ex
 
         try:
-            self._reference_size = validate_tensor(reference_size, shape=(3,))
+            self._size = validate_tensor(size, shape=(3,))
         except Exception as ex:
-            logger.exception('reference_size must be a float tensor of shape (3,)', exc_info=ex)
+            logger.exception('size must be a float tensor of shape (3,)', exc_info=ex)
             raise ex
 
         try:
-            self._reference_field_vector = validate_tensor(reference_field_vector, shape=(3,))
+            self._field_vector = validate_tensor(field_vector, shape=(3,))
         except Exception as ex:
-            logger.exception('reference_field_vector must be a float tensor of shape (3,)', exc_info=ex)
+            logger.exception('field_vector must be a float tensor of shape (3,)', exc_info=ex)
             raise ex
 
         try:
@@ -121,22 +121,22 @@ class MagnetSet:
             logger.exception('field_vectors must be a float tensor of shape (M, 3)', exc_info=ex)
             raise ex
 
-        if rescale_reference_field_vector:
-            reference_norm = np.linalg.norm(self.reference_field_vector, axis=-1)
+        if rescale_field_vector:
+            reference_norm = np.linalg.norm(self.field_vector, axis=-1)
             average_norm = np.mean(np.linalg.norm(self.field_vectors, axis=-1))
-            self._reference_field_vector = (self.reference_field_vector / reference_norm) * average_norm
+            self._field_vector = (self.field_vector / reference_norm) * average_norm
 
     @property
     def mtype(self) -> str:
         return self._mtype
 
     @property
-    def reference_size(self) -> optid.types.TensorVector:
-        return self._reference_size
+    def size(self) -> optid.types.TensorVector:
+        return self._size
 
     @property
-    def reference_field_vector(self) -> optid.types.TensorVector:
-        return self._reference_field_vector
+    def field_vector(self) -> optid.types.TensorVector:
+        return self._field_vector
 
     @property
     def flip_matrix(self) -> optid.types.TensorMatrix:
@@ -176,8 +176,8 @@ class MagnetSet:
         logger.info('Saving magnet set...')
         optid.utils.io.save(file, dict(
             mtype=self.mtype,
-            reference_size=self.reference_size,
-            reference_field_vector=self.reference_field_vector,
+            size=self.size,
+            field_vector=self.field_vector,
             flip_matrix=self.flip_matrix,
             names=self.names,
             sizes=self.sizes,
@@ -200,15 +200,15 @@ class MagnetSet:
         """
 
         logger.info('Loading magnet set...')
-        return MagnetSet(**optid.utils.io.from_file(file), rescale_reference_field_vector=False)
+        return MagnetSet(**optid.utils.io.from_file(file), rescale_field_vector=False)
 
     @staticmethod
     def from_sim_file(mtype : str,
-                      reference_size : optid.types.TensorVector,
-                      reference_field_vector : optid.types.TensorVector,
+                      size : optid.types.TensorVector,
+                      field_vector : optid.types.TensorVector,
                       flip_matrix : optid.types.TensorMatrix,
                       file : optid.types.ASCIIFileHandle,
-                      rescale_reference_field_vector : bool = True) -> 'MagnetSet':
+                      rescale_field_vector : bool = True) -> 'MagnetSet':
         """
         Constructs a MagnetSet instance using per magnet names and field vectors from a .sim file provided by
         the magnet manufacturer.
@@ -218,10 +218,10 @@ class MagnetSet:
             A non-empty string name for this magnet type that should be unique in the context of the full insertion
             device. Names such as 'HH', 'VV', 'HE', 'VE', 'HT' are common.
 
-        reference_size : float tensor (3,)
+        size : float tensor (3,)
             A float tensor of a single 3-dim size for the AABB surrounding the reference magnet geometry.
 
-        reference_field_vector : float tensor (3,)
+        field_vector : float tensor (3,)
             A float tensor of a single 3-dim field vector for the magnetization of the reference magnet.
 
         flip_matrix : float tensor (3, 3)
@@ -232,7 +232,7 @@ class MagnetSet:
             A path to a .sim file or an open file handle to a .sim file containing per magnet names and field
             vectors as provided by the magnet manufacturer.
 
-        rescale_reference_field_vector : bool
+        rescale_field_vector : bool
             If true then normalize the magnitude of the reference field vector by the average magnitude of the
             per magnet field vectors.
 
@@ -242,11 +242,11 @@ class MagnetSet:
         """
 
         def read_file(mtype : str,
-                      reference_size : optid.types.TensorVector,
-                      reference_field_vector : optid.types.TensorVector,
+                      size : optid.types.TensorVector,
+                      field_vector : optid.types.TensorVector,
                       flip_matrix : optid.types.TensorMatrix,
                       file_handle : typing.TextIO,
-                      rescale_reference_field_vector : bool) -> 'MagnetSet':
+                      rescale_field_vector : bool) -> 'MagnetSet':
 
             try:
                 # Load the data into python lists
@@ -263,7 +263,7 @@ class MagnetSet:
                     # Unpack and parse values for the current magnet
                     name, field_x, field_z, field_s = line.split()
                     names += [name]
-                    sizes += [reference_size]
+                    sizes += [size]
                     field_vectors += [(float(field_x), float(field_z), float(field_s))]
 
                 sizes = np.stack(sizes, axis=0)
@@ -273,27 +273,24 @@ class MagnetSet:
                 logger.exception('Failed to load magnet set from .sim file', exc_info=ex)
                 raise ex
 
-            return MagnetSet(mtype=mtype, reference_size=reference_size,
-                             reference_field_vector=reference_field_vector, flip_matrix=flip_matrix,
+            return MagnetSet(mtype=mtype, size=size, field_vector=field_vector, flip_matrix=flip_matrix,
                              names=names, sizes=sizes, field_vectors=field_vectors,
-                             rescale_reference_field_vector=rescale_reference_field_vector)
+                             rescale_field_vector=rescale_field_vector)
 
         if isinstance(file, io.TextIOWrapper):
             # Load directly from the already open file handle
             logger.info('Loading magnet set [%s] from open .sim file handle', mtype)
-            return read_file(mtype=mtype, reference_size=reference_size,
-                             reference_field_vector=reference_field_vector,
+            return read_file(mtype=mtype, size=size, field_vector=field_vector,
                              flip_matrix=flip_matrix, file_handle=file,
-                             rescale_reference_field_vector=rescale_reference_field_vector)
+                             rescale_field_vector=rescale_field_vector)
 
         elif isinstance(file, str):
             # Open the .sim file in a closure to ensure it gets closed on error
             with open(file, 'r') as file_handle:
                 logger.info('Loading magnet set [%s] from .sim file [%s]', mtype, file)
-                return read_file(mtype=mtype, reference_size=reference_size,
-                                 reference_field_vector=reference_field_vector,
+                return read_file(mtype=mtype, size=size, field_vector=field_vector,
                                  flip_matrix=flip_matrix, file_handle=file_handle,
-                                 rescale_reference_field_vector=rescale_reference_field_vector)
+                                 rescale_field_vector=rescale_field_vector)
 
         else:
             # Assert that the file object provided is an open file handle or can be used to open one

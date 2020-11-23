@@ -63,8 +63,8 @@ class MagnetSortGenomeTest(unittest.TestCase):
             [0.008846784, -0.003088993, 1.344698631],
         ], dtype=np.float32)
 
-        magnet_set = MagnetSet(mtype=mtype, reference_size=reference_size,
-                               reference_field_vector=reference_field_vector, flip_matrix=flip_matrix,
+        magnet_set = MagnetSet(mtype=mtype, size=reference_size,
+                               field_vector=reference_field_vector, flip_matrix=flip_matrix,
                                names=names, sizes=sizes, field_vectors=field_vectors)
 
         # MagnetSlots
@@ -148,8 +148,8 @@ class MagnetSortGenomeTest(unittest.TestCase):
             [0.008846784, -0.003088993, 1.344698631],
         ], dtype=np.float32)
 
-        magnet_set = MagnetSet(mtype=mtype, reference_size=reference_size,
-                               reference_field_vector=reference_field_vector, flip_matrix=flip_matrix,
+        magnet_set = MagnetSet(mtype=mtype, size=reference_size,
+                               field_vector=reference_field_vector, flip_matrix=flip_matrix,
                                names=names, sizes=sizes, field_vectors=field_vectors)
 
         magnet_genome = MagnetSortGenome.from_random(seed=1234, magnet_set=magnet_set,

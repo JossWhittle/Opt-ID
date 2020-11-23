@@ -49,12 +49,12 @@ class MagnetSetTest(unittest.TestCase):
         count = 4
         mtype = 'HH'
 
-        reference_size = np.array([10, 10, 2], dtype=np.float32)
-        reference_field_vector = np.array([0, 0, 1], dtype=np.float32)
+        size = np.array([10, 10, 2], dtype=np.float32)
+        field_vector = np.array([0, 0, 1], dtype=np.float32)
         flip_matrix = np.eye(3).astype(np.float32)
 
         names = [f'{index + 1:03d}' for index in range(count)]
-        sizes = np.ones((count, 3)) * reference_size[np.newaxis, ...]
+        sizes = np.ones((count, 3)) * size[np.newaxis, ...]
         field_vectors = np.array([
             [0.003770334, -0.000352049, 1.339567917],
             [-0.007018214, -0.002714164, 1.344710227],
@@ -62,7 +62,7 @@ class MagnetSetTest(unittest.TestCase):
             [0.008846784, -0.003088993, 1.344698631],
         ], dtype=np.float32)
 
-        return count, mtype, reference_size, reference_field_vector, flip_matrix, names, sizes, field_vectors
+        return count, mtype, size, field_vector, flip_matrix, names, sizes, field_vectors
 
     def test_constructor(self):
         """
@@ -70,21 +70,21 @@ class MagnetSetTest(unittest.TestCase):
         """
 
         # Make dummy parameters
-        count, mtype, reference_size, reference_field_vector, flip_matrix, \
+        count, mtype, size, field_vector, flip_matrix, \
             names, sizes, field_vectors = self.dummy_magnet_set_values()
 
         # Construct MagnetSet instance
-        magnet_set = MagnetSet(mtype=mtype, reference_size=reference_size,
-                               reference_field_vector=reference_field_vector,
+        magnet_set = MagnetSet(mtype=mtype, size=size,
+                               field_vector=field_vector,
                                flip_matrix=flip_matrix, names=names, sizes=sizes,
                                field_vectors=field_vectors,
-                               rescale_reference_field_vector=False)
+                               rescale_field_vector=False)
 
         # Assert object members have been correctly assigned
         self.assertEqual(magnet_set.count, count)
         self.assertEqual(magnet_set.mtype, mtype)
-        self.assertTrue(np.allclose(magnet_set.reference_size, reference_size))
-        self.assertTrue(np.allclose(magnet_set.reference_field_vector, reference_field_vector))
+        self.assertTrue(np.allclose(magnet_set.size, size))
+        self.assertTrue(np.allclose(magnet_set.field_vector, field_vector))
         self.assertTrue(np.allclose(magnet_set.flip_matrix, flip_matrix))
         self.assertEqual(magnet_set.names, names)
         self.assertTrue(np.allclose(magnet_set.sizes, sizes))
@@ -96,22 +96,22 @@ class MagnetSetTest(unittest.TestCase):
         """
 
         # Make dummy parameters
-        count, mtype, reference_size, reference_field_vector, flip_matrix, \
+        count, mtype, size, field_vector, flip_matrix, \
             names, sizes, field_vectors = self.dummy_magnet_set_values()
 
         # Construct MagnetSet instance
-        magnet_set = MagnetSet(mtype=mtype, reference_size=reference_size,
-                               reference_field_vector=reference_field_vector,
+        magnet_set = MagnetSet(mtype=mtype, size=size,
+                               field_vector=field_vector,
                                flip_matrix=flip_matrix, names=names, sizes=sizes,
                                field_vectors=field_vectors,
-                               rescale_reference_field_vector=True)
+                               rescale_field_vector=True)
 
         # Assert object members have been correctly assigned
         self.assertEqual(magnet_set.count, count)
         self.assertEqual(magnet_set.mtype, mtype)
-        self.assertTrue(np.allclose(magnet_set.reference_size, reference_size))
-        self.assertTrue(np.linalg.norm(magnet_set.reference_field_vector, axis=-1) >
-                        np.linalg.norm(reference_field_vector, axis=-1))
+        self.assertTrue(np.allclose(magnet_set.size, size))
+        self.assertTrue(np.linalg.norm(magnet_set.field_vector, axis=-1) >
+                        np.linalg.norm(field_vector, axis=-1))
         self.assertTrue(np.allclose(magnet_set.flip_matrix, flip_matrix))
         self.assertEqual(magnet_set.names, names)
         self.assertTrue(np.allclose(magnet_set.sizes, sizes))
@@ -123,10 +123,10 @@ class MagnetSetTest(unittest.TestCase):
         """
 
         # Make dummy parameters
-        count, mtype, reference_size, reference_field_vector, flip_matrix, \
+        count, mtype, size, field_vector, flip_matrix, \
             names, sizes, field_vectors = self.dummy_magnet_set_values()
 
-        fixed_params = dict(reference_size=reference_size, reference_field_vector=reference_field_vector,
+        fixed_params = dict(size=size, field_vector=field_vector,
                             flip_matrix=flip_matrix, names=names, sizes=sizes, field_vectors=field_vectors)
 
         self.assertRaisesRegex(optid.errors.ValidateStringEmptyError, '.*', MagnetSet, **fixed_params,
@@ -141,10 +141,10 @@ class MagnetSetTest(unittest.TestCase):
         """
 
         # Make dummy parameters
-        count, mtype, reference_size, reference_field_vector, flip_matrix, \
+        count, mtype, size, field_vector, flip_matrix, \
             names, sizes, field_vectors = self.dummy_magnet_set_values()
 
-        fixed_params = dict(mtype=mtype, reference_size=reference_size, reference_field_vector=reference_field_vector,
+        fixed_params = dict(mtype=mtype, size=size, field_vector=field_vector,
                             flip_matrix=flip_matrix, sizes=sizes, field_vectors=field_vectors)
 
         self.assertRaisesRegex(optid.errors.ValidateStringListTypeError, '.*', MagnetSet, **fixed_params,
@@ -171,10 +171,10 @@ class MagnetSetTest(unittest.TestCase):
         """
 
         # Make dummy parameters
-        count, mtype, reference_size, reference_field_vector, flip_matrix, \
+        count, mtype, size, field_vector, flip_matrix, \
             names, sizes, field_vectors = self.dummy_magnet_set_values()
 
-        fixed_params = dict(mtype=mtype, reference_size=reference_size, reference_field_vector=reference_field_vector,
+        fixed_params = dict(mtype=mtype, size=size, field_vector=field_vector,
                             flip_matrix=flip_matrix, names=names, sizes=sizes)
 
         self.assertRaisesRegex(optid.errors.ValidateTensorShapeError, '.*', MagnetSet, **fixed_params,
@@ -186,26 +186,29 @@ class MagnetSetTest(unittest.TestCase):
         self.assertRaisesRegex(optid.errors.ValidateTensorTypeError, '.*', MagnetSet, **fixed_params,
                                field_vectors=None)
 
-    def test_constructor_raises_on_bad_parameters_reference_field_vector(self):
+    def test_constructor_raises_on_bad_parameters_field_vector(self):
         """
         Tests the MagnetSet class throws exceptions when constructed with incorrect parameters.
         """
 
         # Make dummy parameters
-        count, mtype, reference_size, reference_field_vector, flip_matrix, \
+        count, mtype, size, field_vector, flip_matrix, \
             names, sizes, field_vectors = self.dummy_magnet_set_values()
 
-        fixed_params = dict(mtype=mtype, reference_size=reference_size,
+        fixed_params = dict(mtype=mtype, size=size,
                             flip_matrix=flip_matrix, names=names, sizes=sizes, field_vectors=field_vectors)
 
         self.assertRaisesRegex(optid.errors.ValidateTensorShapeError, '.*', MagnetSet, **fixed_params,
-                               reference_field_vector=np.random.uniform(size=(4,)))
+                               field_vector=np.random.uniform(size=(4,)))
 
         self.assertRaisesRegex(optid.errors.ValidateTensorElementTypeError, '.*', MagnetSet, **fixed_params,
-                               reference_field_vector=reference_field_vector.astype(np.int32))
+                               field_vector=field_vector.astype(np.int32))
 
         self.assertRaisesRegex(optid.errors.ValidateTensorTypeError, '.*', MagnetSet, **fixed_params,
-                               reference_field_vector=None)
+                               field_vector=None)
+
+        self.assertRaisesRegex(optid.errors.ValidateTensorTypeError, '.*', MagnetSet, **fixed_params,
+                               field_vector='TEST')
 
     def test_flippable(self):
         """
@@ -213,10 +216,10 @@ class MagnetSetTest(unittest.TestCase):
         """
 
         # Make dummy parameters
-        count, mtype, reference_size, reference_field_vector, flip_matrix, \
+        count, mtype, size, field_vector, flip_matrix, \
             names, sizes, field_vectors = self.dummy_magnet_set_values()
 
-        fixed_params = dict(mtype=mtype, reference_size=reference_size, reference_field_vector=reference_field_vector,
+        fixed_params = dict(mtype=mtype, size=size, field_vector=field_vector,
                             names=names, sizes=sizes, field_vectors=field_vectors)
 
         magnet_set = MagnetSet(**fixed_params, flip_matrix=np.ones((3, 3)))
@@ -225,26 +228,26 @@ class MagnetSetTest(unittest.TestCase):
         magnet_set = MagnetSet(**fixed_params, flip_matrix=np.eye(3))
         self.assertFalse(magnet_set.flippable)
 
-    def test_constructor_raises_on_bad_parameters_reference_size(self):
+    def test_constructor_raises_on_bad_parameters_size(self):
         """
         Tests the MagnetSet class throws exceptions when constructed with incorrect parameters.
         """
 
         # Make dummy parameters
-        count, mtype, reference_size, reference_field_vector, flip_matrix, \
+        count, mtype, size, field_vector, flip_matrix, \
             names, sizes, field_vectors = self.dummy_magnet_set_values()
 
-        fixed_params = dict(mtype=mtype, reference_field_vector=reference_field_vector, flip_matrix=flip_matrix,
+        fixed_params = dict(mtype=mtype, field_vector=field_vector, flip_matrix=flip_matrix,
                             names=names, sizes=sizes, field_vectors=field_vectors)
 
         self.assertRaisesRegex(optid.errors.ValidateTensorShapeError, '.*', MagnetSet, **fixed_params,
-                               reference_size=reference_size[:-1])
+                               size=size[:-1])
 
         self.assertRaisesRegex(optid.errors.ValidateTensorElementTypeError, '.*', MagnetSet, **fixed_params,
-                               reference_size=reference_size.astype(np.int32))
+                               size=size.astype(np.int32))
 
         self.assertRaisesRegex(optid.errors.ValidateTensorTypeError, '.*', MagnetSet, **fixed_params,
-                               reference_size=None)
+                               size=None)
 
     def test_constructor_raises_on_bad_parameters_flip_matrix(self):
         """
@@ -252,10 +255,10 @@ class MagnetSetTest(unittest.TestCase):
         """
 
         # Make dummy parameters
-        count, mtype, reference_size, reference_field_vector, flip_matrix, \
+        count, mtype, size, field_vector, flip_matrix, \
             names, sizes, field_vectors = self.dummy_magnet_set_values()
 
-        fixed_params = dict(mtype=mtype, reference_size=reference_size, reference_field_vector=reference_field_vector,
+        fixed_params = dict(mtype=mtype, size=size, field_vector=field_vector,
                             names=names, sizes=sizes, field_vectors=field_vectors)
 
         self.assertRaisesRegex(optid.errors.ValidateTensorShapeError, '.*', MagnetSet, **fixed_params,
@@ -274,7 +277,7 @@ class MagnetSetTest(unittest.TestCase):
         """
 
         # Make dummy parameters
-        count, mtype, reference_size, reference_field_vector, flip_matrix, \
+        count, mtype, size, field_vector, flip_matrix, \
             names, sizes, field_vectors = self.dummy_magnet_set_values()
 
         # Run the round trip file save + load in a temporary directory
@@ -282,11 +285,11 @@ class MagnetSetTest(unittest.TestCase):
             tmp_file_path = os.path.join(tmp_path, 'example.magset')
 
             # Construct MagnetSet instance
-            magnet_set = MagnetSet(mtype=mtype, reference_size=reference_size,
-                                   reference_field_vector=reference_field_vector,
+            magnet_set = MagnetSet(mtype=mtype, size=size,
+                                   field_vector=field_vector,
                                    flip_matrix=flip_matrix, names=names, sizes=sizes,
                                    field_vectors=field_vectors,
-                                   rescale_reference_field_vector=False)
+                                   rescale_field_vector=False)
 
             # Save the MagnetSet to the temporary directory
             magnet_set.save(file=tmp_file_path)
@@ -300,8 +303,8 @@ class MagnetSetTest(unittest.TestCase):
         # Assert object members have been correctly assigned
         self.assertEqual(magnet_set.count, count)
         self.assertEqual(magnet_set.mtype, mtype)
-        self.assertTrue(np.allclose(magnet_set.reference_size, reference_size))
-        self.assertTrue(np.allclose(magnet_set.reference_field_vector, reference_field_vector))
+        self.assertTrue(np.allclose(magnet_set.size, size))
+        self.assertTrue(np.allclose(magnet_set.field_vector, field_vector))
         self.assertTrue(np.allclose(magnet_set.flip_matrix, flip_matrix))
         self.assertEqual(magnet_set.names, names)
         self.assertTrue(np.allclose(magnet_set.sizes, sizes))
@@ -314,7 +317,7 @@ class MagnetSetTest(unittest.TestCase):
         """
 
         # Make dummy parameters
-        count, mtype, reference_size, reference_field_vector, flip_matrix, \
+        count, mtype, size, field_vector, flip_matrix, \
             names, sizes, field_vectors = self.dummy_magnet_set_values()
 
         # Run the round trip file save + load in a temporary directory
@@ -322,11 +325,11 @@ class MagnetSetTest(unittest.TestCase):
             tmp_file_path = os.path.join(tmp_path, 'example.magset')
 
             # Construct MagnetSet instance
-            magnet_set = MagnetSet(mtype=mtype, reference_size=reference_size,
-                                   reference_field_vector=reference_field_vector,
+            magnet_set = MagnetSet(mtype=mtype, size=size,
+                                   field_vector=field_vector,
                                    flip_matrix=flip_matrix, names=names, sizes=sizes,
                                    field_vectors=field_vectors,
-                                   rescale_reference_field_vector=False)
+                                   rescale_field_vector=False)
 
             with open(tmp_file_path, 'wb') as tmp_file_handle:
                 # Save the MagnetSet to the temporary directory
@@ -341,8 +344,8 @@ class MagnetSetTest(unittest.TestCase):
         # Assert object members have been correctly assigned
         self.assertEqual(magnet_set.count, count)
         self.assertEqual(magnet_set.mtype, mtype)
-        self.assertTrue(np.allclose(magnet_set.reference_size, reference_size))
-        self.assertTrue(np.allclose(magnet_set.reference_field_vector, reference_field_vector))
+        self.assertTrue(np.allclose(magnet_set.size, size))
+        self.assertTrue(np.allclose(magnet_set.field_vector, field_vector))
         self.assertTrue(np.allclose(magnet_set.flip_matrix, flip_matrix))
         self.assertEqual(magnet_set.names, names)
         self.assertTrue(np.allclose(magnet_set.sizes, sizes))
@@ -355,12 +358,12 @@ class MagnetSetTest(unittest.TestCase):
         """
 
         # Make dummy parameters
-        count, mtype, reference_size, reference_field_vector, flip_matrix, \
+        count, mtype, size, field_vector, flip_matrix, \
             names, sizes, field_vectors = self.dummy_magnet_set_values()
 
         # Construct MagnetSet instance
-        magnet_set = MagnetSet(mtype=mtype, reference_size=reference_size,
-                               reference_field_vector=reference_field_vector,
+        magnet_set = MagnetSet(mtype=mtype, size=size,
+                               field_vector=field_vector,
                                flip_matrix=flip_matrix, names=names, sizes=sizes,
                                field_vectors=field_vectors)
 
@@ -381,7 +384,7 @@ class MagnetSetTest(unittest.TestCase):
         inputs_path = os.path.join(data_path, 'inputs')
 
         # Make dummy parameters
-        count, mtype, reference_size, reference_field_vector, flip_matrix, \
+        count, mtype, size, field_vector, flip_matrix, \
             names, sizes, field_vectors = self.dummy_magnet_set_values()
 
         # Construct MagnetSet instance
@@ -390,8 +393,8 @@ class MagnetSetTest(unittest.TestCase):
         # Assert object members have been correctly assigned
         self.assertEqual(magnet_set.count, count)
         self.assertEqual(magnet_set.mtype, mtype)
-        self.assertTrue(np.allclose(magnet_set.reference_size, reference_size))
-        self.assertTrue(np.allclose(magnet_set.reference_field_vector, reference_field_vector))
+        self.assertTrue(np.allclose(magnet_set.size, size))
+        self.assertTrue(np.allclose(magnet_set.field_vector, field_vector))
         self.assertTrue(np.allclose(magnet_set.flip_matrix, flip_matrix))
         self.assertEqual(magnet_set.names, names)
         self.assertTrue(np.allclose(magnet_set.sizes, sizes))
@@ -412,7 +415,7 @@ class MagnetSetTest(unittest.TestCase):
         inputs_path = os.path.join(data_path, 'inputs')
 
         # Make dummy parameters
-        count, mtype, reference_size, reference_field_vector, flip_matrix, \
+        count, mtype, size, field_vector, flip_matrix, \
             names, sizes, field_vectors = self.dummy_magnet_set_values()
 
         with open(os.path.join(inputs_path, 'example.magset'), 'rb') as file_handle:
@@ -422,8 +425,8 @@ class MagnetSetTest(unittest.TestCase):
         # Assert object members have been correctly assigned
         self.assertEqual(magnet_set.count, count)
         self.assertEqual(magnet_set.mtype, mtype)
-        self.assertTrue(np.allclose(magnet_set.reference_size, reference_size))
-        self.assertTrue(np.allclose(magnet_set.reference_field_vector, reference_field_vector))
+        self.assertTrue(np.allclose(magnet_set.size, size))
+        self.assertTrue(np.allclose(magnet_set.field_vector, field_vector))
         self.assertTrue(np.allclose(magnet_set.flip_matrix, flip_matrix))
         self.assertEqual(magnet_set.names, names)
         self.assertTrue(np.allclose(magnet_set.sizes, sizes))
@@ -452,20 +455,20 @@ class MagnetSetTest(unittest.TestCase):
         inputs_path = os.path.join(data_path, 'inputs')
 
         # Make dummy parameters
-        count, mtype, reference_size, reference_field_vector, flip_matrix, \
+        count, mtype, size, field_vector, flip_matrix, \
             names, sizes, field_vectors = self.dummy_magnet_set_values()
 
         # Construct MagnetSet instance
-        magnet_set = MagnetSet.from_sim_file(mtype=mtype, reference_size=reference_size,
-                                             reference_field_vector=reference_field_vector, flip_matrix=flip_matrix,
+        magnet_set = MagnetSet.from_sim_file(mtype=mtype, size=size,
+                                             field_vector=field_vector, flip_matrix=flip_matrix,
                                              file=os.path.join(inputs_path, 'example.sim'),
-                                             rescale_reference_field_vector=False)
+                                             rescale_field_vector=False)
 
         # Assert object members have been correctly assigned
         self.assertEqual(magnet_set.count, count)
         self.assertEqual(magnet_set.mtype, mtype)
-        self.assertTrue(np.allclose(magnet_set.reference_size, reference_size))
-        self.assertTrue(np.allclose(magnet_set.reference_field_vector, reference_field_vector))
+        self.assertTrue(np.allclose(magnet_set.size, size))
+        self.assertTrue(np.allclose(magnet_set.field_vector, field_vector))
         self.assertTrue(np.allclose(magnet_set.flip_matrix, flip_matrix))
         self.assertEqual(magnet_set.names, names)
         self.assertTrue(np.allclose(magnet_set.sizes, sizes))
@@ -486,21 +489,21 @@ class MagnetSetTest(unittest.TestCase):
         inputs_path = os.path.join(data_path, 'inputs')
 
         # Make dummy parameters
-        count, mtype, reference_size, reference_field_vector, flip_matrix, \
+        count, mtype, size, field_vector, flip_matrix, \
             names, sizes, field_vectors = self.dummy_magnet_set_values()
 
         with open(os.path.join(inputs_path, 'example.sim'), 'r') as file_handle:
             # Construct MagnetSet instance
-            magnet_set = MagnetSet.from_sim_file(mtype=mtype, reference_size=reference_size,
-                                                 reference_field_vector=reference_field_vector,
+            magnet_set = MagnetSet.from_sim_file(mtype=mtype, size=size,
+                                                 field_vector=field_vector,
                                                  flip_matrix=flip_matrix, file=file_handle,
-                                                 rescale_reference_field_vector=False)
+                                                 rescale_field_vector=False)
 
         # Assert object members have been correctly assigned
         self.assertEqual(magnet_set.count, count)
         self.assertEqual(magnet_set.mtype, mtype)
-        self.assertTrue(np.allclose(magnet_set.reference_size, reference_size))
-        self.assertTrue(np.allclose(magnet_set.reference_field_vector, reference_field_vector))
+        self.assertTrue(np.allclose(magnet_set.size, size))
+        self.assertTrue(np.allclose(magnet_set.field_vector, field_vector))
         self.assertTrue(np.allclose(magnet_set.flip_matrix, flip_matrix))
         self.assertEqual(magnet_set.names, names)
         self.assertTrue(np.allclose(magnet_set.sizes, sizes))
@@ -513,13 +516,13 @@ class MagnetSetTest(unittest.TestCase):
         """
 
         # Make dummy parameters
-        count, mtype, reference_size, reference_field_vector, flip_matrix, \
+        count, mtype, size, field_vector, flip_matrix, \
             names, sizes, field_vectors = self.dummy_magnet_set_values()
 
         # Assert from_sim_file throws error when file is not a string file path or an open file handle
         self.assertRaisesRegex(optid.errors.FileHandleError, '.*', MagnetSet.from_sim_file,
-                               mtype=mtype, reference_size=reference_size,
-                               reference_field_vector=reference_field_vector,
+                               mtype=mtype, size=size,
+                               field_vector=field_vector,
                                flip_matrix=flip_matrix, file=None)
 
     def test_static_from_sim_file_raises_on_bad_sim_file(self):
@@ -536,26 +539,26 @@ class MagnetSetTest(unittest.TestCase):
         inputs_path = os.path.join(data_path, 'inputs')
 
         # Make dummy parameters
-        count, mtype, reference_size, reference_field_vector, flip_matrix, \
+        count, mtype, size, field_vector, flip_matrix, \
             names, sizes, field_vectors = self.dummy_magnet_set_values()
 
         self.assertRaisesRegex(Exception, '.*', MagnetSet.from_sim_file,
-                               mtype=mtype, reference_size=reference_size,
-                               reference_field_vector=reference_field_vector, flip_matrix=flip_matrix,
+                               mtype=mtype, size=size,
+                               field_vector=field_vector, flip_matrix=flip_matrix,
                                file=os.path.join(inputs_path, 'example_missing_name.sim'))
 
         self.assertRaisesRegex(Exception, '.*', MagnetSet.from_sim_file,
-                               mtype=mtype, reference_size=reference_size,
-                               reference_field_vector=reference_field_vector, flip_matrix=flip_matrix,
+                               mtype=mtype, size=size,
+                               field_vector=field_vector, flip_matrix=flip_matrix,
                                file=os.path.join(inputs_path, 'example_missing_field_vector.sim'))
 
         self.assertRaisesRegex(Exception, '.*', MagnetSet.from_sim_file,
-                               mtype=mtype, reference_size=reference_size,
-                               reference_field_vector=reference_field_vector, flip_matrix=flip_matrix,
+                               mtype=mtype, size=size,
+                               field_vector=field_vector, flip_matrix=flip_matrix,
                                file=os.path.join(inputs_path, 'example_invalid_field_vector.sim'))
 
         self.assertRaisesRegex(Exception, '.*', MagnetSet.from_sim_file,
-                               mtype=mtype, reference_size=reference_size,
-                               reference_field_vector=reference_field_vector, flip_matrix=flip_matrix,
+                               mtype=mtype, size=size,
+                               field_vector=field_vector, flip_matrix=flip_matrix,
                                file=os.path.join(inputs_path, 'example_duplicate_name.sim'))
 

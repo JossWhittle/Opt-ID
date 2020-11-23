@@ -119,8 +119,14 @@ def validate_tensor(tensor : np.ndarray,
     streamlined assignment.
     """
 
-    if not isinstance(tensor, np.ndarray):
+    if tensor is None:
         raise ValidateTensorTypeError(expected_dtype=np.ndarray, observed_dtype=type(tensor))
+
+    elif not isinstance(tensor, np.ndarray):
+        try:
+            tensor = np.array(tensor, dtype=dtype)
+        except Exception as ex:
+            raise ValidateTensorTypeError(expected_dtype=np.ndarray, observed_dtype=type(tensor))
 
     if shape is not None:
         if tensor.ndim != len(shape):
