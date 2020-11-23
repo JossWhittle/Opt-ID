@@ -15,5 +15,5 @@
 
 from optid.spec.magnet_spec import MagnetSlotSpec, MagnetTypeSpec
 from optid.spec.beam_spec import BeamSpec
-from optid.spec.device_spec import DeviceSpec, PeriodicDeviceSpec
+from optid.spec.device_spec import DeviceSpec
 

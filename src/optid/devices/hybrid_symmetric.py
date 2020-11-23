@@ -16,13 +16,13 @@ from functools import partial
 
 import optid
 from optid.magnets import MagnetSet
-from optid.spec import PeriodicDeviceSpec
+from optid.spec import DeviceSpec
 from optid.constants import VECTOR_ZERO, VECTOR_Z, VECTOR_S, MATRIX_IDENTITY, MATRIX_ROTZ_180, MATRIX_ROTS_180
 
 logger = optid.utils.logging.get_logger('optid.devices.HybridSymmetricDeviceSpec')
 
 
-class HybridSymmetricDeviceSpec(PeriodicDeviceSpec):
+class HybridSymmetricDeviceSpec(DeviceSpec):
 
     def __init__(self, name : str, periods : int, interstice : float, pole_size : float, terminal_size : float,
                  hh : MagnetSet, he : MagnetSet, ht : MagnetSet):
@@ -54,39 +54,51 @@ class HybridSymmetricDeviceSpec(PeriodicDeviceSpec):
         spacing_pole = (pole_size + (interstice * 2))
 
         # Top Beam Prefix
-        self.push_magnet(beam='TOP', mtype='HT', direction_matrix=MATRIX_ROTZ_180, spacing=spacing_term)
-        self.push_magnet(beam='TOP', mtype='HE', direction_matrix=MATRIX_IDENTITY, spacing=spacing_pole)
+        self.push_magnet(beam='TOP', mtype='HT', period=None,
+                         direction_matrix=MATRIX_ROTZ_180, spacing=spacing_term)
+        self.push_magnet(beam='TOP', mtype='HE', period=None,
+                         direction_matrix=MATRIX_IDENTITY, spacing=spacing_pole)
 
         # Bottom Beam Prefix
-        self.push_magnet(beam='BTM', mtype='HT', direction_matrix=MATRIX_IDENTITY, spacing=spacing_term)
-        self.push_magnet(beam='BTM', mtype='HE', direction_matrix=MATRIX_ROTZ_180, spacing=spacing_pole)
+        self.push_magnet(beam='BTM', mtype='HT', period=None,
+                         direction_matrix=MATRIX_IDENTITY, spacing=spacing_term)
+        self.push_magnet(beam='BTM', mtype='HE', period=None,
+                         direction_matrix=MATRIX_ROTZ_180, spacing=spacing_pole)
 
         for period in range(periods):
             # Top Beam Period
-            self.push_magnet(beam='TOP', mtype='HH', direction_matrix=MATRIX_ROTZ_180, spacing=spacing_pole)
-            self.push_magnet(beam='TOP', mtype='HH', direction_matrix=MATRIX_IDENTITY, spacing=spacing_pole)
+            self.push_magnet(beam='TOP', mtype='HH', period=period,
+                             direction_matrix=MATRIX_ROTZ_180, spacing=spacing_pole)
+            self.push_magnet(beam='TOP', mtype='HH', period=period,
+                             direction_matrix=MATRIX_IDENTITY, spacing=spacing_pole)
 
             # Bottom Beam Period
-            self.push_magnet(beam='BTM', mtype='HH', direction_matrix=MATRIX_IDENTITY, spacing=spacing_pole)
-            self.push_magnet(beam='BTM', mtype='HH', direction_matrix=MATRIX_ROTZ_180, spacing=spacing_pole)
+            self.push_magnet(beam='BTM', mtype='HH', period=period,
+                             direction_matrix=MATRIX_IDENTITY, spacing=spacing_pole)
+            self.push_magnet(beam='BTM', mtype='HH', period=period,
+                             direction_matrix=MATRIX_ROTZ_180, spacing=spacing_pole)
 
         # Top Beam Suffix
-        self.push_magnet(beam='TOP', mtype='HE', direction_matrix=MATRIX_ROTZ_180, spacing=spacing_term)
-        self.push_magnet(beam='TOP', mtype='HT', direction_matrix=MATRIX_IDENTITY)
+        self.push_magnet(beam='TOP', mtype='HE', period=None,
+                         direction_matrix=MATRIX_ROTZ_180, spacing=spacing_term)
+        self.push_magnet(beam='TOP', mtype='HT', period=None,
+                         direction_matrix=MATRIX_IDENTITY)
 
         # Bottom Beam Suffix
-        self.push_magnet(beam='BTM', mtype='HE', direction_matrix=MATRIX_IDENTITY, spacing=spacing_term)
-        self.push_magnet(beam='BTM', mtype='HT', direction_matrix=MATRIX_ROTZ_180)
+        self.push_magnet(beam='BTM', mtype='HE', period=None,
+                         direction_matrix=MATRIX_IDENTITY, spacing=spacing_term)
+        self.push_magnet(beam='BTM', mtype='HT', period=None,
+                         direction_matrix=MATRIX_ROTZ_180)
 
 
-MagnetSetH  = partial(optid.magnets.MagnetSet, reference_field_vector=VECTOR_S, flip_matrix=MATRIX_ROTS_180)
+# Helpers for horizontal magnets
+MagnetSetH  = partial(optid.magnets.MagnetSet, field_vector=VECTOR_S, flip_matrix=MATRIX_ROTS_180)
 MagnetSetHH = partial(MagnetSetH, mtype='HH')
 MagnetSetHE = partial(MagnetSetH, mtype='HE')
 MagnetSetHT = partial(MagnetSetH, mtype='HT')
 
 MagnetSetH_from_sim_file  = partial(optid.magnets.MagnetSet.from_sim_file,
-                                    reference_field_vector=VECTOR_S,
-                                    flip_matrix=MATRIX_ROTS_180)
+                                    field_vector=VECTOR_S, flip_matrix=MATRIX_ROTS_180)
 MagnetSetHH_from_sim_file = partial(MagnetSetH_from_sim_file, mtype='HH')
 MagnetSetHE_from_sim_file = partial(MagnetSetH_from_sim_file, mtype='HE')
 MagnetSetHT_from_sim_file = partial(MagnetSetH_from_sim_file, mtype='HT')

@@ -199,7 +199,7 @@ class BeamSpecTest(unittest.TestCase):
         beam_spec.register_magnet_type(mtype=mtype, size=size, offset=offset,
                                        field_vector=field_vector, flip_matrix=flip_matrix)
 
-        beam_spec.push_magnet(mtype=mtype, direction_matrix=direction_matrix, spacing=1)
+        beam_spec.push_magnet(mtype=mtype, period=0, direction_matrix=direction_matrix, spacing=1)
 
         self.assertEqual(len(beam_spec.elements), 1)
         self.assertEqual(beam_spec.count, 1)
@@ -218,7 +218,7 @@ class BeamSpecTest(unittest.TestCase):
         direction_matrix = np.eye(3, dtype=np.float32)
 
         self.assertRaisesRegex(Exception, '.*', beam_spec.push_magnet,
-                               mtype=mtype, direction_matrix=direction_matrix, spacing=1)
+                               mtype=mtype, period=0, direction_matrix=direction_matrix, spacing=1)
 
     def test_pop_magnet(self):
         """
@@ -239,13 +239,13 @@ class BeamSpecTest(unittest.TestCase):
         beam_spec.register_magnet_type(mtype=mtype, size=size, offset=offset,
                                        field_vector=field_vector, flip_matrix=flip_matrix)
 
-        beam_spec.push_magnet(mtype=mtype, direction_matrix=direction_matrix, spacing=1)
+        beam_spec.push_magnet(mtype=mtype, period=0, direction_matrix=direction_matrix, spacing=1)
 
         self.assertEqual(len(beam_spec.elements), 1)
         self.assertEqual(beam_spec.count, 1)
         self.assertEqual(beam_spec.calculate_length(), 1)
 
-        beam_spec.push_magnet(mtype=mtype, direction_matrix=direction_matrix, spacing=1)
+        beam_spec.push_magnet(mtype=mtype, period=0, direction_matrix=direction_matrix, spacing=1)
 
         self.assertEqual(len(beam_spec.elements), 2)
         self.assertEqual(beam_spec.count, 2)
@@ -296,8 +296,8 @@ class BeamSpecTest(unittest.TestCase):
         beam_spec.register_magnet_type(mtype=mtype, size=size, offset=offset,
                                        field_vector=field_vector, flip_matrix=flip_matrix)
 
-        beam_spec.push_magnet(mtype=mtype, direction_matrix=direction_matrix, spacing=1)
-        beam_spec.push_magnet(mtype=mtype, direction_matrix=direction_matrix, spacing=1)
+        beam_spec.push_magnet(mtype=mtype, period=0, direction_matrix=direction_matrix, spacing=1)
+        beam_spec.push_magnet(mtype=mtype, period=0, direction_matrix=direction_matrix, spacing=1)
 
         self.assertEqual(len(beam_spec.elements), 2)
         self.assertEqual(beam_spec.count, 2)
@@ -312,6 +312,7 @@ class BeamSpecTest(unittest.TestCase):
             self.assertEqual(slot.beam, beam)
             validate_string(slot.slot, assert_non_empty=True)
             self.assertEqual(slot.mtype, mtype)
+            self.assertEqual(slot.period, 0)
             self.assertTrue(np.allclose(slot.size, size))
             validate_tensor(slot.position, shape=(3,))
             self.assertTrue(np.allclose(slot.field_vector, field_vector))

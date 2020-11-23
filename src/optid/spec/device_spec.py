@@ -31,7 +31,7 @@ class DeviceSpec:
     Represents an insertion device composed of multiple magnet types in fixed arrangements.
     """
 
-    def __init__(self, name : str):
+    def __init__(self, name : str, periods : int):
 
         try:
             self._name = validate_string(name, assert_non_empty=True)
@@ -39,11 +39,21 @@ class DeviceSpec:
             logger.exception('beam must be a non-empty string', exc_info=ex)
             raise ex
 
-        self._compiled     = False
-        self._beam_specs   = dict()
-        self._device_set   = dict()
-        self._device_slots = None
-        self._slot_specs   = None
+        try:
+            self._periods = periods
+            assert isinstance(self.periods, int)
+            assert self.periods > 0
+
+        except Exception as ex:
+            logger.exception('periods must be a positive integer', exc_info=ex)
+            raise ex
+
+        self._compiled      = False
+        self._beam_specs    = dict()
+        self._device_set    = dict()
+        self._device_slots  = None
+        self._slot_specs    = None
+        self._period_length = None
 
     @property
     def compiled(self) -> bool:
@@ -57,13 +67,23 @@ class DeviceSpec:
             raise ex
 
     def invalidate_compilation(self):
-        self._compiled     = False
-        self._device_slots = None
-        self._slot_specs   = None
+        self._compiled      = False
+        self._device_slots  = None
+        self._slot_specs    = None
+        self._period_length = None
 
     @property
     def name(self) -> str:
         return self._name
+
+    @property
+    def periods(self) -> int:
+        return self._periods
+
+    @property
+    def period_length(self) -> float:
+        self.assert_compiled()
+        return self._period_length
 
     @property
     def beam_specs(self) -> typing.Dict[str, BeamSpec]:
@@ -123,12 +143,12 @@ class DeviceSpec:
         assert mtype in self.device_set.keys()
 
         magnet_set = self.device_set[mtype]
-        self.beam_specs[beam].register_magnet_type(mtype=magnet_set.mtype, size=magnet_set.reference_size,
-                                                   offset=(magnet_set.reference_size * rel_offset),
-                                                   field_vector=magnet_set.reference_field_vector,
+        self.beam_specs[beam].register_magnet_type(mtype=magnet_set.mtype, size=magnet_set.size,
+                                                   offset=(magnet_set.size * rel_offset),
+                                                   field_vector=magnet_set.field_vector,
                                                    flip_matrix=magnet_set.flip_matrix)
 
-    def push_magnet(self, beam : str, mtype : str,
+    def push_magnet(self, beam : str, mtype : str, period : typing.Optional[int],
                     direction_matrix : optid.types.TensorMatrix,
                     spacing : float = 0.0):
         self.invalidate_compilation()
@@ -139,7 +159,8 @@ class DeviceSpec:
         validate_string(mtype, assert_non_empty=True)
         assert mtype in self.device_set.keys()
 
-        self.beam_specs[beam].push_magnet(mtype=mtype, direction_matrix=direction_matrix, spacing=spacing)
+        self.beam_specs[beam].push_magnet(mtype=mtype, period=period,
+                                          direction_matrix=direction_matrix, spacing=spacing)
 
     def pop_magnet(self, beam : str):
         self.invalidate_compilation()
@@ -149,12 +170,14 @@ class DeviceSpec:
 
         self.beam_specs[beam].pop_magnet()
 
+    def calculate_period_length(self):
+        return sum(beam.calculate_period_length() for beam in self.beam_specs.values()) / len(self.beam_specs)
+
     def calculate_slot_specs(self, gap : float, phase : float = 0.0,
                              offset : optid.types.TensorVector = optid.constants.VECTOR_ZERO):
 
-        beam_keys = sorted(self.beam_specs.keys())
-        return { beam : self.beam_specs[beam].calculate_slot_specs(gap=gap, phase=phase, offset=offset)
-                 for beam in beam_keys }
+        return { key : beam.calculate_slot_specs(gap=gap, phase=phase, offset=offset)
+                 for key, beam in self.beam_specs.items() }
 
     def calculate_device_slots(self, gap : float, phase : float = 0.0,
                                offset : optid.types.TensorVector = optid.constants.VECTOR_ZERO):
@@ -166,12 +189,11 @@ class DeviceSpec:
         for mtype in self.device_set.keys():
 
             mtype_slots_specs  = list(filter((lambda s : s.mtype == mtype), slots_specs))
-            beams              = [s.beam for s in mtype_slots_specs]
-            slots              = [s.slot for s in mtype_slots_specs]
+            beams              = [s.beam   for s in mtype_slots_specs]
+            slots              = [s.slot   for s in mtype_slots_specs]
             positions          = np.stack([s.position         for s in mtype_slots_specs], axis=0)
             gap_vectors        = np.stack([s.gap_vector       for s in mtype_slots_specs], axis=0)
             direction_matrices = np.stack([s.direction_matrix for s in mtype_slots_specs], axis=0)
-
             device_slots[mtype] = MagnetSlots(mtype=mtype, beams=beams, slots=slots, positions=positions,
                                               gap_vectors=gap_vectors, direction_matrices=direction_matrices)
 
@@ -183,26 +205,8 @@ class DeviceSpec:
     def compile(self, gap : float, phase : float = 0.0,
                 offset : optid.types.TensorVector = optid.constants.VECTOR_ZERO):
         self.invalidate_compilation()
-        self._slot_specs   = self.calculate_slot_specs(gap=gap, phase=phase, offset=offset)
-        self._device_slots = self.calculate_device_slots(gap=gap, phase=phase, offset=offset)
+        self._slot_specs    = self.calculate_slot_specs(gap=gap, phase=phase, offset=offset)
+        self._device_slots  = self.calculate_device_slots(gap=gap, phase=phase, offset=offset)
+        self._period_length = self.calculate_period_length()
         self._compiled = True
         return self
-
-
-class PeriodicDeviceSpec(DeviceSpec):
-
-    def __init__(self, name : str, periods : int):
-        super().__init__(name=name)
-
-        try:
-            self._periods = periods
-            assert isinstance(self.periods, int)
-            assert self.periods > 0
-
-        except Exception as ex:
-            logger.exception('periods must be a positive integer', exc_info=ex)
-            raise ex
-
-    @property
-    def periods(self) -> int:
-        return self._periods

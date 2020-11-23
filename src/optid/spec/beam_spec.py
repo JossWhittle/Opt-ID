@@ -25,6 +25,7 @@ logger = optid.utils.logging.get_logger('optid.spec.BeamSpec')
 
 BeamSlotSpec = typing.NamedTuple('BeamSlotSpec', [
     ('mtype', str),
+    ('period', typing.Optional[int]),
     ('direction_matrix', optid.types.TensorMatrix),
     ('spacing', float),
 ])
@@ -96,6 +97,38 @@ class BeamSpec:
     def count(self) -> int:
         return len(self.elements)
 
+    def calculate_period_length(self):
+
+        # Get all the slot specs for this beam
+        slot_specs = self.calculate_slot_specs(gap=0)
+
+        # For each slot spec in this beam accumulate the min and max extrema of the periods they belong to
+        beam_periods = dict()
+        for mslot in slot_specs:
+
+            # If this slot is not assigned to a period then do not include it in the calculation
+            if mslot.period is None:
+                continue
+
+            # Determine the bounds for this slot
+            slot_min = mslot.position[2] - (mslot.size[2] / 2)
+            slot_max = mslot.position[2] + (mslot.size[2] / 2) + mslot.spacing
+
+            # If this is not the first slot found for this period then merge the bounds
+            if mslot.period in beam_periods:
+                _slot_min, _slot_max = beam_periods[mslot.period]
+                slot_min,  slot_max  = min(slot_min, _slot_min), max(slot_max, _slot_max)
+
+            # Update the bounds for the current period
+            beam_periods[mslot.period] = (slot_min, slot_max)
+
+        # For all the periods found calculate the lengths
+        periods = [(period_max - period_min)
+                   for period_min, period_max in beam_periods.values()]
+
+        # Return the average period length
+        return sum(periods) / len(periods)
+
     def calculate_length(self) -> float:
         # Determine the full length of the beam
         s_offset, spacing = 0, 0
@@ -138,7 +171,8 @@ class BeamSpec:
             position[2] += (s_relative_offset - s_centre)
 
             slots.append(MagnetSlotSpec(beam=self.name, slot=f'S{slot_index:06d}', mtype=slot_spec.mtype,
-                                        size=mtype_spec.size, position=position, field_vector=mtype_spec.field_vector,
+                                        period=slot_spec.period, spacing=slot_spec.spacing, size=mtype_spec.size,
+                                        position=position, field_vector=mtype_spec.field_vector,
                                         direction_matrix=slot_spec.direction_matrix, flip_matrix=mtype_spec.flip_matrix,
                                         gap_vector=self.gap_vector, phase_vector=self.phase_vector))
 
@@ -162,6 +196,7 @@ class BeamSpec:
                                                   field_vector=field_vector, flip_matrix=flip_matrix)
 
     def push_magnet(self, mtype : str,
+                    period : typing.Optional[int],
                     direction_matrix : optid.types.TensorMatrix,
                     spacing : float = 0.0):
 
@@ -169,7 +204,8 @@ class BeamSpec:
         assert mtype in self.magnet_types.keys()
 
         assert spacing >= 0.0
-        self.elements.append(BeamSlotSpec(mtype=mtype, direction_matrix=direction_matrix, spacing=spacing))
+        self.elements.append(BeamSlotSpec(mtype=mtype, period=period,
+                                          direction_matrix=direction_matrix, spacing=spacing))
 
     def pop_magnet(self):
         assert len(self.elements) > 0

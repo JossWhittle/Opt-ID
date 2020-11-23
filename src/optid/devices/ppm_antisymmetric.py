@@ -17,13 +17,13 @@ from functools import partial
 
 import optid
 from optid.magnets import MagnetSet
-from optid.spec import PeriodicDeviceSpec
+from optid.spec import DeviceSpec
 from optid.constants import VECTOR_ZERO, VECTOR_Z, VECTOR_S, MATRIX_IDENTITY, MATRIX_ROTS_180, MATRIX_ROTZ_180
 
 logger = optid.utils.logging.get_logger('optid.devices.PPMAntisymmetricDeviceSpec')
 
 
-class PPMAntisymmetricDeviceSpec(PeriodicDeviceSpec):
+class PPMAntisymmetricDeviceSpec(DeviceSpec):
 
     def __init__(self, name : str, periods : int, interstice : float,
                  hh : MagnetSet, he : MagnetSet, vv : MagnetSet, ve : MagnetSet):
@@ -85,10 +85,22 @@ class PPMAntisymmetricDeviceSpec(PeriodicDeviceSpec):
         self.push_magnet(beam='BTM', mtype='HE', direction_matrix=MATRIX_IDENTITY)
 
 
-MagnetSetH  = partial(optid.magnets.MagnetSet, reference_field_vector=VECTOR_S, flip_matrix=MATRIX_ROTS_180)
+# Helpers for horizontal magnets
+MagnetSetH  = partial(optid.magnets.MagnetSet, field_vector=VECTOR_S, flip_matrix=MATRIX_ROTS_180)
 MagnetSetHH = partial(MagnetSetH, mtype='HH')
 MagnetSetHE = partial(MagnetSetH, mtype='HE')
 
-MagnetSetV  = partial(optid.magnets.MagnetSet, reference_field_vector=VECTOR_Z, flip_matrix=MATRIX_ROTZ_180)
+MagnetSetH_from_sim_file  = partial(optid.magnets.MagnetSet.from_sim_file,
+                                    field_vector=VECTOR_S, flip_matrix=MATRIX_ROTS_180)
+MagnetSetHH_from_sim_file = partial(MagnetSetH_from_sim_file, mtype='HH')
+MagnetSetHE_from_sim_file = partial(MagnetSetH_from_sim_file, mtype='HE')
+
+# Helpers for vertical magnets
+MagnetSetV  = partial(optid.magnets.MagnetSet, field_vector=VECTOR_Z, flip_matrix=MATRIX_ROTZ_180)
 MagnetSetVV = partial(MagnetSetV, mtype='VV')
 MagnetSetVE = partial(MagnetSetV, mtype='VE')
+
+MagnetSetV_from_sim_file  = partial(optid.magnets.MagnetSet.from_sim_file,
+                                    field_vector=VECTOR_Z, flip_matrix=MATRIX_ROTZ_180)
+MagnetSetVV_from_sim_file = partial(MagnetSetH_from_sim_file, mtype='VV')
+MagnetSetVE_from_sim_file = partial(MagnetSetH_from_sim_file, mtype='VE')

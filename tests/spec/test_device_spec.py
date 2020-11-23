@@ -42,7 +42,7 @@ class DeviceSpecTest(unittest.TestCase):
 
         name = 'TEST'
 
-        device_spec = DeviceSpec(name)
+        device_spec = DeviceSpec(name, periods=1)
 
         self.assertEqual(device_spec.name, name)
 

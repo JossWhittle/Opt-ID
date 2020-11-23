@@ -15,7 +15,6 @@
 
 import typing
 
-
 import optid
 
 
@@ -29,6 +28,8 @@ MagnetTypeSpec = typing.NamedTuple('MagnetTypeSpec', [
 
 MagnetSlotSpec = typing.NamedTuple('MagnetSlotSpec', [
     ('beam', str), ('slot', str), ('mtype', str),
+    ('period', typing.Optional[int]),
+    ('spacing', int),
     ('size', optid.types.TensorVector),
     ('position', optid.types.TensorPoint),
     ('field_vector', optid.types.TensorVector),

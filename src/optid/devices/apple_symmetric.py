@@ -17,7 +17,7 @@ from functools import partial
 
 import optid
 from optid.magnets import MagnetSet
-from optid.spec import PeriodicDeviceSpec
+from optid.spec import DeviceSpec
 from optid.constants import VECTOR_X, VECTOR_Z, VECTOR_S, \
                             MATRIX_IDENTITY, MATRIX_ROTS_180, MATRIX_ROTZ_180, MATRIX_ROTS_90, \
                             MATRIX_ROTS_270, MATRIX_ROTX_180, MATRIX_ROTS_270_ROTZ_180, MATRIX_ROTS_270_ROTX_180
@@ -25,7 +25,7 @@ from optid.constants import VECTOR_X, VECTOR_Z, VECTOR_S, \
 logger = optid.utils.logging.get_logger('optid.devices.APPLESymmetricDeviceSpec')
 
 
-class APPLESymmetricDeviceSpec(PeriodicDeviceSpec):
+class APPLESymmetricDeviceSpec(DeviceSpec):
 
     def __init__(self, name : str, periods : int, interstice : float, phasing_interstice : float, terminal_size : float,
                  hh : MagnetSet, he : MagnetSet, vv : MagnetSet, ve : MagnetSet):
@@ -141,10 +141,22 @@ class APPLESymmetricDeviceSpec(PeriodicDeviceSpec):
         self.push_magnet(beam='Q4', mtype='HE', direction_matrix=MATRIX_ROTS_90)
 
 
-MagnetSetH  = partial(optid.magnets.MagnetSet, reference_field_vector=VECTOR_S, flip_matrix=MATRIX_ROTS_180)
+# Helpers for horizontal magnets
+MagnetSetH  = partial(optid.magnets.MagnetSet, field_vector=VECTOR_S, flip_matrix=MATRIX_ROTS_180)
 MagnetSetHH = partial(MagnetSetH, mtype='HH')
 MagnetSetHE = partial(MagnetSetH, mtype='HE')
 
-MagnetSetV  = partial(optid.magnets.MagnetSet, reference_field_vector=VECTOR_Z, flip_matrix=MATRIX_IDENTITY)
+MagnetSetH_from_sim_file  = partial(optid.magnets.MagnetSet.from_sim_file,
+                                    field_vector=VECTOR_S, flip_matrix=MATRIX_ROTS_180)
+MagnetSetHH_from_sim_file = partial(MagnetSetH_from_sim_file, mtype='HH')
+MagnetSetHE_from_sim_file = partial(MagnetSetH_from_sim_file, mtype='HE')
+
+# Helpers for vertical magnets
+MagnetSetV  = partial(optid.magnets.MagnetSet, field_vector=VECTOR_Z, flip_matrix=MATRIX_IDENTITY)
 MagnetSetVV = partial(MagnetSetV, mtype='VV')
 MagnetSetVE = partial(MagnetSetV, mtype='VE')
+
+MagnetSetV_from_sim_file  = partial(optid.magnets.MagnetSet.from_sim_file,
+                                    field_vector=VECTOR_Z, flip_matrix=MATRIX_IDENTITY)
+MagnetSetVV_from_sim_file = partial(MagnetSetH_from_sim_file, mtype='VV')
+MagnetSetVE_from_sim_file = partial(MagnetSetH_from_sim_file, mtype='VE')
