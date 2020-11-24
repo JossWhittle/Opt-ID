@@ -322,3 +322,42 @@ class BeamSpecTest(unittest.TestCase):
             self.assertTrue(np.allclose(slot.phase_vector, phase_vector))
 
         self.assertTrue(slots[0].position[2] < slots[1].position[2])
+
+    def test_calculate_period_length(self):
+        """
+        Tests the BeamSpec class can calculate its period length.
+        """
+
+        beam, offset, gap_vector, phase_vector = self.dummy_beam_spec_values()
+
+        beam_spec = BeamSpec(beam=beam, offset=offset, gap_vector=gap_vector, phase_vector=phase_vector)
+
+        mtype            = 'TEST'
+        size             = np.ones((3,), dtype=np.float32)
+        offset           = np.zeros((3,), dtype=np.float32)
+        field_vector     = np.array([0, 1, 0], dtype=np.float32)
+        flip_matrix      = np.eye(3, dtype=np.float32)
+        direction_matrix = np.eye(3, dtype=np.float32)
+
+        beam_spec.register_magnet_type(mtype=mtype, size=size, offset=offset,
+                                       field_vector=field_vector, flip_matrix=flip_matrix)
+
+        beam_spec.push_magnet(mtype=mtype, period=None, direction_matrix=direction_matrix, spacing=1)
+        beam_spec.push_magnet(mtype=mtype, period=0, direction_matrix=direction_matrix, spacing=1)
+        beam_spec.push_magnet(mtype=mtype, period=0, direction_matrix=direction_matrix, spacing=1)
+
+        self.assertTrue(np.allclose(beam_spec.calculate_period_length(), 4))
+
+        beam_spec.push_magnet(mtype=mtype, period=0, direction_matrix=direction_matrix, spacing=1)
+
+        self.assertTrue(np.allclose(beam_spec.calculate_period_length(), 6))
+
+        beam_spec.push_magnet(mtype=mtype, period=1, direction_matrix=direction_matrix, spacing=1)
+        beam_spec.push_magnet(mtype=mtype, period=1, direction_matrix=direction_matrix, spacing=1)
+        beam_spec.push_magnet(mtype=mtype, period=1, direction_matrix=direction_matrix, spacing=1)
+
+        self.assertTrue(np.allclose(beam_spec.calculate_period_length(), 6))
+
+        beam_spec.push_magnet(mtype=mtype, period=None, direction_matrix=direction_matrix)
+
+        self.assertTrue(np.allclose(beam_spec.calculate_period_length(), 6))
