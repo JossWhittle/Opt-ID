@@ -15,6 +15,12 @@
 
 from setuptools import setup, find_packages
 
+# Attempt to import packages that we force the installation of...
+# Throws exception at package install time if not found!
+#   - JAX can be JAX CPU or GPU and requiring one can force the overwrite of an existing version
+#   - Radia requires manual build steps
+import jax
+import radia
 
 setup(
     version='3.0a',
