@@ -29,7 +29,7 @@ jobs:
     runs-on: ubuntu-20.04
 
     env:
-      DOCKER_REPO: opt-id:env-v3
+      DOCKER_REPO_TAG: opt-id:env-v3
 
     steps:
 
@@ -38,10 +38,10 @@ jobs:
 
       # Pull Docker image and execute tests
       - name: Pull existing Docker image
-        run: docker pull ${{ secrets.DOCKER_USERNAME }}/$DOCKER_REPO || true
+        run: docker pull ${{ secrets.DOCKER_USERNAME }}/$DOCKER_REPO_TAG || true
 
       - name: Start container
-        run: docker run -itd --name env -v $(pwd):/tmp/repo/ -w /tmp/repo/ ${{ secrets.DOCKER_USERNAME }}/$DOCKER_REPO
+        run: docker run -itd --name env -v $(pwd):/tmp/repo/ -w /tmp/repo/ ${{ secrets.DOCKER_USERNAME }}/$DOCKER_REPO_TAG
 
       - name: Install Opt-ID within container
         run: docker exec env pip install -e .
