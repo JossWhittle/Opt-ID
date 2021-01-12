@@ -33,10 +33,10 @@ jobs:
       # Configure environment variable depending on which branch we are running on
       - name: Set env to master
         if: endsWith(github.ref, '/master')
-        run: echo "DOCKER_REPO_TAG=opt-id:env-v3" >> $GITHUB_ENV
+        run: echo "DOCKER_REPO_TAG=opt-id:env" >> $GITHUB_ENV
       - name: Set env to development
         if: (endsWith(github.ref, '/development') || endsWith(github.ref, '/development-r3.0') || endsWith(github.ref, '/development-r3.0-jax-core'))
-        run: echo "DOCKER_REPO_TAG=opt-id:env-v3-dev" >> $GITHUB_ENV
+        run: echo "DOCKER_REPO_TAG=opt-id:env-${GITHUB_REF##*/}" >> $GITHUB_ENV
 
       # Checks-out repository under $(pwd)
       - uses: actions/checkout@v2
