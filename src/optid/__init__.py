@@ -13,8 +13,8 @@
 # language governing permissions and limitations under the License.
 
 
-from optid import constants
-from optid import utils
+from . import constants
+from . import utils
 
 import logging
 logging.getLogger('optid').addHandler(logging.NullHandler())
