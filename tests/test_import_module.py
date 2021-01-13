@@ -20,8 +20,7 @@ import unittest
 import optid
 
 # Configure debug logging
-from optid.utils.logging import attach_console_logger
-attach_console_logger(remove_existing=True)
+optid.utils.logging.attach_console_logger(remove_existing=True)
 
 
 class ImportModuleTest(unittest.TestCase):

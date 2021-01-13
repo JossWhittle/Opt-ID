@@ -14,15 +14,11 @@
 
 
 from optid import constants
-from optid import types
-from optid import magnets
-from optid import devices
-from optid import errors
 from optid import utils
 
-# From the root of the optid namespace configure the base logger which attaches
-# a NullHandler to discard all logging messages.
-utils.logging.configure_base_logger()
+import logging
+logging.getLogger('optid').addHandler(logging.NullHandler())
+
 
 VERSION = 'v3.0a'
 """

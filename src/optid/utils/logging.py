@@ -16,19 +16,6 @@
 import logging
 
 
-from logging import getLogger as get_logger
-"""
-Bring base python logger.getLogger into local namespace and make its naming consistent with the optid naming. 
-"""
-
-
-def configure_base_logger():
-    """
-    Base logger in the root optid namespace defaults to a NullHandler to discard all messages.
-    """
-    get_logger('optid').addHandler(logging.NullHandler())
-
-
 def attach_console_logger(log_level : int = logging.DEBUG, remove_existing : bool = True):
     """
     Configure a console handler to redirect logging messages at the desired level to stdout.
@@ -42,7 +29,7 @@ def attach_console_logger(log_level : int = logging.DEBUG, remove_existing : boo
         If true then remove any existing console handlers from the logger before adding this one.
     """
 
-    logger = get_logger('optid')
+    logger = logging.getLogger('optid')
     logger.setLevel(log_level)
 
     format_string = '%(asctime)s | %(levelname)-8s | %(name)-12s | %(funcName)s | %(message)s'
