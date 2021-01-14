@@ -28,7 +28,7 @@ optid.utils.logging.attach_console_logger(remove_existing=True)
 
 class LatticeTest(unittest.TestCase):
     """
-    Test affine arithmetic functions.
+    Test lattice arithmetic functions.
     """
 
     def test_unit_limits(self):
