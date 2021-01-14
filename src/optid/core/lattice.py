@@ -134,12 +134,21 @@ def orthonormal_interpolate(value_lattice, point_lattice, order=1, mode='nearest
     v_shape    = value_lattice.shape[:p_channels]
     v_channels = value_lattice.shape[p_channels:]  # The result will have this shape for its trailing dimensions
 
-    # Collapse multiple channel dims to one dim, and transpose result to compact each channel separately
-    value_lattice = jnp.reshape(value_lattice, (*v_shape, -1)).T
+    # # Collapse multiple channel dims to one dim, and transpose result to compact each channel separately
+    # value_lattice = jnp.moveaxis(jnp.reshape(value_lattice, (*v_shape, -1)), -1, 0)
+    #
+    # # Interpolate each channel separately and stack the results together
+    # interp_values = jnp.stack([jax.scipy.ndimage.map_coordinates(channel, point_lattice, order=order, mode=mode, **kargs)
+    #                            for channel in value_lattice], axis=-1)
 
-    # Interpolate each channel separately and stack the results together
-    interp_values = jnp.stack([jax.scipy.ndimage.map_coordinates(channel, point_lattice, order=order, mode=mode, **kargs)
-                               for channel in value_lattice], axis=-1)
+    # Collapse multiple channel dims to one dim
+    value_lattice = jnp.reshape(value_lattice, (*v_shape, -1))
+
+    def interp_channel(channel):
+        return jax.scipy.ndimage.map_coordinates(channel, point_lattice, order=order, mode=mode, **kargs)
+
+    # Interpolate each channel independently (in parallel) and stack the results together
+    interp_values = jax.vmap(interp_channel, in_axes=-1, out_axes=-1)(value_lattice)
 
     # Reshape the results to have the spatial dims from the point lattice and the value dims from the value lattice
     return jnp.reshape(interp_values, (*p_shape, *v_channels))
