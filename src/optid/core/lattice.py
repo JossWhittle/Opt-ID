@@ -13,8 +13,6 @@
 # language governing permissions and limitations under the License.
 
 
-import numpy as np
-
 import jax
 import jax.numpy as jnp
 
@@ -42,11 +40,6 @@ def unit_lattice(x, z, s):
     Singleton dimensions are centred at 0.
     Non-singleton dimensions are uniformly distributed from -0.5 to +0.5.
 
-    Note:
-        Defined in numpy rather than JAX intentionally due to use case.
-        Only ever used CPU side to pass coordinates to Radia!
-        Implicit coordinates or matrix applied to implicit coordinates used everywhere else.
-
     :param x:
         Number of steps along the X-axis.
 
@@ -59,10 +52,10 @@ def unit_lattice(x, z, s):
     :return:
         Lattice of XZS coordinates uniformly distributed over the unit-cube at origin.
     """
-    return np.stack(np.meshgrid(np.linspace(*unit_limits(x), x),
-                                np.linspace(*unit_limits(z), z),
-                                np.linspace(*unit_limits(s), s),
-                                indexing='ij'), axis=-1)
+    return jnp.stack(jnp.meshgrid(jnp.linspace(*unit_limits(x), x),
+                                  jnp.linspace(*unit_limits(z), z),
+                                  jnp.linspace(*unit_limits(s), s),
+                                  indexing='ij'), axis=-1)
 
 
 def orthonormal_interpolate(value_lattice, point_lattice, order=1, mode='nearest', **kargs):
