@@ -13,16 +13,4 @@
 # language governing permissions and limitations under the License.
 
 
-from . import constants
-from . import core
 from . import lattice
-from . import utils
-
-import logging
-logging.getLogger('optid').addHandler(logging.NullHandler())
-
-
-VERSION = 'v3.0a'
-"""
-str : Opt-ID version string.
-"""
