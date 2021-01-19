@@ -82,7 +82,8 @@ def rotate_x(theta):
     return jnp.array([[ 1,  0,  0,  0],
                       [ 0,  c, -s,  0],
                       [ 0,  s,  c,  0],
-                      [ 0,  0,  0,  1]]).T
+                      [ 0,  0,  0,  1]],
+                     dtype=jnp.float32).T
 
 
 @jax.jit
@@ -100,7 +101,8 @@ def rotate_z(theta):
     return jnp.array([[ c,  0,  s,  0],
                       [ 0,  1,  0,  0],
                       [-s,  0,  c,  0],
-                      [ 0,  0,  0,  1]]).T
+                      [ 0,  0,  0,  1]],
+                     dtype=jnp.float32).T
 
 
 @jax.jit
@@ -118,7 +120,8 @@ def rotate_s(theta):
     return jnp.array([[ c, -s,  0,  0],
                       [ s,  c,  0,  0],
                       [ 0,  0,  1,  0],
-                      [ 0,  0,  0,  1]]).T
+                      [ 0,  0,  0,  1]],
+                     dtype=jnp.float32).T
 
 
 @jax.jit
@@ -141,7 +144,8 @@ def scale(x, z, s):
     return jnp.array([[x, 0, 0, 0],
                       [0, z, 0, 0],
                       [0, 0, s, 0],
-                      [0, 0, 0, 1]]).T
+                      [0, 0, 0, 1]],
+                     dtype=jnp.float32).T
 
 
 @jax.jit
@@ -164,4 +168,5 @@ def translate(x, z, s):
     return jnp.array([[1, 0, 0, x],
                       [0, 1, 0, z],
                       [0, 0, 1, s],
-                      [0, 0, 0, 1]]).T
+                      [0, 0, 0, 1]],
+                     dtype=jnp.float32).T
