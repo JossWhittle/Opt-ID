@@ -13,9 +13,11 @@
 # language governing permissions and limitations under the License.
 
 
+import jax
 import jax.numpy as jnp
 
 
+@jax.jit
 def transform_points(lattice, matrix):
     """
     Apply a 4x4 affine transformation to a lattice of points in XZS.
@@ -33,6 +35,7 @@ def transform_points(lattice, matrix):
     return (lattice @ matrix)[..., :-1]
 
 
+@jax.jit
 def transform_vectors(lattice, matrix):
     """
     Apply a 4x4 affine transformation to a lattice of vectors in XZS.
@@ -50,6 +53,7 @@ def transform_vectors(lattice, matrix):
     return (lattice @ matrix)[..., :-1]
 
 
+@jax.jit
 def radians(degrees):
     """
     Convert degrees to radians.
@@ -63,6 +67,7 @@ def radians(degrees):
     return degrees * (jnp.pi / 180.0)
 
 
+@jax.jit
 def rotate_x(theta):
     """
     Create a 4x4 affine matrix representing a rotation on the X-axis.
@@ -80,6 +85,7 @@ def rotate_x(theta):
                       [ 0,  0,  0,  1]]).T
 
 
+@jax.jit
 def rotate_z(theta):
     """
     Create a 4x4 affine matrix representing a rotation on the Z-axis.
@@ -97,6 +103,7 @@ def rotate_z(theta):
                       [ 0,  0,  0,  1]]).T
 
 
+@jax.jit
 def rotate_s(theta):
     """
     Create a 4x4 affine matrix representing a rotation on the S-axis.
@@ -114,6 +121,7 @@ def rotate_s(theta):
                       [ 0,  0,  0,  1]]).T
 
 
+@jax.jit
 def scale(x, z, s):
     """
     Create a 4x4 affine matrix representing a set of orthogonal scale transformations.
@@ -136,6 +144,7 @@ def scale(x, z, s):
                       [0, 0, 0, 1]]).T
 
 
+@jax.jit
 def translate(x, z, s):
     """
     Create a 4x4 affine matrix representing a set of orthogonal translation transformations.

@@ -76,7 +76,7 @@ class LatticeTest(unittest.TestCase):
                  [[+0.5, +0.5, 0]]]
             ]), atol=1e-5))
 
-    def test_unit_to_orthonormal_coordinates(self):
+    def test_unit_to_orthonormal_matrix(self):
         """
         Test converting from unit to orthonormal coordinates.
         """
@@ -91,7 +91,7 @@ class LatticeTest(unittest.TestCase):
             ])
 
             self.assertTrue(np.allclose(affine.transform_points(lattice.unit_lattice(2, 2, 2),
-                                                                lattice.unit_to_orthonormal_coordinates(2, 2, 2)),
+                                                                lattice.unit_to_orthonormal_matrix(2, 2, 2)),
                                         expected, atol=1e-5))
 
     def test_orthonormal_interpolate_1d(self):

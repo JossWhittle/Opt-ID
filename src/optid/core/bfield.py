@@ -13,9 +13,12 @@
 # language governing permissions and limitations under the License.
 
 
+import jax
+
 from . import lattice
 
 
+@jax.jit
 def bfield_from_lookup(lookup, vector):
     """
     Compute the bfield from a magnet with the given field vector using a lookup table of field rotation matrices.
@@ -37,6 +40,7 @@ def bfield_from_lookup(lookup, vector):
     return lookup @ vector
 
 
+@jax.jit
 def bfield_from_interpolated_lookup(lookup, shim, vector):
     """
     Compute the bfield from a magnet with the given field vector using a lookup table of field rotation matrices.

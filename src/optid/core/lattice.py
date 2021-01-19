@@ -19,6 +19,7 @@ import jax.numpy as jnp
 from . import affine
 
 
+@jax.partial(jax.jit, static_argnums=0)
 def unit_limits(n):
     """
     Find the limits along an axis for a unit-cube centred at origin.
@@ -35,6 +36,7 @@ def unit_limits(n):
     return (-0.5, 0.5) if (n > 1) else (0, 0)
 
 
+@jax.partial(jax.jit, static_argnums=(0, 1, 2))
 def unit_lattice(x, z, s):
     """
     Generate a 3-lattice of XZS coordinates across the unit-cube at origin.
@@ -60,7 +62,8 @@ def unit_lattice(x, z, s):
                                   indexing='ij'), axis=-1)
 
 
-def unit_to_orthonormal_coordinates(x, z, s):
+@jax.jit
+def unit_to_orthonormal_matrix(x, z, s):
     """
     Starting at a coordinate system centred at origin spanning -0.5 to +0.5 transform the coordinates
     to a coordinate system spanning from [0, x), [0, z), and [0, s).
@@ -80,6 +83,7 @@ def unit_to_orthonormal_coordinates(x, z, s):
     return affine.translate(0.5, 0.5, 0.5) @ affine.scale(x, z, s)
 
 
+@jax.jit
 def orthonormal_interpolate(value_lattice, point_lattice, order=1, mode='nearest', **kargs):
     """
     Perform an interpolated lookup of the values in the value lattice using the coordinates in the coordinate lattice.
