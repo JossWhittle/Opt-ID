@@ -15,19 +15,17 @@
 
 from beartype import beartype
 import typing as typ
-import numpy as np
 import jax.numpy as jnp
+
 from .. import core
 
 
 class Lattice:
 
     @beartype
-    def __init__(self, unit_to_world_matrix: jnp.ndarray, x: int, z: int, s: int):
-        self.unit_to_world_matrix = unit_to_world_matrix
-        self.x = x
-        self.z = z
-        self.s = s
+    def __init__(self, matrix: jnp.ndarray, shape: typ.Tuple[int, int, int]):
+        self.unit_to_world_matrix = matrix
+        self.shape = shape
 
     @beartype
     def transform_points_world_to_unit(self, point_lattice: jnp.ndarray) -> jnp.ndarray:
@@ -36,7 +34,7 @@ class Lattice:
             raise ValueError(f'point_lattice must be shape (..., 3) but is : '
                              f'{point_lattice.shape}')
 
-        if isinstance(point_lattice.dtype, jnp.float32):
+        if point_lattice.dtype != jnp.float32:
             raise TypeError(f'point_lattice must have dtype (float32) but is : '
                             f'{point_lattice.dtype}')
 
@@ -49,7 +47,7 @@ class Lattice:
             raise ValueError(f'point_lattice must be shape (..., 3) but is : '
                              f'{point_lattice.shape}')
 
-        if isinstance(point_lattice.dtype, jnp.float32):
+        if point_lattice.dtype != jnp.float32:
             raise TypeError(f'point_lattice must have dtype (float32) but is : '
                             f'{point_lattice.dtype}')
 
@@ -61,7 +59,7 @@ class Lattice:
         """
         Lattice tensor with the desired shape centred at origin spanning -0.5 to +0.5
         """
-        return core.lattice.unit_lattice(self.x, self.z, self.s)
+        return core.lattice.unit_lattice(*self.shape)
 
     @property
     @beartype
@@ -93,7 +91,7 @@ class Lattice:
         """
         Matrix that maps from unit coordinates centred at origin -0.5 to +0.5 to orthonormal space.
         """
-        return core.lattice.unit_to_orthonormal_matrix(self.x, self.z, self.s)
+        return core.lattice.unit_to_orthonormal_matrix(*self.shape)
 
     @property
     @beartype
@@ -111,7 +109,7 @@ class Lattice:
             raise ValueError(f'unit_to_world_matrix must be an affine matrix with shape (4, 4) but is : '
                              f'{unit_to_world_matrix.shape}')
 
-        if isinstance(unit_to_world_matrix.dtype, jnp.float32):
+        if unit_to_world_matrix.dtype != jnp.float32:
             raise TypeError(f'unit_to_world_matrix must have dtype (float32) but is : '
                             f'{unit_to_world_matrix.dtype}')
 
@@ -119,36 +117,17 @@ class Lattice:
 
     @property
     @beartype
-    def x(self) -> int:
-        return self._x
+    def shape(self) -> typ.Tuple[int, int, int]:
+        return self._shape
 
-    @x.setter
+    @shape.setter
     @beartype
-    def x(self, x: int):
+    def shape(self, shape: typ.Tuple[int, int, int]):
+        x, z, s = shape
         if x <= 0:
             raise ValueError(f'x shape must be a positive integer but is : {x}')
-        self._x = x
-
-    @property
-    @beartype
-    def z(self) -> int:
-        return self._z
-
-    @z.setter
-    @beartype
-    def z(self, z: int):
         if z <= 0:
             raise ValueError(f'z shape must be a positive integer but is : {z}')
-        self._z = z
-
-    @property
-    @beartype
-    def s(self) -> int:
-        return self._s
-
-    @s.setter
-    @beartype
-    def s(self, s: int):
         if s <= 0:
             raise ValueError(f's shape must be a positive integer but is : {s}')
-        self._s = s
+        self._shape = shape
