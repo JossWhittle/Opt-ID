@@ -16,6 +16,8 @@
 import jax
 import jax.numpy as jnp
 
+from . import affine
+
 
 def unit_limits(n):
     """
@@ -56,6 +58,26 @@ def unit_lattice(x, z, s):
                                   jnp.linspace(*unit_limits(z), z),
                                   jnp.linspace(*unit_limits(s), s),
                                   indexing='ij'), axis=-1)
+
+
+def unit_to_orthonormal_coordinates(x, z, s):
+    """
+    Starting at a coordinate system centred at origin spanning -0.5 to +0.5 transform the coordinates
+    to a coordinate system spanning from [0, x), [0, z), and [0, s).
+
+    :param x:
+        Size of the resulting span on the X-axis.
+
+    :param z:
+        Size of the resulting span on the Z-axis.
+
+    :param s:
+        Size of the resulting span on the S-axis.
+
+    :return:
+        Affine transformation matrix that converts between coordinate spaces.
+    """
+    return affine.translate(0.5, 0.5, 0.5) @ affine.scale(x, z, s)
 
 
 def orthonormal_interpolate(value_lattice, point_lattice, order=1, mode='nearest', **kargs):

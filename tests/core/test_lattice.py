@@ -20,7 +20,7 @@ import jax.numpy as jnp
 
 # Test imports
 import optid
-from optid.core import lattice
+from optid.core import affine, lattice
 
 # Configure debug logging
 optid.utils.logging.attach_console_logger(remove_existing=True)
@@ -75,6 +75,24 @@ class LatticeTest(unittest.TestCase):
                 [[[+0.5, -0.5, 0]],
                  [[+0.5, +0.5, 0]]]
             ]), atol=1e-5))
+
+    def test_unit_to_orthonormal_coordinates(self):
+        """
+        Test converting from unit to orthonormal coordinates.
+        """
+
+        with self.subTest(x=2, z=2, s=2):
+
+            expected = jnp.array([
+                [[[0.0, 0.0, 0.0], [0.0, 0.0, 2.0]],
+                 [[0.0, 2.0, 0.0], [0.0, 2.0, 2.0]]],
+                [[[2.0, 0.0, 0.0], [2.0, 0.0, 2.0]],
+                 [[2.0, 2.0, 0.0], [2.0, 2.0, 2.0]]]
+            ])
+
+            self.assertTrue(np.allclose(affine.transform_points(lattice.unit_lattice(2, 2, 2),
+                                                                lattice.unit_to_orthonormal_coordinates(2, 2, 2)),
+                                        expected, atol=1e-5))
 
     def test_orthonormal_interpolate_1d(self):
         """
