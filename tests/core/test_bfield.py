@@ -48,3 +48,49 @@ class BfieldTest(unittest.TestCase):
                                                 [[ 0,  0,  1], [ 0,  0, -1]]],
                                                [[[ 0, -1,  0], [ 0,  1,  0]],
                                                 [[ 0,  0,  1], [ 0,  0, -1]]]]), atol=1e-5))
+
+    def test_bfield_from_interpolated_lookup(self):
+        """
+        Test that lookups can be interpolated.
+        """
+
+        lookup = jnp.array([
+            [[[affine.rotate_x(affine.radians(90))[:3, :3], affine.rotate_x(affine.radians(-90))[:3, :3]],
+              [affine.rotate_z(affine.radians(90))[:3, :3], affine.rotate_z(affine.radians(-90))[:3, :3]]],
+             [[affine.rotate_s(affine.radians(90))[:3, :3], affine.rotate_s(affine.radians(-90))[:3, :3]],
+              [affine.rotate_z(affine.radians(90))[:3, :3], affine.rotate_z(affine.radians(-90))[:3, :3]]]],
+            [[[affine.scale(0, 0, 0)[:3, :3], affine.scale(0, 0, 0)[:3, :3]],
+              [affine.scale(0, 0, 0)[:3, :3], affine.scale(0, 0, 0)[:3, :3]]],
+             [[affine.scale(0, 0, 0)[:3, :3], affine.scale(0, 0, 0)[:3, :3]],
+              [affine.scale(0, 0, 0)[:3, :3], affine.scale(0, 0, 0)[:3, :3]]]]
+        ])
+
+        self.assertTrue(np.allclose(
+            bfield.bfield_from_interpolated_lookup(lookup, jnp.array([0.0]), jnp.array([1, 0, 0])),
+            jnp.array([
+                [[[ 1,  0,  0], [ 1,  0,  0]],
+                 [[ 0,  0,  1], [ 0,  0, -1]]],
+                [[[ 0, -1,  0], [ 0,  1,  0]],
+                 [[ 0,  0,  1], [ 0,  0, -1]]]
+            ]),
+            atol=1e-5))
+
+        self.assertTrue(np.allclose(
+            bfield.bfield_from_interpolated_lookup(lookup, jnp.array([0.5]), jnp.array([1, 0, 0])),
+            jnp.array([
+                [[[ 0.5,    0,    0], [ 0.5,    0,    0]],
+                 [[   0,    0,  0.5], [   0,    0, -0.5]]],
+                [[[   0, -0.5,    0], [   0,  0.5,    0]],
+                 [[   0,    0,  0.5], [   0,    0, -0.5]]]
+            ]),
+            atol=1e-5))
+
+        self.assertTrue(np.allclose(
+            bfield.bfield_from_interpolated_lookup(lookup, jnp.array([1.0]), jnp.array([1, 0, 0])),
+            jnp.array([
+                [[[ 0,  0,  0], [ 0,  0,  0]],
+                 [[ 0,  0,  0], [ 0,  0,  0]]],
+                [[[ 0,  0,  0], [ 0,  0,  0]],
+                 [[ 0,  0,  0], [ 0,  0,  0]]]
+            ]),
+            atol=1e-5))
