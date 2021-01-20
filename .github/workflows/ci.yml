@@ -56,7 +56,11 @@ jobs:
 
       - name: Execute tests within container
         run: |
-          docker exec env python -m pytest --cov=src tests/ --cov-report term-missing 2>&1 | tee pytest-results.txt
+          docker exec env python -m pytest --cov=src tests/ --cov-report xml:coverage.xml --cov-report term-missing 2>&1 | tee pytest-results.txt
+
+      - name: Submit coverage to Codecov
+        run: |
+          bash <(curl -s https://codecov.io/bash) -t ${{ secrets.CODECOV_TOKEN }} -f coverage.xml
 
       - name: Save test results as artifact
         if: always()
