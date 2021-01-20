@@ -18,6 +18,10 @@ name: CI - Update README from Template
 on:
   push:
     branches: [ master, development, development-r3.0, development-r3.0-jax-core ]
+    paths:
+      - README.md
+      - README.template
+      - .github/workflows/readme.yml
 
   workflow_dispatch:
 
@@ -46,8 +50,8 @@ jobs:
         run: |
           cat README.template | python3 -c "${JINJA_CMD}" > README.md
 
-      - name: Save results as artifact
-        uses: actions/upload-artifact@v2
+      - name: Commit updated README and push to current branch
+      - uses: stefanzweifel/git-auto-commit-action@v4
         with:
-          name: README
-          path: README.md
+          file_pattern: README.md
+          commit_message: Regenerate README from template
