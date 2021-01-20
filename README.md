@@ -1,6 +1,6 @@
 # Opt-ID: A System for Simulating and Optimizing Synchrotron Insertion Devices through Swarm Optimization
 
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.3968577.svg)](https://doi.org/10.5281/zenodo.3968577) ![GitHub](https://img.shields.io/github/license/JossWhittle/Opt-ID?kill_cache=1) ![CI - Pull Docker Image and Execute Tests](https://github.com/JossWhittle/Opt-ID/workflows/CI%20-%20Pull%20Docker%20Image%20and%20Execute%20Tests/badge.svg?branch=development-r3.0-jax-core) [![codecov](https://codecov.io/gh/JossWhittle/Opt-ID/branch/development-r3.0-jax-core/graph/badge.svg?token=8FZECRXZQH)](https://codecov.io/gh/JossWhittle/Opt-ID)  [![Documentation Status](https://readthedocs.org/projects/opt-id/badge/?version=latest&kill_cache=1)](https://opt-id.readthedocs.io/en/latest/?badge=latest&kill_cache=1)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.3968577.svg)](https://doi.org/10.5281/zenodo.3968577) ![GitHub](https://img.shields.io/github/license/JossWhittle/Opt-ID?kill_cache=1)  [![codecov](https://codecov.io/gh/JossWhittle/Opt-ID/branch/development-r3.0-jax-core/graph/badge.svg?token=8FZECRXZQH)](https://codecov.io/gh/JossWhittle/Opt-ID)  [![Documentation Status](https://readthedocs.org/projects/opt-id/badge/?version=latest&kill_cache=1)](https://opt-id.readthedocs.io/en/latest/?badge=latest&kill_cache=1)
 
 ---
 
