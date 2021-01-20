@@ -45,17 +45,18 @@ jobs:
       - name: Install Jinja2
         run: pip3 install Jinja2
 
-      - name: Execute Jinja2
+      - name: Add ENV variable for current branch
         run: |
           echo "GITHUB_BRANCH=${GITHUB_REF##*/}" >> $GITHUB_ENV
-          echo "${JINJA_TEMPLATE}"
-          echo "${JINJA_OUTPUT}"
+
+      - name: Execute Jinja2
+        run: |
           echo "${GITHUB_BRANCH}"
-          cat "${JINJA_TEMPLATE}" | python3 -c "${JINJA_CMD}" > "${JINJA_OUTPUT}"
+          cat ${JINJA_TEMPLATE} | python3 -c "${JINJA_CMD}" > ${JINJA_OUTPUT}
           ls -la
 
       - name: Save results as artifact
         uses: actions/upload-artifact@v2
         with:
           name: output
-          path: "${JINJA_OUTPUT}"
+          path: ${JINJA_OUTPUT}
