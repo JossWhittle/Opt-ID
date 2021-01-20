@@ -41,7 +41,7 @@ def bfield_from_lookup(lookup, vector):
 
 
 @jax.jit
-def bfield_from_interpolated_lookup(lookup, shim, vector):
+def bfield_from_interpolated_lookup(lookup, vector, shim):
     """
     Compute the bfield from a magnet with the given field vector using a lookup table of field rotation matrices.
 

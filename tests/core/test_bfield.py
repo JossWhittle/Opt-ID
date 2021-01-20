@@ -66,7 +66,7 @@ class BfieldTest(unittest.TestCase):
         ])
 
         self.assertTrue(np.allclose(
-            bfield.bfield_from_interpolated_lookup(lookup, jnp.array([0.0]), jnp.array([1, 0, 0])),
+            bfield.bfield_from_interpolated_lookup(lookup, jnp.array([1, 0, 0]), jnp.array([0.0])),
             jnp.array([
                 [[[ 1,  0,  0], [ 1,  0,  0]],
                  [[ 0,  0,  1], [ 0,  0, -1]]],
@@ -76,7 +76,7 @@ class BfieldTest(unittest.TestCase):
             atol=1e-5))
 
         self.assertTrue(np.allclose(
-            bfield.bfield_from_interpolated_lookup(lookup, jnp.array([0.5]), jnp.array([1, 0, 0])),
+            bfield.bfield_from_interpolated_lookup(lookup, jnp.array([1, 0, 0]), jnp.array([0.5])),
             jnp.array([
                 [[[ 0.5,    0,    0], [ 0.5,    0,    0]],
                  [[   0,    0,  0.5], [   0,    0, -0.5]]],
@@ -86,7 +86,7 @@ class BfieldTest(unittest.TestCase):
             atol=1e-5))
 
         self.assertTrue(np.allclose(
-            bfield.bfield_from_interpolated_lookup(lookup, jnp.array([1.0]), jnp.array([1, 0, 0])),
+            bfield.bfield_from_interpolated_lookup(lookup, jnp.array([1, 0, 0]), jnp.array([1.0])),
             jnp.array([
                 [[[ 0,  0,  0], [ 0,  0,  0]],
                  [[ 0,  0,  0], [ 0,  0,  0]]],
