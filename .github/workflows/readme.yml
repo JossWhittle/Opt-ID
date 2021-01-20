@@ -26,12 +26,6 @@ env:
     import os, sys, jinja2
     sys.stdout.write(jinja2.Template(sys.stdin.read()).render(env=os.environ))
 
-  JINJA_TEMPLATE: |
-    README.template
-
-  JINJA_OUTPUT: |
-    README.md
-
 jobs:
   update-readme:
     name: Update README
@@ -39,7 +33,6 @@ jobs:
 
     steps:
 
-      # Checks-out repository under $(pwd)
       - uses: actions/checkout@v2
 
       - name: Install Jinja2
@@ -51,12 +44,10 @@ jobs:
 
       - name: Execute Jinja2
         run: |
-          echo "${GITHUB_BRANCH}"
-          cat ${JINJA_TEMPLATE} | python3 -c "${JINJA_CMD}" > ${JINJA_OUTPUT}
-          ls -la
+          cat README.template | python3 -c "${JINJA_CMD}" > README.md
 
       - name: Save results as artifact
         uses: actions/upload-artifact@v2
         with:
-          name: output
-          path: ${JINJA_OUTPUT}
+          name: README
+          path: README.md
