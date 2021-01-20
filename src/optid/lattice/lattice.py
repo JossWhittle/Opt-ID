@@ -15,6 +15,7 @@
 
 from beartype import beartype
 import typing as typ
+import numpy as np
 import jax.numpy as jnp
 
 from .. import core
@@ -28,7 +29,9 @@ class Lattice:
         self.shape = shape
 
     @beartype
-    def transform_points_world_to_unit(self, point_lattice: jnp.ndarray) -> jnp.ndarray:
+    def transform_points_world_to_unit(self,
+                                       point_lattice: jnp.ndarray,
+                                       raise_out_of_bounds: bool = True) -> jnp.ndarray:
 
         if point_lattice.shape[-1] != 3:
             raise ValueError(f'point_lattice must be shape (..., 3) but is : '
@@ -38,10 +41,18 @@ class Lattice:
             raise TypeError(f'point_lattice must have dtype (float32) but is : '
                             f'{point_lattice.dtype}')
 
-        return core.affine.transform_points(point_lattice, self.world_to_unit_matrix)
+        transformed_point_lattice = core.affine.transform_points(point_lattice, self.world_to_unit_matrix)
+
+        if raise_out_of_bounds:
+            if core.lattice.any_unit_point_out_of_bounds(transformed_point_lattice, 1e-5):
+                raise ValueError(f'point_lattice contains world space coordinates outside the lattice')
+
+        return transformed_point_lattice
 
     @beartype
-    def transform_points_world_to_orthonormal(self, point_lattice: jnp.ndarray) -> jnp.ndarray:
+    def transform_points_world_to_orthonormal(self,
+                                              point_lattice: jnp.ndarray,
+                                              raise_out_of_bounds: bool = True) -> jnp.ndarray:
 
         if point_lattice.shape[-1] != 3:
             raise ValueError(f'point_lattice must be shape (..., 3) but is : '
@@ -51,7 +62,13 @@ class Lattice:
             raise TypeError(f'point_lattice must have dtype (float32) but is : '
                             f'{point_lattice.dtype}')
 
-        return core.affine.transform_points(point_lattice, self.world_to_orthonormal_matrix)
+        transformed_point_lattice = core.affine.transform_points(point_lattice, self.world_to_orthonormal_matrix)
+
+        if raise_out_of_bounds:
+            if core.lattice.any_orthonormal_point_out_of_bounds(transformed_point_lattice, *self.shape, 1e-5):
+                raise ValueError(f'point_lattice contains world space coordinates outside the lattice')
+
+        return transformed_point_lattice
 
     @property
     @beartype
@@ -123,11 +140,6 @@ class Lattice:
     @shape.setter
     @beartype
     def shape(self, shape: typ.Tuple[int, int, int]):
-        x, z, s = shape
-        if x <= 0:
-            raise ValueError(f'x shape must be a positive integer but is : {x}')
-        if z <= 0:
-            raise ValueError(f'z shape must be a positive integer but is : {z}')
-        if s <= 0:
-            raise ValueError(f's shape must be a positive integer but is : {s}')
+        if np.any(np.array(shape) <= 0):
+            raise ValueError(f'shape must be a 3-tuple of positive integers but is : {shape}')
         self._shape = shape

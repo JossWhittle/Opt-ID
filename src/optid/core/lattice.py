@@ -83,6 +83,53 @@ def unit_to_orthonormal_matrix(x, z, s):
     return affine.translate(0.5, 0.5, 0.5) @ affine.scale(x, z, s)
 
 
+@jax.partial(jax.jit, static_argnums=1)
+def any_unit_point_out_of_bounds(point_lattice, eps):
+    """
+    Test that all points in the point lattice are within the bounds of the unit lattice centred at origin spanning
+    -0.5 to +0.5.
+
+    :param point_lattice:
+        Lattice of points in unit space.
+
+    :param eps:
+        Tolerance value for comparison.
+
+    :return:
+        True if any point lays outside the unit cube.
+    """
+    return jnp.any((point_lattice > +(0.5 + eps)) |
+                   (point_lattice < -(0.5 + eps)))
+
+
+@jax.partial(jax.jit, static_argnums=(1, 2, 3, 4))
+def any_orthonormal_point_out_of_bounds(point_lattice, x, z, s, eps):
+    """
+    Test that all points in the point lattice are within the bounds of the orthonormal lattice spanning from
+    [0, x), [0, z), and [0, s).
+
+    :param point_lattice:
+        Lattice of points in orthonormal space.
+
+    :param x:
+        Size of the resulting span on the X-axis.
+
+    :param z:
+        Size of the resulting span on the Z-axis.
+
+    :param s:
+        Size of the resulting span on the S-axis.
+
+    :param eps:
+        Tolerance value for comparison.
+
+    :return:
+        True if any point lays outside the orthonormal bounds.
+    """
+    return jnp.any((point_lattice > (jnp.array([x, z, s], dtype=jnp.float32) + eps)) |
+                   (point_lattice < -eps))
+
+
 @jax.jit
 def orthonormal_interpolate(value_lattice, point_lattice, order=1, mode='nearest', **kargs):
     """

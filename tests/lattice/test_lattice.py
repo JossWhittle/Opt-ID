@@ -14,6 +14,8 @@
 
 
 # Utility imports
+import sys
+from beartype.roar import BeartypeException
 import unittest
 import numpy as np
 import jax.numpy as jnp
@@ -30,6 +32,26 @@ class LatticeTest(unittest.TestCase):
     """
     Test optid.lattice.Lattice class.
     """
+
+    @unittest.skipIf(sys.flags.optimize > 0, 'BearType optimized away.')
+    def test_bad_shape_raises_exception(self):
+        """
+        Test lattice shape is validated.
+        """
+
+        optid.lattice.Lattice(matrix=jnp.eye(4, dtype=jnp.float32), shape=(1, 1, 1))
+
+        self.assertRaisesRegex(BeartypeException, '.*', optid.lattice.Lattice,
+                               matrix=jnp.eye(4, dtype=jnp.float32), shape=(1, 1, 1.5))
+
+        self.assertRaisesRegex(BeartypeException, '.*', optid.lattice.Lattice,
+                               matrix=jnp.eye(4, dtype=jnp.float32), shape=(1,))
+
+        self.assertRaisesRegex(BeartypeException, '.*', optid.lattice.Lattice,
+                               matrix=jnp.eye(4, dtype=jnp.float32), shape=(1, 1))
+
+        self.assertRaisesRegex(BeartypeException, '.*', optid.lattice.Lattice,
+                               matrix=jnp.eye(4, dtype=jnp.float32), shape=(1, 1, 1, 1))
 
     def test_bad_shape_x_raises_exception(self):
         """
@@ -80,6 +102,7 @@ class LatticeTest(unittest.TestCase):
         self.assertRaisesRegex(ValueError, '.*', optid.lattice.Lattice,
                                matrix=jnp.eye(2, dtype=jnp.float32), shape=(2, 2, 10))
 
+
     def test_transform_points_world_to_unit(self):
         """
         Test lattice correctly transforms point lattice.
@@ -110,6 +133,61 @@ class LatticeTest(unittest.TestCase):
         self.assertRaisesRegex(TypeError, '.*', lattice.transform_points_world_to_unit,
                                point_lattice=jnp.ones((3,), dtype=jnp.int32))
 
+    def test_transform_points_world_to_unit_bad_point_raises_exception(self):
+        """
+        Test lattice raises exceptions from transforming points outside the lattice.
+        """
+
+        lattice = optid.lattice.Lattice(matrix=affine.scale(2, 2, 10), shape=(2, 2, 10))
+
+        lattice.transform_points_world_to_unit(jnp.array([0, 0, 0], dtype=jnp.float32),
+                                               raise_out_of_bounds=True)
+
+        lattice.transform_points_world_to_unit(jnp.array([0, 0, 0], dtype=jnp.float32),
+                                               raise_out_of_bounds=False)
+
+        lattice.transform_points_world_to_unit(jnp.array([-1.1, -1, -5], dtype=jnp.float32),
+                                               raise_out_of_bounds=False)
+
+        lattice.transform_points_world_to_unit(jnp.array([-1, -1.1, -5], dtype=jnp.float32),
+                                               raise_out_of_bounds=False)
+
+        lattice.transform_points_world_to_unit(jnp.array([-1, -1, -5.1], dtype=jnp.float32),
+                                               raise_out_of_bounds=False)
+
+        lattice.transform_points_world_to_unit(jnp.array([1.1, 1, 5], dtype=jnp.float32),
+                                               raise_out_of_bounds=False)
+
+        lattice.transform_points_world_to_unit(jnp.array([1, 1.1, 5], dtype=jnp.float32),
+                                               raise_out_of_bounds=False)
+
+        lattice.transform_points_world_to_unit(jnp.array([1, 1, 5.1], dtype=jnp.float32),
+                                               raise_out_of_bounds=False)
+
+        self.assertRaisesRegex(ValueError, '.*', lattice.transform_points_world_to_unit,
+                               point_lattice=jnp.array([-1.1, -1, -5], dtype=jnp.float32),
+                               raise_out_of_bounds=True)
+
+        self.assertRaisesRegex(ValueError, '.*', lattice.transform_points_world_to_unit,
+                               point_lattice=jnp.array([-1, -1.1, -5], dtype=jnp.float32),
+                               raise_out_of_bounds=True)
+
+        self.assertRaisesRegex(ValueError, '.*', lattice.transform_points_world_to_unit,
+                               point_lattice=jnp.array([-1, -1, -5.1], dtype=jnp.float32),
+                               raise_out_of_bounds=True)
+
+        self.assertRaisesRegex(ValueError, '.*', lattice.transform_points_world_to_unit,
+                               point_lattice=jnp.array([1.1, 1, 5], dtype=jnp.float32),
+                               raise_out_of_bounds=True)
+
+        self.assertRaisesRegex(ValueError, '.*', lattice.transform_points_world_to_unit,
+                               point_lattice=jnp.array([1, 1.1, 5], dtype=jnp.float32),
+                               raise_out_of_bounds=True)
+
+        self.assertRaisesRegex(ValueError, '.*', lattice.transform_points_world_to_unit,
+                               point_lattice=jnp.array([1, 1, 5.1], dtype=jnp.float32),
+                               raise_out_of_bounds=True)
+
     def test_transform_points_world_to_orthonormal(self):
         """
         Test lattice correctly transforms point lattice.
@@ -139,6 +217,61 @@ class LatticeTest(unittest.TestCase):
 
         self.assertRaisesRegex(TypeError, '.*', lattice.transform_points_world_to_orthonormal,
                                point_lattice=jnp.ones((3,), dtype=jnp.int32))
+
+    def test_transform_points_world_to_orthonormal_bad_point_raises_exception(self):
+        """
+        Test lattice raises exceptions from transforming points outside the lattice.
+        """
+
+        lattice = optid.lattice.Lattice(matrix=affine.scale(2, 2, 10), shape=(2, 2, 10))
+
+        lattice.transform_points_world_to_orthonormal(jnp.array([0, 0, 0], dtype=jnp.float32),
+                                                      raise_out_of_bounds=True)
+
+        lattice.transform_points_world_to_orthonormal(jnp.array([0, 0, 0], dtype=jnp.float32),
+                                                      raise_out_of_bounds=False)
+
+        lattice.transform_points_world_to_orthonormal(jnp.array([-1.1, -1, -5], dtype=jnp.float32),
+                                                      raise_out_of_bounds=False)
+
+        lattice.transform_points_world_to_orthonormal(jnp.array([-1, -1.1, -5], dtype=jnp.float32),
+                                                      raise_out_of_bounds=False)
+
+        lattice.transform_points_world_to_orthonormal(jnp.array([-1, -1, -5.1], dtype=jnp.float32),
+                                                      raise_out_of_bounds=False)
+
+        lattice.transform_points_world_to_orthonormal(jnp.array([1.1, 1, 5], dtype=jnp.float32),
+                                                      raise_out_of_bounds=False)
+
+        lattice.transform_points_world_to_orthonormal(jnp.array([1, 1.1, 5], dtype=jnp.float32),
+                                                      raise_out_of_bounds=False)
+
+        lattice.transform_points_world_to_orthonormal(jnp.array([1, 1, 5.1], dtype=jnp.float32),
+                                                      raise_out_of_bounds=False)
+
+        self.assertRaisesRegex(ValueError, '.*', lattice.transform_points_world_to_orthonormal,
+                               point_lattice=jnp.array([-1.1, -1, -5], dtype=jnp.float32),
+                               raise_out_of_bounds=True)
+
+        self.assertRaisesRegex(ValueError, '.*', lattice.transform_points_world_to_orthonormal,
+                               point_lattice=jnp.array([-1, -1.1, -5], dtype=jnp.float32),
+                               raise_out_of_bounds=True)
+
+        self.assertRaisesRegex(ValueError, '.*', lattice.transform_points_world_to_orthonormal,
+                               point_lattice=jnp.array([-1, -1, -5.1], dtype=jnp.float32),
+                               raise_out_of_bounds=True)
+
+        self.assertRaisesRegex(ValueError, '.*', lattice.transform_points_world_to_orthonormal,
+                               point_lattice=jnp.array([1.1, 1, 5], dtype=jnp.float32),
+                               raise_out_of_bounds=True)
+
+        self.assertRaisesRegex(ValueError, '.*', lattice.transform_points_world_to_orthonormal,
+                               point_lattice=jnp.array([1, 1.1, 5], dtype=jnp.float32),
+                               raise_out_of_bounds=True)
+
+        self.assertRaisesRegex(ValueError, '.*', lattice.transform_points_world_to_orthonormal,
+                               point_lattice=jnp.array([1, 1, 5.1], dtype=jnp.float32),
+                               raise_out_of_bounds=True)
 
     def test_unit_lattice(self):
         """
