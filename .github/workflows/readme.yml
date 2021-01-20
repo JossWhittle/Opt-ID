@@ -51,7 +51,7 @@ jobs:
           cat README.template | python3 -c "${JINJA_CMD}" > README.md
 
       - name: Commit updated README and push to current branch
-      - uses: stefanzweifel/git-auto-commit-action@v4
+        uses: stefanzweifel/git-auto-commit-action@v4
         with:
           file_pattern: README.md
           commit_message: Regenerate README from template
