@@ -49,10 +49,10 @@ jobs:
         env:
           GITHUB_BRANCH: "${GITHUB_REF##*/}"
         run: |
-          cat ${JINJA_TEMPLATE} | python3 -c "${JINJA_CMD}" > ${JINJA_OUTPUT}
+          cat "${JINJA_TEMPLATE}" | python3 -c "${JINJA_CMD}" > "${JINJA_OUTPUT}"
 
       - name: Save results as artifact
         uses: actions/upload-artifact@v2
         with:
-          name: ${JINJA_OUTPUT}
-          path: ${JINJA_OUTPUT}
+          name: output
+          path: "${JINJA_OUTPUT}"
