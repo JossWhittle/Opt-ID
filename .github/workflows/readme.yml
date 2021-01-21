@@ -17,7 +17,8 @@ name: CI - Update README from Template
 
 on:
   push:
-    branches: [ master, development, development-r3.0, development-r3.0-jax-core ]
+    branches:
+      - '**'
     paths:
       - README.md
       - README.template
