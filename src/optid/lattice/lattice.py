@@ -35,6 +35,27 @@ class Lattice:
         self.shape = shape
 
     @beartype
+    def transform_points_unit_to_world(self,
+                                       point_lattice: jnp.ndarray,
+                                       raise_out_of_bounds: bool = True) -> jnp.ndarray:
+
+        if point_lattice.shape[-1] != 3:
+            raise ValueError(f'point_lattice must be shape (..., 3) but is : '
+                             f'{point_lattice.shape}')
+
+        if point_lattice.dtype != jnp.float32:
+            raise TypeError(f'point_lattice must have dtype (float32) but is : '
+                            f'{point_lattice.dtype}')
+
+        if raise_out_of_bounds:
+            if any_unit_point_out_of_bounds(point_lattice, 1e-5):
+                raise ValueError(f'point_lattice contains world space coordinates outside the lattice')
+
+        transformed_point_lattice = transform_points(point_lattice, self.unit_to_world_matrix)
+
+        return transformed_point_lattice
+
+    @beartype
     def transform_points_world_to_unit(self,
                                        point_lattice: jnp.ndarray,
                                        raise_out_of_bounds: bool = True) -> jnp.ndarray:
