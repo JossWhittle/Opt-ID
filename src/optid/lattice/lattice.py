@@ -147,5 +147,6 @@ class Lattice:
     @beartype
     def shape(self, shape: typ.Tuple[int, int, int]):
         if np.any(np.array(shape) <= 0):
-            raise ValueError(f'shape must be a 3-tuple of positive integers but is : {shape}')
+            raise ValueError(f'shape must be a 3-tuple of positive integers but is : '
+                             f'{shape}')
         self._shape = shape
