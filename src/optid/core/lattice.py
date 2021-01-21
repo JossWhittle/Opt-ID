@@ -19,7 +19,7 @@ import jax.numpy as jnp
 from . import affine
 
 
-@jax.partial(jax.jit, static_argnums=0)
+@jax.jit
 def unit_limits(n):
     """
     Find the limits along an axis for a unit-cube centred at origin.
@@ -33,7 +33,8 @@ def unit_limits(n):
     :return:
         Min-max limits along the axis.
     """
-    return (-0.5, 0.5) if (n > 1) else (0, 0)
+    limit = jnp.clip((n - 1), 0.0, 1.0) * 0.5
+    return -limit, limit
 
 
 @jax.partial(jax.jit, static_argnums=(0, 1, 2))
@@ -43,6 +44,8 @@ def unit_lattice(x, z, s):
 
     Singleton dimensions are centred at 0.
     Non-singleton dimensions are uniformly distributed from -0.5 to +0.5.
+
+    Note: jax.jit needs static_argnums because x,z,s change the output size.
 
     :param x:
         Number of steps along the X-axis.
@@ -83,7 +86,7 @@ def unit_to_orthonormal_matrix(x, z, s):
     return affine.translate(0.5, 0.5, 0.5) @ affine.scale(x, z, s)
 
 
-@jax.partial(jax.jit, static_argnums=1)
+@jax.jit
 def any_unit_point_out_of_bounds(point_lattice, eps):
     """
     Test that all points in the point lattice are within the bounds of the unit lattice centred at origin spanning
@@ -102,7 +105,7 @@ def any_unit_point_out_of_bounds(point_lattice, eps):
                    (point_lattice < -(0.5 + eps)))
 
 
-@jax.partial(jax.jit, static_argnums=(1, 2, 3, 4))
+@jax.jit
 def any_orthonormal_point_out_of_bounds(point_lattice, x, z, s, eps):
     """
     Test that all points in the point lattice are within the bounds of the orthonormal lattice spanning from
