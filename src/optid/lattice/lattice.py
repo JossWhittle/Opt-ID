@@ -30,14 +30,29 @@ from ..core.lattice import \
 class Lattice:
 
     @beartype
-    def __init__(self, matrix: jnp.ndarray, shape: typ.Tuple[int, int, int]):
-        self.unit_to_world_matrix = matrix
-        self.shape = shape
+    def __init__(self,
+            unit_to_world_matrix: jnp.ndarray,
+            shape: typ.Tuple[int, int, int]):
+
+        if unit_to_world_matrix.shape != (4, 4):
+            raise ValueError(f'unit_to_world_matrix must be an affine matrix with shape (4, 4) but is : '
+                             f'{unit_to_world_matrix.shape}')
+
+        if unit_to_world_matrix.dtype != jnp.float32:
+            raise TypeError(f'unit_to_world_matrix must have dtype (float32) but is : '
+                            f'{unit_to_world_matrix.dtype}')
+
+        self._unit_to_world_matrix = unit_to_world_matrix
+
+        if np.any(np.array(shape) <= 0):
+            raise ValueError(f'shape must be a 3-tuple of positive integers but is : '
+                             f'{shape}')
+        self._shape = shape
 
     @beartype
     def transform_points_unit_to_world(self,
-                                       point_lattice: jnp.ndarray,
-                                       raise_out_of_bounds: bool = True) -> jnp.ndarray:
+            point_lattice: jnp.ndarray,
+            raise_out_of_bounds: bool = True) -> jnp.ndarray:
 
         if point_lattice.shape[-1] != 3:
             raise ValueError(f'point_lattice must be shape (..., 3) but is : '
@@ -57,8 +72,8 @@ class Lattice:
 
     @beartype
     def transform_points_world_to_unit(self,
-                                       point_lattice: jnp.ndarray,
-                                       raise_out_of_bounds: bool = True) -> jnp.ndarray:
+            point_lattice: jnp.ndarray,
+            raise_out_of_bounds: bool = True) -> jnp.ndarray:
 
         if point_lattice.shape[-1] != 3:
             raise ValueError(f'point_lattice must be shape (..., 3) but is : '
@@ -78,8 +93,8 @@ class Lattice:
 
     @beartype
     def transform_points_world_to_orthonormal(self,
-                                              point_lattice: jnp.ndarray,
-                                              raise_out_of_bounds: bool = True) -> jnp.ndarray:
+            point_lattice: jnp.ndarray,
+            raise_out_of_bounds: bool = True) -> jnp.ndarray:
 
         if point_lattice.shape[-1] != 3:
             raise ValueError(f'point_lattice must be shape (..., 3) but is : '
@@ -145,29 +160,7 @@ class Lattice:
         """
         return self._unit_to_world_matrix
 
-    @unit_to_world_matrix.setter
-    @beartype
-    def unit_to_world_matrix(self, unit_to_world_matrix: jnp.ndarray):
-
-        if unit_to_world_matrix.shape != (4, 4):
-            raise ValueError(f'unit_to_world_matrix must be an affine matrix with shape (4, 4) but is : '
-                             f'{unit_to_world_matrix.shape}')
-
-        if unit_to_world_matrix.dtype != jnp.float32:
-            raise TypeError(f'unit_to_world_matrix must have dtype (float32) but is : '
-                            f'{unit_to_world_matrix.dtype}')
-
-        self._unit_to_world_matrix = unit_to_world_matrix
-
     @property
     @beartype
     def shape(self) -> typ.Tuple[int, int, int]:
         return self._shape
-
-    @shape.setter
-    @beartype
-    def shape(self, shape: typ.Tuple[int, int, int]):
-        if np.any(np.array(shape) <= 0):
-            raise ValueError(f'shape must be a 3-tuple of positive integers but is : '
-                             f'{shape}')
-        self._shape = shape

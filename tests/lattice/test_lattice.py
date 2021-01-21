@@ -39,19 +39,19 @@ class LatticeTest(unittest.TestCase):
         Test lattice shape is validated.
         """
 
-        optid.lattice.Lattice(matrix=jnp.eye(4, dtype=jnp.float32), shape=(1, 1, 1))
+        optid.lattice.Lattice(unit_to_world_matrix=jnp.eye(4, dtype=jnp.float32), shape=(1, 1, 1))
 
         self.assertRaisesRegex(BeartypeException, '.*', optid.lattice.Lattice,
-                               matrix=jnp.eye(4, dtype=jnp.float32), shape=(1, 1, 1.5))
+                               unit_to_world_matrix=jnp.eye(4, dtype=jnp.float32), shape=(1, 1, 1.5))
 
         self.assertRaisesRegex(BeartypeException, '.*', optid.lattice.Lattice,
-                               matrix=jnp.eye(4, dtype=jnp.float32), shape=(1,))
+                               unit_to_world_matrix=jnp.eye(4, dtype=jnp.float32), shape=(1,))
 
         self.assertRaisesRegex(BeartypeException, '.*', optid.lattice.Lattice,
-                               matrix=jnp.eye(4, dtype=jnp.float32), shape=(1, 1))
+                               unit_to_world_matrix=jnp.eye(4, dtype=jnp.float32), shape=(1, 1))
 
         self.assertRaisesRegex(BeartypeException, '.*', optid.lattice.Lattice,
-                               matrix=jnp.eye(4, dtype=jnp.float32), shape=(1, 1, 1, 1))
+                               unit_to_world_matrix=jnp.eye(4, dtype=jnp.float32), shape=(1, 1, 1, 1))
 
     def test_bad_shape_x_raises_exception(self):
         """
@@ -59,10 +59,10 @@ class LatticeTest(unittest.TestCase):
         """
 
         self.assertRaisesRegex(ValueError, '.*', optid.lattice.Lattice,
-                               matrix=jnp.eye(4, dtype=jnp.float32), shape=(0, 2, 10))
+                               unit_to_world_matrix=jnp.eye(4, dtype=jnp.float32), shape=(0, 2, 10))
 
         self.assertRaisesRegex(ValueError, '.*', optid.lattice.Lattice,
-                               matrix=jnp.eye(4, dtype=jnp.float32), shape=(-1, 2, 10))
+                               unit_to_world_matrix=jnp.eye(4, dtype=jnp.float32), shape=(-1, 2, 10))
 
     def test_bad_shape_z_raises_exception(self):
         """
@@ -70,10 +70,10 @@ class LatticeTest(unittest.TestCase):
         """
 
         self.assertRaisesRegex(ValueError, '.*', optid.lattice.Lattice,
-                               matrix=jnp.eye(4, dtype=jnp.float32), shape=(2, 0, 10))
+                               unit_to_world_matrix=jnp.eye(4, dtype=jnp.float32), shape=(2, 0, 10))
 
         self.assertRaisesRegex(ValueError, '.*', optid.lattice.Lattice,
-                               matrix=jnp.eye(4, dtype=jnp.float32), shape=(2, -1, 10))
+                               unit_to_world_matrix=jnp.eye(4, dtype=jnp.float32), shape=(2, -1, 10))
 
     def test_bad_shape_s_raises_exception(self):
         """
@@ -81,10 +81,10 @@ class LatticeTest(unittest.TestCase):
         """
 
         self.assertRaisesRegex(ValueError, '.*', optid.lattice.Lattice,
-                               matrix=jnp.eye(4, dtype=jnp.float32), shape=(2, 2, 0))
+                               unit_to_world_matrix=jnp.eye(4, dtype=jnp.float32), shape=(2, 2, 0))
 
         self.assertRaisesRegex(ValueError, '.*', optid.lattice.Lattice,
-                               matrix=jnp.eye(4, dtype=jnp.float32), shape=(2, 2, -1))
+                               unit_to_world_matrix=jnp.eye(4, dtype=jnp.float32), shape=(2, 2, -1))
 
     def test_bad_matrix_type_raises_exception(self):
         """
@@ -92,7 +92,7 @@ class LatticeTest(unittest.TestCase):
         """
 
         self.assertRaisesRegex(TypeError, '.*', optid.lattice.Lattice,
-                               matrix=jnp.eye(4, dtype=jnp.int32), shape=(2, 2, 10))
+                               unit_to_world_matrix=jnp.eye(4, dtype=jnp.int32), shape=(2, 2, 10))
 
     def test_bad_matrix_shape_raises_exception(self):
         """
@@ -100,14 +100,14 @@ class LatticeTest(unittest.TestCase):
         """
 
         self.assertRaisesRegex(ValueError, '.*', optid.lattice.Lattice,
-                               matrix=jnp.eye(2, dtype=jnp.float32), shape=(2, 2, 10))
+                               unit_to_world_matrix=jnp.eye(2, dtype=jnp.float32), shape=(2, 2, 10))
 
     def test_transform_points_unit_to_world(self):
         """
         Test lattice correctly transforms point lattice.
         """
 
-        lattice = optid.lattice.Lattice(matrix=affine.scale(2, 2, 10), shape=(2, 2, 10))
+        lattice = optid.lattice.Lattice(unit_to_world_matrix=affine.scale(2, 2, 10), shape=(2, 2, 10))
 
         self.assertTrue(np.allclose(lattice.transform_points_unit_to_world(
             jnp.array([0.5, 0.5, 0.5], dtype=jnp.float32)), jnp.array([1, 1, 5], dtype=jnp.float32), atol=1e-5))
@@ -117,7 +117,7 @@ class LatticeTest(unittest.TestCase):
         Test lattice raises exceptions from incorrectly sized point lattices.
         """
 
-        lattice = optid.lattice.Lattice(matrix=affine.scale(2, 2, 10), shape=(2, 2, 10))
+        lattice = optid.lattice.Lattice(unit_to_world_matrix=affine.scale(2, 2, 10), shape=(2, 2, 10))
 
         self.assertRaisesRegex(ValueError, '.*', lattice.transform_points_unit_to_world,
                                point_lattice=jnp.ones((2,), dtype=jnp.float32))
@@ -127,7 +127,7 @@ class LatticeTest(unittest.TestCase):
         Test lattice raises exceptions from incorrectly typed point lattices.
         """
 
-        lattice = optid.lattice.Lattice(matrix=affine.scale(2, 2, 10), shape=(2, 2, 10))
+        lattice = optid.lattice.Lattice(unit_to_world_matrix=affine.scale(2, 2, 10), shape=(2, 2, 10))
 
         self.assertRaisesRegex(TypeError, '.*', lattice.transform_points_unit_to_world,
                                point_lattice=jnp.ones((3,), dtype=jnp.int32))
@@ -137,7 +137,7 @@ class LatticeTest(unittest.TestCase):
         Test lattice raises exceptions from transforming points outside the lattice.
         """
 
-        lattice = optid.lattice.Lattice(matrix=affine.scale(2, 2, 10), shape=(2, 2, 10))
+        lattice = optid.lattice.Lattice(unit_to_world_matrix=affine.scale(2, 2, 10), shape=(2, 2, 10))
 
         lattice.transform_points_unit_to_world(jnp.array([0, 0, 0], dtype=jnp.float32),
                                                raise_out_of_bounds=True)
@@ -192,7 +192,7 @@ class LatticeTest(unittest.TestCase):
         Test lattice correctly transforms point lattice.
         """
 
-        lattice = optid.lattice.Lattice(matrix=affine.scale(2, 2, 10), shape=(2, 2, 10))
+        lattice = optid.lattice.Lattice(unit_to_world_matrix=affine.scale(2, 2, 10), shape=(2, 2, 10))
 
         self.assertTrue(np.allclose(lattice.transform_points_world_to_unit(jnp.array([1, 1, 5], dtype=jnp.float32)),
                                     jnp.array([0.5, 0.5, 0.5], dtype=jnp.float32), atol=1e-5))
@@ -202,7 +202,7 @@ class LatticeTest(unittest.TestCase):
         Test lattice raises exceptions from incorrectly sized point lattices.
         """
 
-        lattice = optid.lattice.Lattice(matrix=affine.scale(2, 2, 10), shape=(2, 2, 10))
+        lattice = optid.lattice.Lattice(unit_to_world_matrix=affine.scale(2, 2, 10), shape=(2, 2, 10))
 
         self.assertRaisesRegex(ValueError, '.*', lattice.transform_points_world_to_unit,
                                point_lattice=jnp.ones((2,), dtype=jnp.float32))
@@ -212,7 +212,7 @@ class LatticeTest(unittest.TestCase):
         Test lattice raises exceptions from incorrectly typed point lattices.
         """
 
-        lattice = optid.lattice.Lattice(matrix=affine.scale(2, 2, 10), shape=(2, 2, 10))
+        lattice = optid.lattice.Lattice(unit_to_world_matrix=affine.scale(2, 2, 10), shape=(2, 2, 10))
 
         self.assertRaisesRegex(TypeError, '.*', lattice.transform_points_world_to_unit,
                                point_lattice=jnp.ones((3,), dtype=jnp.int32))
@@ -222,7 +222,7 @@ class LatticeTest(unittest.TestCase):
         Test lattice raises exceptions from transforming points outside the lattice.
         """
 
-        lattice = optid.lattice.Lattice(matrix=affine.scale(2, 2, 10), shape=(2, 2, 10))
+        lattice = optid.lattice.Lattice(unit_to_world_matrix=affine.scale(2, 2, 10), shape=(2, 2, 10))
 
         lattice.transform_points_world_to_unit(jnp.array([0, 0, 0], dtype=jnp.float32),
                                                raise_out_of_bounds=True)
@@ -277,7 +277,7 @@ class LatticeTest(unittest.TestCase):
         Test lattice correctly transforms point lattice.
         """
 
-        lattice = optid.lattice.Lattice(matrix=affine.scale(2, 2, 10), shape=(2, 2, 10))
+        lattice = optid.lattice.Lattice(unit_to_world_matrix=affine.scale(2, 2, 10), shape=(2, 2, 10))
 
         self.assertTrue(np.allclose(lattice.transform_points_world_to_orthonormal(jnp.array([1, 1, 5], dtype=jnp.float32)),
                                     jnp.array([2, 2, 10], dtype=jnp.float32), atol=1e-5))
@@ -287,7 +287,7 @@ class LatticeTest(unittest.TestCase):
         Test lattice raises exceptions from incorrectly sized point lattices.
         """
 
-        lattice = optid.lattice.Lattice(matrix=affine.scale(2, 2, 10), shape=(2, 2, 10))
+        lattice = optid.lattice.Lattice(unit_to_world_matrix=affine.scale(2, 2, 10), shape=(2, 2, 10))
 
         self.assertRaisesRegex(ValueError, '.*', lattice.transform_points_world_to_orthonormal,
                                point_lattice=jnp.ones((2,), dtype=jnp.float32))
@@ -297,7 +297,7 @@ class LatticeTest(unittest.TestCase):
         Test lattice raises exceptions from incorrectly typed point lattices.
         """
 
-        lattice = optid.lattice.Lattice(matrix=affine.scale(2, 2, 10), shape=(2, 2, 10))
+        lattice = optid.lattice.Lattice(unit_to_world_matrix=affine.scale(2, 2, 10), shape=(2, 2, 10))
 
         self.assertRaisesRegex(TypeError, '.*', lattice.transform_points_world_to_orthonormal,
                                point_lattice=jnp.ones((3,), dtype=jnp.int32))
@@ -307,7 +307,7 @@ class LatticeTest(unittest.TestCase):
         Test lattice raises exceptions from transforming points outside the lattice.
         """
 
-        lattice = optid.lattice.Lattice(matrix=affine.scale(2, 2, 10), shape=(2, 2, 10))
+        lattice = optid.lattice.Lattice(unit_to_world_matrix=affine.scale(2, 2, 10), shape=(2, 2, 10))
 
         lattice.transform_points_world_to_orthonormal(jnp.array([0, 0, 0], dtype=jnp.float32),
                                                       raise_out_of_bounds=True)
@@ -362,7 +362,7 @@ class LatticeTest(unittest.TestCase):
         Test lattice correctly produces a lattice in unit space.
         """
 
-        lattice = optid.lattice.Lattice(matrix=affine.scale(2, 2, 2), shape=(2, 2, 2))
+        lattice = optid.lattice.Lattice(unit_to_world_matrix=affine.scale(2, 2, 2), shape=(2, 2, 2))
 
         self.assertTrue(np.allclose(lattice.unit_lattice,
                                     jnp.array([[[[-0.5, -0.5, -0.5], [-0.5, -0.5,  0.5]],
@@ -376,7 +376,7 @@ class LatticeTest(unittest.TestCase):
         Test lattice correctly produces a lattice in world space.
         """
 
-        lattice = optid.lattice.Lattice(matrix=affine.scale(2, 2, 2), shape=(2, 2, 2))
+        lattice = optid.lattice.Lattice(unit_to_world_matrix=affine.scale(2, 2, 2), shape=(2, 2, 2))
 
         self.assertTrue(np.allclose(lattice.world_lattice,
                                     jnp.array([[[[-1, -1, -1], [-1, -1,  1]],
