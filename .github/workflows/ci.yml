@@ -18,8 +18,16 @@ name: CI - Build Docker Image and Execute Tests
 on:
   push:
     branches: [ master, development, development-r3.0, development-r3.0-jax-core ]
+    paths-ignore:
+      - README.md
+      - README.template
+      - .github/workflows/readme.yml
   pull_request:
     branches: [ master, development, development-r3.0, development-r3.0-jax-core ]
+    paths-ignore:
+      - README.md
+      - README.template
+      - .github/workflows/readme.yml
 
   workflow_dispatch:
 
