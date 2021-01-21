@@ -16,7 +16,6 @@
 # External Imports
 from beartype import beartype
 import typing as typ
-import numpy as np
 import jax.numpy as jnp
 
 # Opt-ID Imports
@@ -44,7 +43,7 @@ class Lattice:
 
         self._unit_to_world_matrix = unit_to_world_matrix
 
-        if np.any(np.array(shape) <= 0):
+        if jnp.any(jnp.array(shape) <= 0):
             raise ValueError(f'shape must be a 3-tuple of positive integers but is : '
                              f'{shape}')
         self._shape = shape
