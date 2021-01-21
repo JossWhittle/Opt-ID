@@ -13,9 +13,11 @@
 # language governing permissions and limitations under the License.
 
 
+# External Imports
 import jax
 
-from . import lattice
+# Opt-ID Imports
+from .lattice import orthonormal_interpolate
 
 
 @jax.jit
@@ -67,4 +69,4 @@ def bfield_from_interpolated_lookup(lookup, vector, shim):
         Lattice of 3-vectors representing the field direction and magnitude at each spatial location represented on
         the lattice of the lookup table.
     """
-    return bfield_from_lookup(lattice.orthonormal_interpolate(lookup, shim), vector)
+    return bfield_from_lookup(orthonormal_interpolate(lookup, shim), vector)

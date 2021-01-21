@@ -13,10 +13,12 @@
 # language governing permissions and limitations under the License.
 
 
+# External Imports
 import jax
 import jax.numpy as jnp
 
-from . import affine
+# Opt-ID Imports
+from .affine import translate, scale
 
 
 @jax.jit
@@ -83,7 +85,7 @@ def unit_to_orthonormal_matrix(x, z, s):
     :return:
         Affine transformation matrix that converts between coordinate spaces.
     """
-    return affine.translate(0.5, 0.5, 0.5) @ affine.scale(x, z, s)
+    return translate(0.5, 0.5, 0.5) @ scale(x, z, s)
 
 
 @jax.jit

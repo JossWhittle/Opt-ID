@@ -13,12 +13,18 @@
 # language governing permissions and limitations under the License.
 
 
+# External Imports
 from beartype import beartype
 import typing as typ
 import numpy as np
 import jax.numpy as jnp
 
-from .. import core
+# Opt-ID Imports
+from ..core.affine import \
+    transform_points
+
+from ..core.lattice import \
+    unit_lattice, unit_to_orthonormal_matrix, any_unit_point_out_of_bounds, any_orthonormal_point_out_of_bounds
 
 
 class Lattice:
@@ -41,10 +47,10 @@ class Lattice:
             raise TypeError(f'point_lattice must have dtype (float32) but is : '
                             f'{point_lattice.dtype}')
 
-        transformed_point_lattice = core.affine.transform_points(point_lattice, self.world_to_unit_matrix)
+        transformed_point_lattice = transform_points(point_lattice, self.world_to_unit_matrix)
 
         if raise_out_of_bounds:
-            if core.lattice.any_unit_point_out_of_bounds(transformed_point_lattice, 1e-5):
+            if any_unit_point_out_of_bounds(transformed_point_lattice, 1e-5):
                 raise ValueError(f'point_lattice contains world space coordinates outside the lattice')
 
         return transformed_point_lattice
@@ -62,10 +68,10 @@ class Lattice:
             raise TypeError(f'point_lattice must have dtype (float32) but is : '
                             f'{point_lattice.dtype}')
 
-        transformed_point_lattice = core.affine.transform_points(point_lattice, self.world_to_orthonormal_matrix)
+        transformed_point_lattice = transform_points(point_lattice, self.world_to_orthonormal_matrix)
 
         if raise_out_of_bounds:
-            if core.lattice.any_orthonormal_point_out_of_bounds(transformed_point_lattice, *self.shape, 1e-5):
+            if any_orthonormal_point_out_of_bounds(transformed_point_lattice, *self.shape, 1e-5):
                 raise ValueError(f'point_lattice contains world space coordinates outside the lattice')
 
         return transformed_point_lattice
@@ -76,7 +82,7 @@ class Lattice:
         """
         Lattice tensor with the desired shape centred at origin spanning -0.5 to +0.5
         """
-        return core.lattice.unit_lattice(*self.shape)
+        return unit_lattice(*self.shape)
 
     @property
     @beartype
@@ -84,7 +90,7 @@ class Lattice:
         """
         Lattice tensor with the desired shape in world coordinates.
         """
-        return core.affine.transform_points(self.unit_lattice, self.unit_to_world_matrix)
+        return transform_points(self.unit_lattice, self.unit_to_world_matrix)
 
     @property
     @beartype
@@ -108,7 +114,7 @@ class Lattice:
         """
         Matrix that maps from unit coordinates centred at origin -0.5 to +0.5 to orthonormal space.
         """
-        return core.lattice.unit_to_orthonormal_matrix(*self.shape)
+        return unit_to_orthonormal_matrix(*self.shape)
 
     @property
     @beartype
