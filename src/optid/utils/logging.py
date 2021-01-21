@@ -13,19 +13,20 @@
 # language governing permissions and limitations under the License.
 
 
+# External Imports
+from beartype import beartype
 import logging
 
 
-def attach_console_logger(log_level : int = logging.DEBUG, remove_existing : bool = True):
+@beartype
+def attach_console_logger(log_level: int = logging.DEBUG, remove_existing: bool = True):
     """
     Configure a console handler to redirect logging messages at the desired level to stdout.
 
-    Parameters
-    ----------
-    log_level : int
+    :param log_level:
         Set the logging level for the root optid console logger.
 
-    remove_existing : bool
+    :param remove_existing:
         If true then remove any existing console handlers from the logger before adding this one.
     """
 

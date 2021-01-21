@@ -13,22 +13,5 @@
 # language governing permissions and limitations under the License.
 
 
-import numpy as np
-
-
-MAX_RAND_INT = (np.iinfo(np.int32).max - 1)
-
-VECTOR_ZERO = np.array([0, 0, 0], dtype=np.float32)
-
-VECTOR_X = np.array([1, 0, 0], dtype=np.float32)
-VECTOR_Z = np.array([0, 1, 0], dtype=np.float32)
-VECTOR_S = np.array([0, 0, 1], dtype=np.float32)
-
-MATRIX_IDENTITY          = np.array([[ 1,  0,  0], [ 0,  1,  0], [ 0,  0,  1]], dtype=np.float32)
-MATRIX_ROTX_180          = np.array([[ 1,  0,  0], [ 0, -1,  0], [ 0,  0, -1]], dtype=np.float32)
-MATRIX_ROTZ_180          = np.array([[-1,  0,  0], [ 0,  1,  0], [ 0,  0, -1]], dtype=np.float32)
-MATRIX_ROTS_90           = np.array([[ 0,  1,  0], [-1,  0,  0], [ 0,  0,  1]], dtype=np.float32)
-MATRIX_ROTS_180          = np.array([[-1,  0,  0], [ 0, -1,  0], [ 0,  0,  1]], dtype=np.float32)
-MATRIX_ROTS_270          = np.array([[ 0, -1,  0], [ 1,  0,  0], [ 0,  0,  1]], dtype=np.float32)
-MATRIX_ROTS_270_ROTX_180 = np.array([[ 0, -1,  0], [-1,  0,  0], [ 0,  0, -1]], dtype=np.float32)
-MATRIX_ROTS_270_ROTZ_180 = np.array([[ 0,  1,  0], [ 1,  0,  0], [ 0,  0, -1]], dtype=np.float32)
+# Opt-ID Imports
+from .constants import *
