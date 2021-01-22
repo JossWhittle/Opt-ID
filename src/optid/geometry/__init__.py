@@ -14,18 +14,5 @@
 
 
 # Opt-ID Imports
-from . import constants
-from . import core
-from . import bfield
-from . import lattice
-from . import geometry
-from . import utils
-
-import logging
-logging.getLogger('optid').addHandler(logging.NullHandler())
-
-
-VERSION = 'v3.0a'
-"""
-str : Opt-ID version string.
-"""
+from .geometry import Geometry
+from .cuboid import Cuboid
