@@ -16,6 +16,7 @@
 # External Imports
 from beartype import beartype
 import typing as typ
+import numpy as np
 import jax.numpy as jnp
 
 # Opt-ID Imports
@@ -110,6 +111,22 @@ class Lattice:
                 raise ValueError(f'point_lattice contains world space coordinates outside the lattice')
 
         return transformed_point_lattice
+
+    @beartype
+    def __eq__(self, other) -> bool:
+
+        if not isinstance(other, Lattice):
+            return False
+
+        if self.shape != other.shape:
+            return False
+
+        return np.allclose(self.unit_to_world_matrix, other.unit_to_world_matrix, atol=1e-5)
+
+    @beartype
+    def __ne__(self, other) -> bool:
+        return not (self == other)
+
 
     @property
     @beartype

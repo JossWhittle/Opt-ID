@@ -377,6 +377,76 @@ class LatticeTest(unittest.TestCase):
 
     ####################################################################################################################
 
+    def test_eq(self):
+
+        lattice0 = Lattice(unit_to_world_matrix=scale(2, 2, 2), shape=(2, 2, 2))
+        lattice1 = Lattice(unit_to_world_matrix=scale(2, 2, 2), shape=(2, 2, 2))
+
+        self.assertTrue(lattice0 == lattice1)
+
+    def test_eq_self(self):
+
+        lattice = Lattice(unit_to_world_matrix=scale(2, 2, 2), shape=(2, 2, 2))
+
+        self.assertTrue(lattice == lattice)
+
+    def test_eq_bad_type(self):
+
+        lattice = Lattice(unit_to_world_matrix=scale(2, 2, 2), shape=(2, 2, 2))
+
+        self.assertFalse(lattice == 'None')
+
+    def test_eq_bad_shape(self):
+
+        lattice0 = Lattice(unit_to_world_matrix=scale(2, 2, 2), shape=(2, 2, 2))
+        lattice1 = Lattice(unit_to_world_matrix=scale(2, 2, 2), shape=(1, 1, 1))
+
+        self.assertFalse(lattice0 == lattice1)
+
+    def test_eq_bad_matrix(self):
+
+        lattice0 = Lattice(unit_to_world_matrix=scale(2, 2, 2), shape=(2, 2, 2))
+        lattice1 = Lattice(unit_to_world_matrix=scale(1, 2, 3), shape=(2, 2, 2))
+
+        self.assertFalse(lattice0 == lattice1)
+
+    ####################################################################################################################
+
+    def test_ne(self):
+
+        lattice0 = Lattice(unit_to_world_matrix=scale(2, 2, 2), shape=(2, 2, 2))
+        lattice1 = Lattice(unit_to_world_matrix=scale(2, 2, 2), shape=(2, 2, 2))
+
+        self.assertFalse(lattice0 != lattice1)
+
+    def test_ne_self(self):
+
+        lattice = Lattice(unit_to_world_matrix=scale(2, 2, 2), shape=(2, 2, 2))
+
+        self.assertFalse(lattice != lattice)
+
+    def test_ne_bad_type(self):
+
+        lattice = Lattice(unit_to_world_matrix=scale(2, 2, 2), shape=(2, 2, 2))
+
+        self.assertTrue(lattice != 'None')
+
+    def test_ne_bad_shape(self):
+
+        lattice0 = Lattice(unit_to_world_matrix=scale(2, 2, 2), shape=(2, 2, 2))
+        lattice1 = Lattice(unit_to_world_matrix=scale(2, 2, 2), shape=(1, 1, 1))
+
+        self.assertTrue(lattice0 != lattice1)
+
+    def test_ne_bad_matrix(self):
+
+        lattice0 = Lattice(unit_to_world_matrix=scale(2, 2, 2), shape=(2, 2, 2))
+        lattice1 = Lattice(unit_to_world_matrix=scale(1, 2, 3), shape=(2, 2, 2))
+
+        self.assertTrue(lattice0 != lattice1)
+
+    ####################################################################################################################
+
     def test_unit_lattice(self):
 
         lattice = Lattice(unit_to_world_matrix=scale(2, 2, 2), shape=(2, 2, 2))
