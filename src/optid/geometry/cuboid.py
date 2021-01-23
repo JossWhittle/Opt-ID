@@ -17,45 +17,24 @@
 from beartype import beartype
 import typing as typ
 import numpy as np
-import jax.numpy as jnp
 
 # Opt-ID Imports
 from ..geometry import \
-    Geometry
+    ExtrudedPolygon
 
 
-class Cuboid(Geometry):
+class Cuboid(ExtrudedPolygon):
 
     @beartype
     def __init__(self,
-            shape: typ.Tuple[float, float, float]):
+            shape: typ.Tuple[typ.Union[int, float], typ.Union[int, float], typ.Union[int, float]]):
 
         if np.any(np.array(shape) <= 0):
             raise ValueError(f'shape must be greater than zero in every dimension but is : '
                              f'{shape}')
 
-        self._shape = shape
+        x, z, s = shape
+        x /= 2
+        z /= 2
 
-        x, z, s = np.array(shape) / 2.0
-
-        super().__init__(
-            vertices=jnp.array([
-                # 0             1             2             3
-                [-x, -z, -s], [-x,  z, -s], [ x,  z, -s], [ x, -z, -s],
-                # 4             5             6             7
-                [-x, -z,  s], [-x,  z,  s], [ x,  z,  s], [ x, -z,  s],
-            ], dtype=jnp.float32),
-
-            faces=[
-                # -X            +X
-                [0, 1, 5, 4], [2, 3, 7, 6],
-                # -Z            +Z
-                [0, 3, 7, 4], [1, 2, 6, 5],
-                # -S            +S
-                [0, 1, 2, 3], [4, 5, 6, 7],
-            ])
-
-    @property
-    @beartype
-    def shape(self) -> typ.Tuple[float, float, float]:
-        return self._shape
+        super().__init__(polygon=[[-x, -z], [-x, z], [x, z], [x, -z]], thickness=s)

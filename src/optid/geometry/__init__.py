@@ -15,4 +15,5 @@
 
 # Opt-ID Imports
 from .geometry import Geometry
+from .extruded_polygon import ExtrudedPolygon
 from .cuboid import Cuboid
