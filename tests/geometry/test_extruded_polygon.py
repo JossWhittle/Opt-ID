@@ -70,7 +70,7 @@ class ExtrudedPolygonTest(unittest.TestCase):
             [0, 1, 5, 4], [1, 2, 6, 5],
             [2, 3, 7, 6], [3, 0, 4, 7]]
 
-        self.assertTrue(np.allclose(geometry.vertices, jnp.array(vertices, dtype=jnp.float32), atol=1e-5))
+        self.assertTrue(np.allclose(geometry.vertices, vertices, atol=1e-5))
         self.assertEqual(geometry.faces, faces)
 
     @unittest.skipIf(sys.flags.optimize > 0, 'BearType optimized away.')

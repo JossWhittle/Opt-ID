@@ -68,7 +68,7 @@ class CuboidTest(unittest.TestCase):
             [0, 1, 5, 4], [1, 2, 6, 5],
             [2, 3, 7, 6], [3, 0, 4, 7]]
 
-        self.assertTrue(np.allclose(geometry.vertices, jnp.array(vertices, dtype=jnp.float32), atol=1e-5))
+        self.assertTrue(np.allclose(geometry.vertices, vertices, atol=1e-5))
         self.assertEqual(geometry.faces, faces)
 
     def test_constructor_shape_tuple(self):
@@ -86,7 +86,7 @@ class CuboidTest(unittest.TestCase):
             [0, 1, 5, 4], [1, 2, 6, 5],
             [2, 3, 7, 6], [3, 0, 4, 7]]
 
-        self.assertTrue(np.allclose(geometry.vertices, jnp.array(vertices, dtype=jnp.float32), atol=1e-5))
+        self.assertTrue(np.allclose(geometry.vertices, vertices, atol=1e-5))
         self.assertEqual(geometry.faces, faces)
 
     @unittest.skipIf(sys.flags.optimize > 0, 'BearType optimized away.')
@@ -102,7 +102,7 @@ class CuboidTest(unittest.TestCase):
         self.assertRaisesRegex(ValueError, '.*', Cuboid,
                                shape=shape)
 
-    def test_constructor_bad_polygon_array_type_raises_exception(self):
+    def test_constructor_bad_shape_array_type_raises_exception(self):
 
         shape = jnp.ones((3,), dtype=jnp.int32)
 
