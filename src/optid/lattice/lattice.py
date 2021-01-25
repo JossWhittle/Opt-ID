@@ -33,6 +33,16 @@ class Lattice:
     def __init__(self,
             unit_to_world_matrix: jnp.ndarray,
             shape: typ.Tuple[int, int, int]):
+        """
+        Construct a Lattice instance from a subdivision of a unit cube at origin and a matrix that transforms it
+        into world space coordinates.
+
+        :param unit_to_world_matrix:
+            Affine matrix that transforms the unit cube at origin spanning -0.5 to +0.5 into world space.
+
+        :param shape:
+            Subdivision in each axis for the lattice.
+        """
 
         if unit_to_world_matrix.shape != (4, 4):
             raise ValueError(f'unit_to_world_matrix must be an affine matrix with shape (4, 4) but is : '
@@ -53,6 +63,18 @@ class Lattice:
     def transform_points_unit_to_world(self,
             point_lattice: jnp.ndarray,
             raise_out_of_bounds: bool = True) -> jnp.ndarray:
+        """
+        Transform the lattice of points in the unit cube at origin spanning -0.5 to +0.5 into world space.
+
+        :param point_lattice:
+            Arbitrary shaped lattice of points in the unit coordinate space.
+
+        :param raise_out_of_bounds:
+            If true then raise an exception if any point in the point lattice is outside the bounds of the lattice.
+
+        :return:
+            Lattice of points in world space of the same size as the input point lattice.
+        """
 
         if point_lattice.shape[-1] != 3:
             raise ValueError(f'point_lattice must be shape (..., 3) but is : '
@@ -74,6 +96,18 @@ class Lattice:
     def transform_points_world_to_unit(self,
             point_lattice: jnp.ndarray,
             raise_out_of_bounds: bool = True) -> jnp.ndarray:
+        """
+        Transform the lattice of points in world space into the unit cube at origin spanning -0.5 to +0.5.
+
+        :param point_lattice:
+            Arbitrary shaped lattice of points in the world coordinate space.
+
+        :param raise_out_of_bounds:
+            If true then raise an exception if any point in the point lattice is outside the bounds of the lattice.
+
+        :return:
+            Lattice of points in unit space of the same size as the input point lattice.
+        """
 
         if point_lattice.shape[-1] != 3:
             raise ValueError(f'point_lattice must be shape (..., 3) but is : '
@@ -95,6 +129,18 @@ class Lattice:
     def transform_points_world_to_orthonormal(self,
             point_lattice: jnp.ndarray,
             raise_out_of_bounds: bool = True) -> jnp.ndarray:
+        """
+        Transform the lattice of points in world space into the orthonormal space.
+
+        :param point_lattice:
+            Arbitrary shaped lattice of points in the world coordinate space.
+
+        :param raise_out_of_bounds:
+            If true then raise an exception if any point in the point lattice is outside the bounds of the lattice.
+
+        :return:
+            Lattice of points in orthonormal space of the same size as the input point lattice.
+        """
 
         if point_lattice.shape[-1] != 3:
             raise ValueError(f'point_lattice must be shape (..., 3) but is : '
@@ -114,6 +160,15 @@ class Lattice:
 
     @beartype
     def __eq__(self, other) -> bool:
+        """
+        Compare this Lattice instance to another to see if they represent the same lattice.
+
+        :param other:
+            Lattice to compare to.
+
+        :return:
+            True if the two lattices have the same unit to world matrix and the same subdivision, otherwise False.
+        """
 
         if not isinstance(other, Lattice):
             return False
@@ -125,6 +180,15 @@ class Lattice:
 
     @beartype
     def __ne__(self, other) -> bool:
+        """
+        Compare this Lattice instance to another to see if they represent the different lattices.
+
+        :param other:
+            Lattice to compare to.
+
+        :return:
+            False if the two lattices have the same unit to world matrix and the same subdivision, otherwise True.
+        """
         return not (self == other)
 
 
@@ -179,4 +243,7 @@ class Lattice:
     @property
     @beartype
     def shape(self) -> typ.Tuple[int, int, int]:
+        """
+        Subdivision shape of the lattice.
+        """
         return self._shape
