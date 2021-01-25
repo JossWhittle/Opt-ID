@@ -85,7 +85,7 @@ def unit_to_orthonormal_matrix(x, z, s):
     :return:
         Affine transformation matrix that converts between coordinate spaces.
     """
-    return translate(0.5, 0.5, 0.5) @ scale(x, z, s)
+    return translate(0.5, 0.5, 0.5) @ scale((x - 1), (z - 1), (s - 1))
 
 
 @jax.jit
