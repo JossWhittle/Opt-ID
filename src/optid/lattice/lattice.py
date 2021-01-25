@@ -93,6 +93,105 @@ class Lattice:
         return transformed_point_lattice
 
     @beartype
+    def transform_points_unit_to_orthonormal(self,
+            point_lattice: jnp.ndarray,
+            raise_out_of_bounds: bool = True) -> jnp.ndarray:
+        """
+        Transform the lattice of points in the unit cube at origin spanning -0.5 to +0.5 into orthonormal space.
+
+        :param point_lattice:
+            Arbitrary shaped lattice of points in the unit coordinate space.
+
+        :param raise_out_of_bounds:
+            If true then raise an exception if any point in the point lattice is outside the bounds of the lattice.
+
+        :return:
+            Lattice of points in orthonormal space of the same size as the input point lattice.
+        """
+
+        if point_lattice.shape[-1] != 3:
+            raise ValueError(f'point_lattice must be shape (..., 3) but is : '
+                             f'{point_lattice.shape}')
+
+        if point_lattice.dtype != jnp.float32:
+            raise TypeError(f'point_lattice must have dtype (float32) but is : '
+                            f'{point_lattice.dtype}')
+
+        if raise_out_of_bounds:
+            if any_unit_point_out_of_bounds(point_lattice, 1e-5):
+                raise ValueError(f'point_lattice contains world space coordinates outside the lattice')
+
+        transformed_point_lattice = transform_points(point_lattice, self.unit_to_orthonormal_matrix)
+
+        return transformed_point_lattice
+
+    @beartype
+    def transform_points_orthonormal_to_unit(self,
+            point_lattice: jnp.ndarray,
+            raise_out_of_bounds: bool = True) -> jnp.ndarray:
+        """
+        Transform the lattice of points in orthonormal space into the unit cube at origin spanning -0.5 to +0.5.
+
+        :param point_lattice:
+            Arbitrary shaped lattice of points in the orthonormal coordinate space.
+
+        :param raise_out_of_bounds:
+            If true then raise an exception if any point in the point lattice is outside the bounds of the lattice.
+
+        :return:
+            Lattice of points in unit space of the same size as the input point lattice.
+        """
+
+        if point_lattice.shape[-1] != 3:
+            raise ValueError(f'point_lattice must be shape (..., 3) but is : '
+                             f'{point_lattice.shape}')
+
+        if point_lattice.dtype != jnp.float32:
+            raise TypeError(f'point_lattice must have dtype (float32) but is : '
+                            f'{point_lattice.dtype}')
+
+        transformed_point_lattice = transform_points(point_lattice, self.orthonormal_to_unit_matrix)
+
+        if raise_out_of_bounds:
+            if any_unit_point_out_of_bounds(transformed_point_lattice, 1e-5):
+                raise ValueError(f'point_lattice contains orthonormal space coordinates outside the lattice')
+
+        return transformed_point_lattice
+
+    @beartype
+    def transform_points_orthonormal_to_world(self,
+            point_lattice: jnp.ndarray,
+            raise_out_of_bounds: bool = True) -> jnp.ndarray:
+        """
+        Transform the lattice of points in orthonormal space into the world space.
+
+        :param point_lattice:
+            Arbitrary shaped lattice of points in the orthonormal coordinate space.
+
+        :param raise_out_of_bounds:
+            If true then raise an exception if any point in the point lattice is outside the bounds of the lattice.
+
+        :return:
+            Lattice of points in world space of the same size as the input point lattice.
+        """
+
+        if point_lattice.shape[-1] != 3:
+            raise ValueError(f'point_lattice must be shape (..., 3) but is : '
+                             f'{point_lattice.shape}')
+
+        if point_lattice.dtype != jnp.float32:
+            raise TypeError(f'point_lattice must have dtype (float32) but is : '
+                            f'{point_lattice.dtype}')
+
+        if raise_out_of_bounds:
+            if any_orthonormal_point_out_of_bounds(point_lattice, *self.shape, 1e-5):
+                raise ValueError(f'point_lattice contains orthonormal space coordinates outside the lattice')
+
+        transformed_point_lattice = transform_points(point_lattice, self.orthonormal_to_world_matrix)
+
+        return transformed_point_lattice
+
+    @beartype
     def transform_points_world_to_unit(self,
             point_lattice: jnp.ndarray,
             raise_out_of_bounds: bool = True) -> jnp.ndarray:
@@ -223,6 +322,22 @@ class Lattice:
         Matrix that maps world space coordinates to orthonormal space.
         """
         return self.world_to_unit_matrix @ self.unit_to_orthonormal_matrix
+
+    @property
+    @beartype
+    def orthonormal_to_unit_matrix(self) -> jnp.ndarray:
+        """
+        Matrix that maps orthonormal space coordinates to unit coordinates centred at origin -0.5 to +0.5.
+        """
+        return jnp.linalg.inv(self.unit_to_orthonormal_matrix)
+
+    @property
+    @beartype
+    def orthonormal_to_world_matrix(self) -> jnp.ndarray:
+        """
+        Matrix that maps orthonormal space coordinates to world space.
+        """
+        return self.orthonormal_to_unit_matrix @ self.unit_to_world_matrix
 
     @property
     @beartype
