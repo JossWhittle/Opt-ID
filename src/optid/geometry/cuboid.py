@@ -29,6 +29,12 @@ class Cuboid(ExtrudedPolygon):
     @beartype
     def __init__(self,
             shape: typ.Union[jnp.ndarray, typ.Sequence[typ.Union[int, float]]]):
+        """
+        Construct a Cuboid instance.
+
+        :param shape:
+            Aligned size vector in 3-space.
+        """
 
         if not isinstance(shape, jnp.ndarray):
             shape = jnp.array(shape, dtype=jnp.float32)

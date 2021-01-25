@@ -40,6 +40,21 @@ class SquareCutCuboid(ExtrudedPolygon):
                                       typ.Tuple[typ.Union[int, float], typ.Union[int, float]],
                                       typ.Tuple[typ.Union[int, float], typ.Union[int, float]],
                                       typ.Tuple[typ.Union[int, float], typ.Union[int, float]]]] = 0):
+        """
+        Construct a SquareCutCuboid instance.
+
+        :param shape:
+            Aligned size vector in 3-space for the main cuboid.
+
+        :param cuts:
+            Size of the cut regions on each corner of the main cuboid in the XZ plane.
+
+            Cuts can be specified as either:
+                Scalar value to be applied in X and Z at every corner.
+                Tuple (X, Z) to be applied at every corner.
+                Tuple (BL, TL, TR, BR) to be applied in X and Z the four corners.
+                Tuple ((BLx, BLz), (TLx, TLz), (TRx, TRz), (BRx, BRz)) to be applied at the four corners.
+        """
 
         if not isinstance(shape, jnp.ndarray):
             shape = jnp.array(shape, dtype=jnp.float32)
