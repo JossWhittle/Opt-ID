@@ -18,3 +18,4 @@ from .geometry import Geometry
 from .extruded_polygon import ExtrudedPolygon
 from .cuboid import Cuboid
 from .chamfered_cuboid import ChamferedCuboid
+from .square_cut_cuboid import SquareCutCuboid
