@@ -29,6 +29,15 @@ class ExtrudedPolygon(Geometry):
     def __init__(self,
             polygon: typ.Union[jnp.ndarray, typ.Sequence[typ.Sequence[typ.Union[float, int]]]],
             thickness: typ.Union[float, int]):
+        """
+        Construct an ExtrudedPolygon instance from a set of unique polygon vertices in 2-space and a thickness.
+
+        :param polygon:
+            Tensor of vertices in 2-space of shape (N, 2).
+
+        :param thickness:
+            Thickness of the geometry along the S-axis.
+        """
 
         if not isinstance(polygon, jnp.ndarray):
 
