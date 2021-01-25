@@ -30,6 +30,19 @@ class Lookup:
             shim_lattice: Lattice,
             lookup_lattice: Lattice,
             lookup: jnp.ndarray):
+        """
+        Construct a Lookup instance to represent a Bfield lookup table of 3x3 rotation matrices sampled over a
+        3-lattice of spatial coordinates, and additionally sampled over a 3-lattice of shim offsets.
+
+        :param shim_lattice:
+            Lattice representing shim offsets the lookup table is duplicated over.
+
+        :param lookup_lattice:
+            Lattice representing the spatial coordinates of the Bfield samples.
+
+        :param lookup:
+            Tensor representing the 8D lookup table of 3x3 rotation matrices sampled over the two 3-lattices.
+        """
 
         self._shim_lattice = shim_lattice
         self._lookup_lattice = lookup_lattice
@@ -62,6 +75,18 @@ class Lookup:
     def bfield(self,
             vector: jnp.ndarray,
             shim: typ.Optional[jnp.ndarray] = None) -> jnp.ndarray:
+        """
+        Extract a Bfield for a magnet with the desired magnetization vector from the lookup table.
+
+        :param vector:
+            Vector in 3-space for the major magnetization direction to map to all of the 3x3 rotation matrices.
+
+        :param shim:
+            Coordinate in 3-space to use to interpolate between lookup tables at different shim offsets.
+
+        :return:
+            Bfield as a 4D tensor of shape (X, Z, S, 3).
+        """
 
         if vector.shape != (3,):
             raise ValueError(f'vector must be shape (3,) but is : '
@@ -95,14 +120,23 @@ class Lookup:
     @property
     @beartype
     def shim_lattice(self) -> Lattice:
+        """
+        Lattice representing the locations of lookup tables computed at different shim offsets.
+        """
         return self._shim_lattice
 
     @property
     @beartype
     def lookup_lattice(self) -> Lattice:
+        """
+        Lattice representing the spatial locations of each 3x3 matrix in the lookup table.
+        """
         return self._lookup_lattice
 
     @property
     @beartype
     def lookup(self) -> jnp.ndarray:
+        """
+        Tensor for the raw lookup table data.
+        """
         return self._lookup
