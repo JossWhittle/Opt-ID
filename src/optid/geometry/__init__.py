@@ -17,3 +17,4 @@
 from .geometry import Geometry
 from .extruded_polygon import ExtrudedPolygon
 from .cuboid import Cuboid
+from .chamfered_cuboid import ChamferedCuboid
