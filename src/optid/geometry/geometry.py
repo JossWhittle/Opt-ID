@@ -30,6 +30,15 @@ class Geometry:
     def __init__(self,
             vertices: typ.Union[jnp.ndarray, typ.Sequence[typ.Sequence[typ.Union[float, int]]]],
             faces: typ.Sequence[typ.Sequence[int]]):
+        """
+        Construct a Geometry instance from a set of unique vertices in 3-space and a list of polygons.
+
+        :param vertices:
+            Tensor of vertices in 3-space of shape (N, 3).
+
+        :param faces:
+            List of lists of integer vertex IDs in the range [0, N). Each face must have at least 3 vertices.
+        """
 
         if not isinstance(vertices, jnp.ndarray):
 
@@ -82,6 +91,15 @@ class Geometry:
 
     @beartype
     def transform(self, matrix: jnp.ndarray) -> jnp.ndarray:
+        """
+        Apply an affine matrix transformation to the vertices of this Geometry instance.
+
+        :param matrix:
+            Affine transformation matrix to apply.
+
+        :return:
+            Tensor the same shape as the vertices with the affine transformation applied.
+        """
 
         if matrix.shape != (4, 4):
             raise ValueError(f'matrix must be an affine matrix with shape (4, 4) but is : '
@@ -96,9 +114,15 @@ class Geometry:
     @property
     @beartype
     def vertices(self) -> jnp.ndarray:
+        """
+        Tensor of vertices in 3-space.
+        """
         return self._vertices
 
     @property
     @beartype
     def faces(self) -> typ.List[typ.List[int]]:
+        """
+        List of lists of integer vertex IDs.
+        """
         return self._faces
