@@ -28,8 +28,19 @@ class Geometry:
 
     @beartype
     def __init__(self,
-            vertices: jnp.ndarray,
-            faces: typ.List[typ.List[int]]):
+            vertices: typ.Union[jnp.ndarray, typ.Sequence[typ.Sequence[typ.Union[float, int]]]],
+            faces: typ.Sequence[typ.Sequence[int]]):
+
+        if not isinstance(vertices, jnp.ndarray):
+
+            def is_vertex_not_3d(vertex: typ.Sequence[typ.Union[float, int]]) -> bool:
+                return len(vertex) != 3
+
+            if any(map(is_vertex_not_3d, vertices)):
+                raise ValueError(f'vertices must be a list of 3D XZS coordinates but is : '
+                                 f'{vertices}')
+
+            vertices = jnp.array(vertices, dtype=jnp.float32)
 
         if vertices.ndim != 2 or vertices.shape[-1] != 3:
             raise ValueError(f'vertices must be shape (N, 3) but is : '
@@ -41,13 +52,31 @@ class Geometry:
 
         self._vertices = vertices
 
-        def any_vertex_out_of_bounds(face):
+        # Coerce sequence of sequences into list of lists
+        faces = [[vertex for vertex in face] for face in faces]
+
+        def any_vertex_out_of_bounds(face: typ.List[int]) -> bool:
             face = np.array(face)
             return np.any((face < 0) | (face >= vertices.shape[0]))
 
         if any(map(any_vertex_out_of_bounds, faces)):
-            raise TypeError(f'faces must be list of lists of integers in range [0, {vertices.shape[0]}) but is : '
-                            f'{faces}')
+            raise ValueError(f'faces must be list of lists of unique integers in range '
+                             f'[0, {vertices.shape[0]}) but is : '
+                             f'{faces}')
+
+        def any_vertex_duplicated(face: typ.List[int]) -> bool:
+            return len(set(face)) < len(face)
+
+        if any(map(any_vertex_duplicated, faces)):
+            raise ValueError(f'faces must be list of lists of unique integers but is : '
+                             f'{faces}')
+
+        def is_face_not_polygon(face: typ.List[int]) -> bool:
+            return len(face) < 3
+
+        if any(map(is_face_not_polygon, faces)):
+            raise ValueError(f'faces must contain faces of at least 3 vertices but is : '
+                             f'{faces}')
 
         self._faces = faces
 

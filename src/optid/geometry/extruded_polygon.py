@@ -28,9 +28,17 @@ class ExtrudedPolygon(Geometry):
     @beartype
     def __init__(self,
             polygon: typ.Union[jnp.ndarray, typ.Sequence[typ.Sequence[typ.Union[float, int]]]],
-            thickness: float):
+            thickness: typ.Union[float, int]):
 
         if not isinstance(polygon, jnp.ndarray):
+
+            def is_vertex_not_2d(vertex: typ.Sequence[typ.Union[float, int]]) -> bool:
+                return len(vertex) != 2
+
+            if any(map(is_vertex_not_2d, polygon)):
+                raise ValueError(f'polygon must be a list of 2D XZ coordinates but is : '
+                                 f'{polygon}')
+
             polygon = jnp.array(polygon, dtype=jnp.float32)
 
         if polygon.shape[-1] != 2:
@@ -45,15 +53,18 @@ class ExtrudedPolygon(Geometry):
             raise TypeError(f'polygon must have dtype (float32) but is : '
                             f'{polygon.dtype}')
 
+        thickness = float(thickness)
+
         if thickness <= 0:
             raise TypeError(f'thickness must a positive float but is : '
                             f'{thickness}')
 
         n = polygon.shape[0]
+        s = thickness * 0.5
 
         vertices = jnp.concatenate([
-            jnp.concatenate([polygon, jnp.full((n, 1), -thickness / 2.0)], axis=-1),
-            jnp.concatenate([polygon, jnp.full((n, 1), +thickness / 2.0)], axis=-1)], axis=0)
+            jnp.pad(polygon, ((0, 0), (0, 1)), constant_values=-s),
+            jnp.pad(polygon, ((0, 0), (0, 1)), constant_values=+s)])
 
         faces = [
             # End polygons

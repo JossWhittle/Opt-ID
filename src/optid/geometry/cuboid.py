@@ -17,6 +17,7 @@
 from beartype import beartype
 import typing as typ
 import numpy as np
+import jax.numpy as jnp
 
 # Opt-ID Imports
 from ..geometry import \
@@ -27,14 +28,28 @@ class Cuboid(ExtrudedPolygon):
 
     @beartype
     def __init__(self,
-            shape: typ.Tuple[typ.Union[int, float], typ.Union[int, float], typ.Union[int, float]]):
+            shape: typ.Union[jnp.ndarray, typ.Sequence[typ.Union[int, float]]]):
 
-        if np.any(np.array(shape) <= 0):
+        if not isinstance(shape, jnp.ndarray):
+            shape = jnp.array(shape, dtype=jnp.float32)
+
+        if shape.shape != (3,):
+            raise ValueError(f'shape must be a vector of shape (3,) but is : '
+                             f'{shape.shape}')
+
+        if shape.dtype != jnp.float32:
+            raise TypeError(f'shape must have dtype (float32) but is : '
+                            f'{shape.dtype}')
+
+        if np.any(shape <= 0):
             raise ValueError(f'shape must be greater than zero in every dimension but is : '
                              f'{shape}')
 
-        x, z, s = shape
-        x /= 2
-        z /= 2
+        x, z, s = shape.tolist()
+        x *= 0.5
+        z *= 0.5
 
-        super().__init__(polygon=[[-x, -z], [-x, z], [x, z], [x, -z]], thickness=s)
+        polygon = jnp.array(
+            [[-x, -z], [-x, z], [x, z], [x, -z]], dtype=jnp.float32)
+
+        super().__init__(polygon=polygon, thickness=s)
