@@ -61,8 +61,12 @@ class Geometry:
 
         self._vertices = vertices
 
-        # Coerce sequence of sequences into list of lists
-        faces = [[vertex for vertex in face] for face in faces]
+        def is_face_not_list(face):
+            return not isinstance(face, list)
+
+        if not isinstance(faces, list) or any(map(is_face_not_list, faces)):
+            # Coerce sequence of sequences into list of lists
+            faces = [[vertex for vertex in face] for face in faces]
 
         def any_vertex_out_of_bounds(face: typ.List[int]) -> bool:
             face = np.array(face)
@@ -90,7 +94,7 @@ class Geometry:
         self._faces = faces
 
     @beartype
-    def transform(self, matrix: jnp.ndarray) -> jnp.ndarray:
+    def transform(self, matrix: jnp.ndarray) -> 'Geometry':
         """
         Apply an affine matrix transformation to the vertices of this Geometry instance.
 
@@ -109,7 +113,8 @@ class Geometry:
             raise TypeError(f'matrix must have dtype (float32) but is : '
                             f'{matrix.dtype}')
 
-        return transform_points(self.vertices, matrix)
+        return Geometry(vertices=transform_points(self.vertices, matrix),
+                        faces=self.faces)
 
     @property
     @beartype

@@ -127,6 +127,40 @@ class GeometryTest(unittest.TestCase):
         self.assertRaisesRegex(TypeError, '.*', Geometry,
                                vertices=vertices, faces=faces)
 
+    def test_constructor_faces_list_of_sequences(self):
+
+        vertices = jnp.array([
+            [-0.5, -0.5, -0.5], [-0.5,  0.5, -0.5], [0.5,  0.5, -0.5], [0.5, -0.5, -0.5],
+            [-0.5, -0.5,  0.5], [-0.5,  0.5,  0.5], [0.5,  0.5,  0.5], [0.5, -0.5,  0.5]],
+            dtype=jnp.float32)
+
+        faces = [
+            [0, 1, 2, 3], (4, 5, 6, 7),
+            [0, 1, 5, 4], [1, 2, 6, 5],
+            [2, 3, 7, 6], [3, 0, 4, 7]]
+
+        geometry = Geometry(vertices=vertices, faces=faces)
+
+        self.assertTrue(np.allclose(geometry.vertices, vertices, atol=1e-5))
+        self.assertEqual(geometry.faces, [[vertex for vertex in face] for face in faces])
+
+    def test_constructor_faces_sequence_of_lists(self):
+
+        vertices = jnp.array([
+            [-0.5, -0.5, -0.5], [-0.5,  0.5, -0.5], [0.5,  0.5, -0.5], [0.5, -0.5, -0.5],
+            [-0.5, -0.5,  0.5], [-0.5,  0.5,  0.5], [0.5,  0.5,  0.5], [0.5, -0.5,  0.5]],
+            dtype=jnp.float32)
+
+        faces = (
+            [0, 1, 2, 3], [4, 5, 6, 7],
+            [0, 1, 5, 4], [1, 2, 6, 5],
+            [2, 3, 7, 6], [3, 0, 4, 7])
+
+        geometry = Geometry(vertices=vertices, faces=faces)
+
+        self.assertTrue(np.allclose(geometry.vertices, vertices, atol=1e-5))
+        self.assertEqual(geometry.faces, [[vertex for vertex in face] for face in faces])
+
     def test_constructor_bad_faces_vertex_out_of_bounds_raises_exception(self):
 
         vertices = jnp.ones((8, 3), dtype=jnp.float32)
@@ -178,7 +212,11 @@ class GeometryTest(unittest.TestCase):
 
         geometry = Geometry(vertices=vertices, faces=faces)
 
-        self.assertTrue(np.allclose(geometry.transform(scale(2, 2, 2)), (vertices * 2.0), atol=1e-5))
+        transformed_geometry = geometry.transform(scale(2, 2, 2))
+
+        self.assertTrue(np.allclose(transformed_geometry.vertices, (vertices * 2.0), atol=1e-5))
+        self.assertEqual(transformed_geometry.faces, geometry.faces)
+        self.assertIs(transformed_geometry.faces, geometry.faces)
 
     @unittest.skipIf(sys.flags.optimize > 0, 'BearType optimized away.')
     def test_transform_bad_matrix_type_raises_exception(self):
