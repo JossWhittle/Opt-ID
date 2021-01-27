@@ -46,5 +46,7 @@ setup(
         'nptyping',
         'h5py',
         'pandas',
+        'beartype',
+        'sect',
     ]
 )
