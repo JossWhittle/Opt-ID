@@ -44,9 +44,12 @@ setup(
     install_requires=[
         'numpy>=1.18.0',
         'nptyping',
+        'beartype',
         'h5py',
         'pandas',
-        'beartype',
         'sect',
+        'vtk',
+        'pyvista',
+        'tetgen',
     ]
 )
