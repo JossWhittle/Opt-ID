@@ -16,7 +16,9 @@
 # External Imports
 from beartype import beartype
 import typing as typ
+import numpy as np
 import jax.numpy as jnp
+from sect.triangulation import constrained_delaunay_triangles
 
 # Opt-ID Imports
 from ..geometry import \
@@ -75,11 +77,32 @@ class ExtrudedPolygon(Geometry):
             jnp.pad(polygon, ((0, 0), (0, 1)), constant_values=-s),
             jnp.pad(polygon, ((0, 0), (0, 1)), constant_values=+s)])
 
-        faces = [
-            # End polygons
-            [v for v in range(n)], [(v + n) for v in range(n)],
-            # Iterate over all the edge quads for the extrusion
-            *[[v, ((v + 1) % n), (((v + 1) % n) + n), (v + n)] for v in range(n)]]
+        def is_polygon_convex(polygon):
+            polygon = np.concatenate([polygon, polygon[:2]], axis=0)
+            return all((x0 - x1) * (z1 - z2) <= (z0 - z1) * (x1 - x2)
+                       for (x0, z0), (x1, z1), (x2, z2) in zip(polygon[:2], polygon[1:-1], polygon[2:]))
 
-        super().__init__(vertices=vertices, faces=faces)
+        if is_polygon_convex(polygon):
+            # Consider the entire end polygon at once if it is convex
+            polygons = [list(range(len(polygon)))]
+
+        else:
+            # Triangulate non-convex end polygon into multiple convex polygons
+            vertex_to_id = { (*vertex,): idx for idx, vertex in enumerate(polygon) }
+            polygons = [[vertex_to_id[vertex] for vertex in face]
+                        for face in constrained_delaunay_triangles(list(vertex_to_id.keys()))]
+
+        # Produce a set of convex prisms representing the full extrusion
+        polyhedra = [[
+
+            [v for v in polygon],
+
+            [(v + n) for v in reversed(polygon)],
+
+            *[[v1, (v1 + n), (v0 + n), v0]
+              for v0, v1 in zip(polygon, (polygon[1:] + polygon[:1]))]
+
+            ] for polygon in polygons]
+
+        super().__init__(vertices=vertices, polyhedra=polyhedra)
 

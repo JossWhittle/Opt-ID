@@ -45,13 +45,13 @@ class CuboidTest(unittest.TestCase):
             [-0.5, -0.5, -0.5], [-0.5,  0.5, -0.5], [0.5,  0.5, -0.5], [0.5, -0.5, -0.5],
             [-0.5, -0.5,  0.5], [-0.5,  0.5,  0.5], [0.5,  0.5,  0.5], [0.5, -0.5,  0.5]], dtype=jnp.float32)
 
-        faces = [
-            [0, 1, 2, 3], [4, 5, 6, 7],
-            [0, 1, 5, 4], [1, 2, 6, 5],
-            [2, 3, 7, 6], [3, 0, 4, 7]]
+        polyhedra = [[
+            [0, 1, 2, 3], [7, 6, 5, 4],
+            [1, 5, 4, 0], [2, 6, 5, 1],
+            [3, 7, 6, 2], [0, 4, 7, 3]]]
 
         self.assertTrue(np.allclose(geometry.vertices, vertices, atol=1e-5))
-        self.assertEqual(geometry.faces, faces)
+        self.assertEqual(geometry.polyhedra, polyhedra)
 
     def test_constructor_shape_list(self):
 
@@ -63,13 +63,13 @@ class CuboidTest(unittest.TestCase):
             [-0.5, -0.5, -0.5], [-0.5,  0.5, -0.5], [0.5,  0.5, -0.5], [0.5, -0.5, -0.5],
             [-0.5, -0.5,  0.5], [-0.5,  0.5,  0.5], [0.5,  0.5,  0.5], [0.5, -0.5,  0.5]], dtype=jnp.float32)
 
-        faces = [
-            [0, 1, 2, 3], [4, 5, 6, 7],
-            [0, 1, 5, 4], [1, 2, 6, 5],
-            [2, 3, 7, 6], [3, 0, 4, 7]]
+        polyhedra = [[
+            [0, 1, 2, 3], [7, 6, 5, 4],
+            [1, 5, 4, 0], [2, 6, 5, 1],
+            [3, 7, 6, 2], [0, 4, 7, 3]]]
 
         self.assertTrue(np.allclose(geometry.vertices, vertices, atol=1e-5))
-        self.assertEqual(geometry.faces, faces)
+        self.assertEqual(geometry.polyhedra, polyhedra)
 
     def test_constructor_shape_tuple(self):
 
@@ -81,13 +81,13 @@ class CuboidTest(unittest.TestCase):
             [-0.5, -0.5, -0.5], [-0.5,  0.5, -0.5], [0.5,  0.5, -0.5], [0.5, -0.5, -0.5],
             [-0.5, -0.5,  0.5], [-0.5,  0.5,  0.5], [0.5,  0.5,  0.5], [0.5, -0.5,  0.5]], dtype=jnp.float32)
 
-        faces = [
-            [0, 1, 2, 3], [4, 5, 6, 7],
-            [0, 1, 5, 4], [1, 2, 6, 5],
-            [2, 3, 7, 6], [3, 0, 4, 7]]
+        polyhedra = [[
+            [0, 1, 2, 3], [7, 6, 5, 4],
+            [1, 5, 4, 0], [2, 6, 5, 1],
+            [3, 7, 6, 2], [0, 4, 7, 3]]]
 
         self.assertTrue(np.allclose(geometry.vertices, vertices, atol=1e-5))
-        self.assertEqual(geometry.faces, faces)
+        self.assertEqual(geometry.polyhedra, polyhedra)
 
     @unittest.skipIf(sys.flags.optimize > 0, 'BearType optimized away.')
     def test_constructor_bad_shape_type_raises_exception(self):

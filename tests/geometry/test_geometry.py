@@ -42,15 +42,15 @@ class GeometryTest(unittest.TestCase):
             [-0.5, -0.5, -0.5], [-0.5,  0.5, -0.5], [0.5,  0.5, -0.5], [0.5, -0.5, -0.5],
             [-0.5, -0.5,  0.5], [-0.5,  0.5,  0.5], [0.5,  0.5,  0.5], [0.5, -0.5,  0.5]], dtype=jnp.float32)
 
-        faces = [
+        polyhedra = [[
             [0, 1, 2, 3], [4, 5, 6, 7],
             [0, 1, 5, 4], [1, 2, 6, 5],
-            [2, 3, 7, 6], [3, 0, 4, 7]]
+            [2, 3, 7, 6], [3, 0, 4, 7]]]
 
-        geometry = Geometry(vertices=vertices, faces=faces)
+        geometry = Geometry(vertices=vertices, polyhedra=polyhedra)
 
         self.assertTrue(np.allclose(geometry.vertices, vertices, atol=1e-5))
-        self.assertEqual(geometry.faces, faces)
+        self.assertEqual(geometry.polyhedra, polyhedra)
 
     def test_constructor_vertices_list(self):
 
@@ -58,36 +58,36 @@ class GeometryTest(unittest.TestCase):
             [-0.5, -0.5, -0.5], [-0.5,  0.5, -0.5], [0.5,  0.5, -0.5], [0.5, -0.5, -0.5],
             [-0.5, -0.5,  0.5], [-0.5,  0.5,  0.5], [0.5,  0.5,  0.5], [0.5, -0.5,  0.5]]
 
-        faces = [
+        polyhedra = [[
             [0, 1, 2, 3], [4, 5, 6, 7],
             [0, 1, 5, 4], [1, 2, 6, 5],
-            [2, 3, 7, 6], [3, 0, 4, 7]]
+            [2, 3, 7, 6], [3, 0, 4, 7]]]
 
-        geometry = Geometry(vertices=vertices, faces=faces)
+        geometry = Geometry(vertices=vertices, polyhedra=polyhedra)
 
         self.assertTrue(np.allclose(geometry.vertices, jnp.array(vertices, dtype=jnp.float32), atol=1e-5))
-        self.assertEqual(geometry.faces, faces)
+        self.assertEqual(geometry.polyhedra, polyhedra)
 
     @unittest.skipIf(sys.flags.optimize > 0, 'BearType optimized away.')
     def test_constructor_bad_vertices_raises_exception(self):
 
-        faces = [
+        polyhedra = [[
             [0, 1, 2, 3], [4, 5, 6, 7],
             [0, 1, 5, 4], [1, 2, 6, 5],
-            [2, 3, 7, 6], [3, 0, 4, 7]]
+            [2, 3, 7, 6], [3, 0, 4, 7]]]
 
         self.assertRaisesRegex(BeartypeException, '.*', Geometry,
-                               vertices=None, faces=faces)
+                               vertices=None, polyhedra=polyhedra)
 
     @unittest.skipIf(sys.flags.optimize > 0, 'BearType optimized away.')
-    def test_constructor_bad_faces_raises_exception(self):
+    def test_constructor_bad_polyhedra_raises_exception(self):
 
         vertices = [
             [-0.5, -0.5, -0.5], [-0.5,  0.5, -0.5], [0.5,  0.5, -0.5], [0.5, -0.5, -0.5],
             [-0.5, -0.5,  0.5], [-0.5,  0.5,  0.5], [0.5,  0.5,  0.5], [0.5, -0.5,  0.5]]
 
         self.assertRaisesRegex(BeartypeException, '.*', Geometry,
-                               vertices=vertices, faces=None)
+                               vertices=vertices, polyhedra=None)
 
     def test_constructor_bad_vertices_list_vertex_shape_raises_exception(self):
 
@@ -95,107 +95,134 @@ class GeometryTest(unittest.TestCase):
             [-0.5, -0.5      ], [-0.5,  0.5, -0.5], [0.5,  0.5, -0.5], [0.5, -0.5, -0.5],
             [-0.5, -0.5,  0.5], [-0.5,  0.5,  0.5], [0.5,  0.5,  0.5], [0.5, -0.5,  0.5]]
 
-        faces = [
+        polyhedra = [[
             [0, 1, 2, 3], [4, 5, 6, 7],
             [0, 1, 5, 4], [1, 2, 6, 5],
-            [2, 3, 7, 6], [3, 0, 4, 7]]
+            [2, 3, 7, 6], [3, 0, 4, 7]]]
 
         self.assertRaisesRegex(ValueError, '.*', Geometry,
-                               vertices=vertices, faces=faces)
+                               vertices=vertices, polyhedra=polyhedra)
 
     def test_constructor_bad_vertices_array_vertices_shape_raises_exception(self):
 
         vertices = jnp.ones((8, 2), dtype=jnp.float32)
 
-        faces = [
+        polyhedra = [[
             [0, 1, 2, 3], [4, 5, 6, 7],
             [0, 1, 5, 4], [1, 2, 6, 5],
-            [2, 3, 7, 6], [3, 0, 4, 7]]
+            [2, 3, 7, 6], [3, 0, 4, 7]]]
 
         self.assertRaisesRegex(ValueError, '.*', Geometry,
-                               vertices=vertices, faces=faces)
+                               vertices=vertices, polyhedra=polyhedra)
 
     def test_constructor_bad_vertices_array_type_raises_exception(self):
 
         vertices = jnp.ones((8, 3), dtype=jnp.int32)
 
-        faces = [
+        polyhedra = [[
             [0, 1, 2, 3], [4, 5, 6, 7],
             [0, 1, 5, 4], [1, 2, 6, 5],
-            [2, 3, 7, 6], [3, 0, 4, 7]]
+            [2, 3, 7, 6], [3, 0, 4, 7]]]
 
         self.assertRaisesRegex(TypeError, '.*', Geometry,
-                               vertices=vertices, faces=faces)
+                               vertices=vertices, polyhedra=polyhedra)
 
-    def test_constructor_faces_list_of_sequences(self):
+    def test_constructor_polyhedra_list_of_list_of_sequences(self):
 
         vertices = jnp.array([
             [-0.5, -0.5, -0.5], [-0.5,  0.5, -0.5], [0.5,  0.5, -0.5], [0.5, -0.5, -0.5],
             [-0.5, -0.5,  0.5], [-0.5,  0.5,  0.5], [0.5,  0.5,  0.5], [0.5, -0.5,  0.5]],
             dtype=jnp.float32)
 
-        faces = [
+        polyhedra = [[
             [0, 1, 2, 3], (4, 5, 6, 7),
             [0, 1, 5, 4], [1, 2, 6, 5],
-            [2, 3, 7, 6], [3, 0, 4, 7]]
+            [2, 3, 7, 6], [3, 0, 4, 7]]]
 
-        geometry = Geometry(vertices=vertices, faces=faces)
+        geometry = Geometry(vertices=vertices, polyhedra=polyhedra)
 
         self.assertTrue(np.allclose(geometry.vertices, vertices, atol=1e-5))
-        self.assertEqual(geometry.faces, [[vertex for vertex in face] for face in faces])
+        self.assertEqual(geometry.polyhedra, [[[vertex for vertex in face] for face in faces] for faces in polyhedra])
 
-    def test_constructor_faces_sequence_of_lists(self):
+    def test_constructor_polyhedra_list_of_sequences_of_lists(self):
 
         vertices = jnp.array([
             [-0.5, -0.5, -0.5], [-0.5,  0.5, -0.5], [0.5,  0.5, -0.5], [0.5, -0.5, -0.5],
             [-0.5, -0.5,  0.5], [-0.5,  0.5,  0.5], [0.5,  0.5,  0.5], [0.5, -0.5,  0.5]],
             dtype=jnp.float32)
 
-        faces = (
+        polyhedra = [(
             [0, 1, 2, 3], [4, 5, 6, 7],
             [0, 1, 5, 4], [1, 2, 6, 5],
-            [2, 3, 7, 6], [3, 0, 4, 7])
+            [2, 3, 7, 6], [3, 0, 4, 7])]
 
-        geometry = Geometry(vertices=vertices, faces=faces)
+        geometry = Geometry(vertices=vertices, polyhedra=polyhedra)
 
         self.assertTrue(np.allclose(geometry.vertices, vertices, atol=1e-5))
-        self.assertEqual(geometry.faces, [[vertex for vertex in face] for face in faces])
+        self.assertEqual(geometry.polyhedra, [[[vertex for vertex in face] for face in faces] for faces in polyhedra])
 
-    def test_constructor_bad_faces_vertex_out_of_bounds_raises_exception(self):
+    def test_constructor_polyhedra_sequence_of_lists_of_lists(self):
+
+        vertices = jnp.array([
+            [-0.5, -0.5, -0.5], [-0.5,  0.5, -0.5], [0.5,  0.5, -0.5], [0.5, -0.5, -0.5],
+            [-0.5, -0.5,  0.5], [-0.5,  0.5,  0.5], [0.5,  0.5,  0.5], [0.5, -0.5,  0.5]],
+            dtype=jnp.float32)
+
+        polyhedra = ([
+            [0, 1, 2, 3], [4, 5, 6, 7],
+            [0, 1, 5, 4], [1, 2, 6, 5],
+            [2, 3, 7, 6], [3, 0, 4, 7]],)
+
+        geometry = Geometry(vertices=vertices, polyhedra=polyhedra)
+
+        self.assertTrue(np.allclose(geometry.vertices, vertices, atol=1e-5))
+        self.assertEqual(geometry.polyhedra, [[[vertex for vertex in face] for face in faces] for faces in polyhedra])
+
+    def test_constructor_bad_polyhedra_vertex_out_of_bounds_raises_exception(self):
 
         vertices = jnp.ones((8, 3), dtype=jnp.float32)
 
-        faces = [
+        polyhedra = [[
             [8, 1, 2, 3], [4, 5, 6, 7],
             [0, 1, 5, 4], [1, 2, 6, 5],
-            [2, 3, 7, 6], [3, 0, 4, 7]]
+            [2, 3, 7, 6], [3, 0, 4, 7]]]
 
         self.assertRaisesRegex(ValueError, '.*', Geometry,
-                               vertices=vertices, faces=faces)
+                               vertices=vertices, polyhedra=polyhedra)
 
-    def test_constructor_bad_faces_vertex_duplicated_raises_exception(self):
+    def test_constructor_bad_polyhedra_vertex_duplicated_raises_exception(self):
 
         vertices = jnp.ones((8, 3), dtype=jnp.float32)
 
-        faces = [
+        polyhedra = [[
             [0, 0, 2, 3], [4, 5, 6, 7],
             [0, 1, 5, 4], [1, 2, 6, 5],
-            [2, 3, 7, 6], [3, 0, 4, 7]]
+            [2, 3, 7, 6], [3, 0, 4, 7]]]
 
         self.assertRaisesRegex(ValueError, '.*', Geometry,
-                               vertices=vertices, faces=faces)
+                               vertices=vertices, polyhedra=polyhedra)
 
-    def test_constructor_bad_faces_face_not_polygon_raises_exception(self):
+    def test_constructor_bad_polyhedra_face_not_polygon_raises_exception(self):
 
         vertices = jnp.ones((8, 3), dtype=jnp.float32)
 
-        faces = [
+        polyhedra = [[
             [0, 1], [4, 5, 6, 7],
             [0, 1, 5, 4], [1, 2, 6, 5],
-            [2, 3, 7, 6], [3, 0, 4, 7]]
+            [2, 3, 7, 6], [3, 0, 4, 7]]]
 
         self.assertRaisesRegex(ValueError, '.*', Geometry,
-                               vertices=vertices, faces=faces)
+                               vertices=vertices, polyhedra=polyhedra)
+
+    def test_constructor_bad_polyhedra_not_polyhedra_raises_exception(self):
+
+        vertices = jnp.ones((8, 3), dtype=jnp.float32)
+
+        polyhedra = [[
+            [0, 1, 2, 3], [4, 5, 6, 7], [0, 1, 5, 4]]]
+
+        self.assertRaisesRegex(ValueError, '.*', Geometry,
+                               vertices=vertices, polyhedra=polyhedra)
 
     ####################################################################################################################
 
@@ -205,18 +232,18 @@ class GeometryTest(unittest.TestCase):
             [-0.5, -0.5, -0.5], [-0.5,  0.5, -0.5], [0.5,  0.5, -0.5], [0.5, -0.5, -0.5],
             [-0.5, -0.5,  0.5], [-0.5,  0.5,  0.5], [0.5,  0.5,  0.5], [0.5, -0.5,  0.5]], dtype=jnp.float32)
 
-        faces = [
+        polyhedra = [[
             [0, 1, 2, 3], [4, 5, 6, 7],
             [0, 1, 5, 4], [1, 2, 6, 5],
-            [2, 3, 7, 6], [3, 0, 4, 7]]
+            [2, 3, 7, 6], [3, 0, 4, 7]]]
 
-        geometry = Geometry(vertices=vertices, faces=faces)
+        geometry = Geometry(vertices=vertices, polyhedra=polyhedra)
 
         transformed_geometry = geometry.transform(scale(2, 2, 2))
 
         self.assertTrue(np.allclose(transformed_geometry.vertices, (vertices * 2.0), atol=1e-5))
-        self.assertEqual(transformed_geometry.faces, geometry.faces)
-        self.assertIs(transformed_geometry.faces, geometry.faces)
+        self.assertEqual(transformed_geometry.polyhedra, geometry.polyhedra)
+        self.assertIs(transformed_geometry.polyhedra, geometry.polyhedra)
 
     @unittest.skipIf(sys.flags.optimize > 0, 'BearType optimized away.')
     def test_transform_bad_matrix_type_raises_exception(self):
@@ -225,12 +252,12 @@ class GeometryTest(unittest.TestCase):
             [-0.5, -0.5, -0.5], [-0.5,  0.5, -0.5], [0.5,  0.5, -0.5], [0.5, -0.5, -0.5],
             [-0.5, -0.5,  0.5], [-0.5,  0.5,  0.5], [0.5,  0.5,  0.5], [0.5, -0.5,  0.5]], dtype=jnp.float32)
 
-        faces = [
+        polyhedra = [[
             [0, 1, 2, 3], [4, 5, 6, 7],
             [0, 1, 5, 4], [1, 2, 6, 5],
-            [2, 3, 7, 6], [3, 0, 4, 7]]
+            [2, 3, 7, 6], [3, 0, 4, 7]]]
 
-        geometry = Geometry(vertices=vertices, faces=faces)
+        geometry = Geometry(vertices=vertices, polyhedra=polyhedra)
 
         self.assertRaisesRegex(BeartypeException, '.*', geometry.transform,
                                matrix=None)
@@ -241,12 +268,12 @@ class GeometryTest(unittest.TestCase):
             [-0.5, -0.5, -0.5], [-0.5,  0.5, -0.5], [0.5,  0.5, -0.5], [0.5, -0.5, -0.5],
             [-0.5, -0.5,  0.5], [-0.5,  0.5,  0.5], [0.5,  0.5,  0.5], [0.5, -0.5,  0.5]], dtype=jnp.float32)
 
-        faces = [
+        polyhedra = [[
             [0, 1, 2, 3], [4, 5, 6, 7],
             [0, 1, 5, 4], [1, 2, 6, 5],
-            [2, 3, 7, 6], [3, 0, 4, 7]]
+            [2, 3, 7, 6], [3, 0, 4, 7]]]
 
-        geometry = Geometry(vertices=vertices, faces=faces)
+        geometry = Geometry(vertices=vertices, polyhedra=polyhedra)
 
         self.assertRaisesRegex(ValueError, '.*', geometry.transform,
                                matrix=jnp.eye(3, dtype=jnp.float32))
@@ -257,12 +284,12 @@ class GeometryTest(unittest.TestCase):
             [-0.5, -0.5, -0.5], [-0.5,  0.5, -0.5], [0.5,  0.5, -0.5], [0.5, -0.5, -0.5],
             [-0.5, -0.5,  0.5], [-0.5,  0.5,  0.5], [0.5,  0.5,  0.5], [0.5, -0.5,  0.5]], dtype=jnp.float32)
 
-        faces = [
+        polyhedra = [[
             [0, 1, 2, 3], [4, 5, 6, 7],
             [0, 1, 5, 4], [1, 2, 6, 5],
-            [2, 3, 7, 6], [3, 0, 4, 7]]
+            [2, 3, 7, 6], [3, 0, 4, 7]]]
 
-        geometry = Geometry(vertices=vertices, faces=faces)
+        geometry = Geometry(vertices=vertices, polyhedra=polyhedra)
 
         self.assertRaisesRegex(TypeError, '.*', geometry.transform,
                                matrix=jnp.eye(4, dtype=jnp.int32))

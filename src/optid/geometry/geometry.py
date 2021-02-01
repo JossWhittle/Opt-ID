@@ -18,6 +18,7 @@ from beartype import beartype
 import typing as typ
 import numpy as np
 import jax.numpy as jnp
+import radia as rad
 
 # Opt-ID Imports
 from ..core.affine import \
@@ -29,15 +30,16 @@ class Geometry:
     @beartype
     def __init__(self,
             vertices: typ.Union[jnp.ndarray, typ.Sequence[typ.Sequence[typ.Union[float, int]]]],
-            faces: typ.Sequence[typ.Sequence[int]]):
+            polyhedra: typ.Sequence[typ.Sequence[typ.Sequence[int]]]):
         """
         Construct a Geometry instance from a set of unique vertices in 3-space and a list of polygons.
 
         :param vertices:
             Tensor of vertices in 3-space of shape (N, 3).
 
-        :param faces:
-            List of lists of integer vertex IDs in the range [0, N). Each face must have at least 3 vertices.
+        :param polyhedra:
+            List of lists of lists of integer vertex IDs in the range [0, N).
+            Each polyhedra must have at least 4 faces. Each face must have at least 3 vertices.
         """
 
         if not isinstance(vertices, jnp.ndarray):
@@ -61,37 +63,49 @@ class Geometry:
 
         self._vertices = vertices
 
-        def is_face_not_list(face):
-            return not isinstance(face, list)
+        def is_not_list(seq):
+            return not isinstance(seq, list)
 
-        if not isinstance(faces, list) or any(map(is_face_not_list, faces)):
-            # Coerce sequence of sequences into list of lists
-            faces = [[vertex for vertex in face] for face in faces]
+        if is_not_list(polyhedra) or \
+           any(map(is_not_list, polyhedra)) or \
+           any(any(map(is_not_list, faces)) for faces in polyhedra):
+            # Coerce sequence of sequences of sequences into list of lists of lists
+            polyhedra = [[[vertex for vertex in face] for face in faces] for faces in polyhedra]
 
-        def any_vertex_out_of_bounds(face: typ.List[int]) -> bool:
-            face = np.array(face)
-            return np.any((face < 0) | (face >= vertices.shape[0]))
+        if len(polyhedra) < 1:
+            raise ValueError(f'polyhedra must have at least one element but is : '
+                             f'{len(polyhedra)}')
 
-        if any(map(any_vertex_out_of_bounds, faces)):
-            raise ValueError(f'faces must be list of lists of unique integers in range '
-                             f'[0, {vertices.shape[0]}) but is : '
-                             f'{faces}')
+        for idx, faces in enumerate(polyhedra):
 
-        def any_vertex_duplicated(face: typ.List[int]) -> bool:
-            return len(set(face)) < len(face)
+            if len(faces) < 4:
+                raise ValueError(f'polyhedra {idx} must have at least 4 faces but has : '
+                                 f'{len(faces)}')
 
-        if any(map(any_vertex_duplicated, faces)):
-            raise ValueError(f'faces must be list of lists of unique integers but is : '
-                             f'{faces}')
+            def any_vertex_out_of_bounds(face: typ.List[int]) -> bool:
+                face = np.array(face)
+                return np.any((face < 0) | (face >= vertices.shape[0]))
 
-        def is_face_not_polygon(face: typ.List[int]) -> bool:
-            return len(face) < 3
+            if any(map(any_vertex_out_of_bounds, faces)):
+                raise ValueError(f'faces of polyhedra {idx} must be list of lists of unique integers in range '
+                                 f'[0, {vertices.shape[0]}) but is : '
+                                 f'{faces}')
 
-        if any(map(is_face_not_polygon, faces)):
-            raise ValueError(f'faces must contain faces of at least 3 vertices but is : '
-                             f'{faces}')
+            def any_vertex_duplicated(face: typ.List[int]) -> bool:
+                return len(set(face)) < len(face)
 
-        self._faces = faces
+            if any(map(any_vertex_duplicated, faces)):
+                raise ValueError(f'faces of polyhedra {idx} must be list of lists of unique integers but is : '
+                                 f'{faces}')
+
+            def is_face_not_polygon(face: typ.List[int]) -> bool:
+                return len(face) < 3
+
+            if any(map(is_face_not_polygon, faces)):
+                raise ValueError(f'faces of polyhedra {idx} must contain faces of at least 3 vertices but is : '
+                                 f'{faces}')
+
+        self._polyhedra = polyhedra
 
     @beartype
     def transform(self, matrix: jnp.ndarray) -> 'Geometry':
@@ -114,7 +128,51 @@ class Geometry:
                             f'{matrix.dtype}')
 
         return Geometry(vertices=transform_points(self.vertices, matrix),
-                        faces=self.faces)
+                        polyhedra=self.polyhedra)
+
+    @beartype
+    def to_radia(self,
+            vector: typ.Union[jnp.ndarray, typ.Sequence[typ.Union[float, int]]]) -> int:
+        """
+        Instance a new Radia object containing all the polyhedra in the Geometry instance.
+
+        :param vector:
+            World space directional vector for the magnetic field of the polyhedra.
+
+        :return:
+            Integer handle to a Radia object.
+        """
+
+        if not isinstance(vector, jnp.ndarray):
+            vector = jnp.array(vector, dtype=jnp.float32)
+
+        if vector.shape != (3,):
+            raise ValueError(f'vector must be shape (3,) but is : '
+                             f'{vector.shape}')
+
+        if vector.dtype != jnp.float32:
+            raise TypeError(f'vector must have dtype (float32) but is : '
+                            f'{vector.dtype}')
+
+        obj = []
+        for polyhedra in self.polyhedra:
+
+            # Find the vertices used by this polyhedra
+            used_ids = sorted(list(set(vertex for face in polyhedra for vertex in face)))
+
+            # Extract a minimal vertex list of just the points used by this polyhedra
+            local_vertices = [self.vertices[global_id].tolist() for global_id in used_ids]
+
+            # Create a lookup table mapping vertex ids in the full list to those in them minimal list
+            map_ids  = { global_id: local_id for local_id, global_id in enumerate(used_ids)}
+
+            # Create a face list using the minimal vertex list
+            faces = [[(map_ids[global_id] + 1) for global_id in face] for face in polyhedra]
+
+            # Create a radia object for this polyhedra
+            obj += [rad.ObjPolyhdr(local_vertices, faces, vector.tolist())]
+
+        return rad.ObjCnt(obj) if len(obj) > 1 else obj[0]
 
     @property
     @beartype
@@ -126,8 +184,8 @@ class Geometry:
 
     @property
     @beartype
-    def faces(self) -> typ.List[typ.List[int]]:
+    def polyhedra(self) -> typ.List[typ.List[typ.List[int]]]:
         """
-        List of lists of integer vertex IDs.
+        List of lists of lists of integer vertex IDs.
         """
-        return self._faces
+        return self._polyhedra
