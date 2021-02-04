@@ -44,7 +44,7 @@ RUN pip3 install --no-cache-dir --upgrade \
     env MPICC=/usr/local/bin/mpicc pip3 install --no-cache-dir --upgrade \
         mpi4py && \
     pip3 install --no-cache-dir --upgrade \
-        jax jaxlib==0.1.57+cuda110 -f https://storage.googleapis.com/jax-releases/jax_releases.html && \
+        jax jaxlib==0.1.59+cuda110 -f https://storage.googleapis.com/jax-releases/jax_releases.html && \
     rm -rf /tmp/* && \
     find /usr/lib/python3.*/ -name 'tests' -exec rm -rf '{}' +
 
