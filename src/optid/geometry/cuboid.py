@@ -28,12 +28,20 @@ class Cuboid(ExtrudedPolygon):
 
     @beartype
     def __init__(self,
-            shape: typ.Union[jnp.ndarray, typ.Sequence[typ.Union[int, float]]]):
+            shape: typ.Union[jnp.ndarray, typ.Sequence[typ.Union[int, float]]],
+            subdiv: typ.Union[float, int] = 0,
+            **tetgen_kargs):
         """
         Construct a Cuboid instance.
 
         :param shape:
             Aligned size vector in 3-space.
+
+        :param subdiv:
+            Scale for introducing new vertices to aid in subdivision. Ignored if less than or equal to zero.
+
+        :param **tetgen_kargs:
+            All additional parameters are forwarded to TetGen's tetrahedralize function.
         """
 
         if not isinstance(shape, jnp.ndarray):
@@ -58,4 +66,4 @@ class Cuboid(ExtrudedPolygon):
         polygon = jnp.array(
             [[-x, -z], [-x, z], [x, z], [x, -z]], dtype=jnp.float32)
 
-        super().__init__(polygon=polygon, thickness=s)
+        super().__init__(polygon=polygon, thickness=s, subdiv=subdiv, **tetgen_kargs)

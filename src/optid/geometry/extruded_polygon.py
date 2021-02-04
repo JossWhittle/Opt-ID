@@ -22,15 +22,17 @@ from sect.triangulation import constrained_delaunay_triangles
 
 # Opt-ID Imports
 from ..geometry import \
-    Geometry
+    TetrahedralMesh
 
 
-class ExtrudedPolygon(Geometry):
+class ExtrudedPolygon(TetrahedralMesh):
 
     @beartype
     def __init__(self,
             polygon: typ.Union[jnp.ndarray, typ.Sequence[typ.Sequence[typ.Union[float, int]]]],
-            thickness: typ.Union[float, int]):
+            thickness: typ.Union[float, int],
+            subdiv: typ.Union[float, int] = 0,
+            **tetgen_kargs):
         """
         Construct an ExtrudedPolygon instance from a set of unique polygon vertices in 2-space and a thickness.
 
@@ -39,6 +41,12 @@ class ExtrudedPolygon(Geometry):
 
         :param thickness:
             Thickness of the geometry along the S-axis.
+
+        :param subdiv:
+            Scale for introducing new vertices to aid in subdivision. Ignored if less than or equal to zero.
+
+        :param **tetgen_kargs:
+            All additional parameters are forwarded to TetGen's tetrahedralize function.
         """
 
         if not isinstance(polygon, jnp.ndarray):
@@ -70,39 +78,46 @@ class ExtrudedPolygon(Geometry):
             raise TypeError(f'thickness must a positive float but is : '
                             f'{thickness}')
 
-        n = polygon.shape[0]
-        s = thickness * 0.5
+        # Introduce new vertices into end polygon loop
+        def subdiv_edge(p0, p1):
+            dist = np.sqrt(np.sum(np.square(p1 - p0)))
+            segments = 2 if subdiv <= 0 else max(2, int(np.ceil(dist / subdiv)))
+            return np.stack([np.linspace(p0[0], p1[0], segments)[:-1],
+                             np.linspace(p0[1], p1[1], segments)[:-1]], axis=1)
 
+        cap_polygon = np.concatenate([polygon, polygon[:1]], axis=0)
+        cap_polygon = np.concatenate([subdiv_edge(p0, p1) for p0, p1 in zip(cap_polygon[:-1], cap_polygon[1:])], axis=0)
+        n = cap_polygon.shape[0]
+
+        # Naive mesh
+        vertex_to_id = { (*vertex,): idx for idx, vertex in enumerate(cap_polygon) }
+        cap_mesh_polygons = [[vertex_to_id[vertex] for vertex in face]
+                             for face in constrained_delaunay_triangles(list(vertex_to_id.keys()))]
+
+        # Project end polygon 2D vertices into 3D vertices for each slice
+        s_limit = thickness * 0.5
+        s_slices = 2 if subdiv <= 0 else max(2, int(np.ceil(thickness / subdiv)))
         vertices = jnp.concatenate([
-            jnp.pad(polygon, ((0, 0), (0, 1)), constant_values=-s),
-            jnp.pad(polygon, ((0, 0), (0, 1)), constant_values=+s)])
+            jnp.pad(cap_polygon, ((0, 0), (0, 1)), constant_values=s)
+            for s in np.linspace(-s_limit, +s_limit, s_slices)])
 
-        def is_polygon_convex(polygon):
-            polygon = np.concatenate([polygon, polygon[:2]], axis=0)
-            return all((x0 - x1) * (z1 - z2) <= (z0 - z1) * (x1 - x2)
-                       for (x0, z0), (x1, z1), (x2, z2) in zip(polygon[:2], polygon[1:-1], polygon[2:]))
+        faces = [*cap_mesh_polygons]
+        s = (n * (s_slices - 1))
 
-        if is_polygon_convex(polygon):
-            # Consider the entire end polygon at once if it is convex
-            polygons = [list(range(len(polygon)))]
+        for a, b, c in cap_mesh_polygons:
+            faces += [[(a + s), (c + s), (b + s)]]
 
-        else:
-            # Triangulate non-convex end polygon into multiple convex polygons
-            vertex_to_id = { (*vertex,): idx for idx, vertex in enumerate(polygon) }
-            polygons = [[vertex_to_id[vertex] for vertex in face]
-                        for face in constrained_delaunay_triangles(list(vertex_to_id.keys()))]
+        # Edge polygons
+        for v0 in range(n):
+            v1 = (v0 + 1) % n
+            for s in range(s_slices - 1):
+                # D A
+                # C B
+                a, b, c, d = (v1 + (n * s)), (v0 + (n * s)), (v0 + (n * (s + 1))), (v1 + (n * (s + 1)))
+                faces += [[a, b, c], [a, c, d]]
 
-        # Produce a set of convex prisms representing the full extrusion
-        polyhedra = [[
+        faces = jnp.array(faces, dtype=jnp.int32)
+        vertices = jnp.array(vertices, dtype=jnp.float32)
 
-            [v for v in polygon],
-
-            [(v + n) for v in reversed(polygon)],
-
-            *[[v1, (v1 + n), (v0 + n), v0]
-              for v0, v1 in zip(polygon, (polygon[1:] + polygon[:1]))]
-
-            ] for polygon in polygons]
-
-        super().__init__(vertices=vertices, polyhedra=polyhedra)
+        super().__init__(vertices=vertices, faces=faces, **tetgen_kargs)
 

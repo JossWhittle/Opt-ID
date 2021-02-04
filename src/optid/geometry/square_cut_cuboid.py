@@ -39,7 +39,9 @@ class SquareCutCuboid(ExtrudedPolygon):
                             typ.Tuple[typ.Tuple[typ.Union[int, float], typ.Union[int, float]],
                                       typ.Tuple[typ.Union[int, float], typ.Union[int, float]],
                                       typ.Tuple[typ.Union[int, float], typ.Union[int, float]],
-                                      typ.Tuple[typ.Union[int, float], typ.Union[int, float]]]] = 0):
+                                      typ.Tuple[typ.Union[int, float], typ.Union[int, float]]]] = 0,
+            subdiv: typ.Union[float, int] = 0,
+            **tetgen_kargs):
         """
         Construct a SquareCutCuboid instance.
 
@@ -54,6 +56,12 @@ class SquareCutCuboid(ExtrudedPolygon):
                 Tuple (X, Z) to be applied at every corner.
                 Tuple (BL, TL, TR, BR) to be applied in X and Z the four corners.
                 Tuple ((BLx, BLz), (TLx, TLz), (TRx, TRz), (BRx, BRz)) to be applied at the four corners.
+
+        :param subdiv:
+            Scale for introducing new vertices to aid in subdivision. Ignored if less than or equal to zero.
+
+        :param **tetgen_kargs:
+            All additional parameters are forwarded to TetGen's tetrahedralize function.
         """
 
         if not isinstance(shape, jnp.ndarray):
@@ -133,4 +141,4 @@ class SquareCutCuboid(ExtrudedPolygon):
             *([[ x, -(z - brz)], [ (x - brx), -(z - brz)], [ (x - brx), -z]] if br else [[ x, -z]])],
             dtype=jnp.float32)
 
-        super().__init__(polygon=polygon, thickness=s)
+        super().__init__(polygon=polygon, thickness=s, subdiv=subdiv, **tetgen_kargs)

@@ -15,6 +15,7 @@
 
 # Opt-ID Imports
 from .geometry import Geometry
+from .tetrahedral_mesh import TetrahedralMesh
 from .extruded_polygon import ExtrudedPolygon
 from .cuboid import Cuboid
 from .chamfered_cuboid import ChamferedCuboid
