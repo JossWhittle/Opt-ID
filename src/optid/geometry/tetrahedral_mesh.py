@@ -30,7 +30,7 @@ class TetrahedralMesh(Geometry):
     @beartype
     def __init__(self,
             vertices: typ.Union[jnp.ndarray, typ.Sequence[typ.Sequence[typ.Union[float, int]]]],
-            faces: typ.Union[jnp.ndarray, typ.Sequence[typ.Sequence[typ.Sequence[int]]]],
+            faces: typ.Union[jnp.ndarray, typ.Sequence[typ.Sequence[int]]],
             **tetgen_kargs):
         """
         Construct a tetrahedralized mesh from an input triangular surface mesh.
@@ -91,16 +91,14 @@ class TetrahedralMesh(Geometry):
             raise TypeError(f'faces must have dtype (int32) but is : '
                             f'{faces.dtype}')
 
-        tetrahedron_faces = [[0, 1, 2], [1, 2, 3], [2, 3, 0], [3, 0, 1]]
-
         kargs = dict(mindihedral=20, minratio=1.5, nobisect=False)
         kargs.update(tetgen_kargs)
-
         tet = tetgen.TetGen(np.array(vertices, dtype=np.float32), np.array(faces, dtype=np.int32))
         tet.tetrahedralize(order=1, **kargs)
 
         vertices = jnp.array(tet.grid.points.astype(np.float32))
 
+        tetrahedron_faces = [[0, 1, 2], [1, 2, 3], [2, 3, 0], [3, 0, 1]]
         polyhedra = [[[int(cell[vertex]) for vertex in face] for face in tetrahedron_faces]
                      for cell in tet.grid.cells.reshape(-1, 5)[:, 1:]]
 
