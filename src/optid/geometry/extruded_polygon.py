@@ -15,6 +15,7 @@
 
 # External Imports
 from beartype import beartype
+import numbers
 import typing as typ
 import numpy as np
 import jax.numpy as jnp
@@ -25,13 +26,16 @@ from ..geometry import \
     TetrahedralMesh
 
 
+TPolygon = typ.Union[jnp.ndarray, typ.Sequence[typ.Sequence[numbers.Real]]]
+
+
 class ExtrudedPolygon(TetrahedralMesh):
 
     @beartype
     def __init__(self,
-            polygon: typ.Union[jnp.ndarray, typ.Sequence[typ.Sequence[typ.Union[float, int]]]],
-            thickness: typ.Union[float, int],
-            subdiv: typ.Union[float, int] = 0,
+            polygon: TPolygon,
+            thickness: numbers.Real,
+            subdiv: numbers.Real = 0,
             **tetgen_kargs):
         """
         Construct an ExtrudedPolygon instance from a set of unique polygon vertices in 2-space and a thickness.
@@ -51,7 +55,7 @@ class ExtrudedPolygon(TetrahedralMesh):
 
         if not isinstance(polygon, jnp.ndarray):
 
-            def is_vertex_not_2d(vertex: typ.Sequence[typ.Union[float, int]]) -> bool:
+            def is_vertex_not_2d(vertex) -> bool:
                 return len(vertex) != 2
 
             if any(map(is_vertex_not_2d, polygon)):

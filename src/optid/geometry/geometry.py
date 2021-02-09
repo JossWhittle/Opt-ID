@@ -15,6 +15,7 @@
 
 # External Imports
 from beartype import beartype
+import numbers
 import typing as typ
 import numpy as np
 import jax.numpy as jnp
@@ -25,12 +26,17 @@ from ..core.affine import \
     transform_points
 
 
+TVertices  = typ.Union[jnp.ndarray, typ.Sequence[typ.Sequence[numbers.Real]]]
+TPolyhedra = typ.Sequence[typ.Sequence[typ.Sequence[int]]]
+TVector    = typ.Union[jnp.ndarray, typ.Sequence[numbers.Real]]
+
+
 class Geometry:
 
     @beartype
     def __init__(self,
-            vertices: typ.Union[jnp.ndarray, typ.Sequence[typ.Sequence[typ.Union[float, int]]]],
-            polyhedra: typ.Sequence[typ.Sequence[typ.Sequence[int]]]):
+            vertices: TVertices,
+            polyhedra: TPolyhedra):
         """
         Construct a Geometry instance from a set of unique vertices in 3-space and a list of polygons.
 
@@ -44,7 +50,7 @@ class Geometry:
 
         if not isinstance(vertices, jnp.ndarray):
 
-            def is_vertex_not_3d(vertex: typ.Sequence[typ.Union[float, int]]) -> bool:
+            def is_vertex_not_3d(vertex) -> bool:
                 return len(vertex) != 3
 
             if any(map(is_vertex_not_3d, vertices)):
@@ -82,7 +88,7 @@ class Geometry:
                 raise ValueError(f'polyhedra {idx} must have at least 4 faces but has : '
                                  f'{len(faces)}')
 
-            def any_vertex_out_of_bounds(face: typ.List[int]) -> bool:
+            def any_vertex_out_of_bounds(face) -> bool:
                 face = np.array(face)
                 return np.any((face < 0) | (face >= vertices.shape[0]))
 
@@ -91,14 +97,14 @@ class Geometry:
                                  f'[0, {vertices.shape[0]}) but is : '
                                  f'{faces}')
 
-            def any_vertex_duplicated(face: typ.List[int]) -> bool:
+            def any_vertex_duplicated(face) -> bool:
                 return len(set(face)) < len(face)
 
             if any(map(any_vertex_duplicated, faces)):
                 raise ValueError(f'faces of polyhedra {idx} must be list of lists of unique integers but is : '
                                  f'{faces}')
 
-            def is_face_not_polygon(face: typ.List[int]) -> bool:
+            def is_face_not_polygon(face) -> bool:
                 return len(face) < 3
 
             if any(map(is_face_not_polygon, faces)):
@@ -132,7 +138,7 @@ class Geometry:
 
     @beartype
     def to_radia(self,
-            vector: typ.Union[jnp.ndarray, typ.Sequence[typ.Union[float, int]]]) -> int:
+            vector: TVector) -> int:
         """
         Instance a new Radia object containing all the polyhedra in the Geometry instance.
 
@@ -184,7 +190,7 @@ class Geometry:
 
     @property
     @beartype
-    def polyhedra(self) -> typ.List[typ.List[typ.List[int]]]:
+    def polyhedra(self) -> TPolyhedra:
         """
         List of lists of lists of integer vertex IDs.
         """

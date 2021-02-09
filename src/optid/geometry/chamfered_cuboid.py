@@ -15,6 +15,7 @@
 
 # External Imports
 from beartype import beartype
+import numbers
 import typing as typ
 import numpy as np
 import jax.numpy as jnp
@@ -24,23 +25,20 @@ from ..geometry import \
     ExtrudedPolygon
 
 
+TShape = typ.Union[jnp.ndarray, typ.Sequence[numbers.Real]]
+TChamferTuple = typ.Tuple[numbers.Real, numbers.Real]
+TChamferCornerScalars = typ.Tuple[numbers.Real, numbers.Real, numbers.Real, numbers.Real]
+TChamferCornerTuples = typ.Tuple[TChamferTuple, TChamferTuple, TChamferTuple, TChamferTuple]
+TChamfers = typ.Union[jnp.ndarray, numbers.Real, TChamferTuple, TChamferCornerScalars, TChamferCornerTuples]
+
+
 class ChamferedCuboid(ExtrudedPolygon):
 
     @beartype
     def __init__(self,
-            shape: typ.Union[jnp.ndarray, typ.Sequence[typ.Union[int, float]]],
-            chamfer: typ.Union[jnp.ndarray,
-                               typ.Union[int, float],
-                               typ.Tuple[typ.Union[int, float], typ.Union[int, float]],
-                               typ.Tuple[typ.Union[int, float],
-                                         typ.Union[int, float],
-                                         typ.Union[int, float],
-                                         typ.Union[int, float]],
-                               typ.Tuple[typ.Tuple[typ.Union[int, float], typ.Union[int, float]],
-                                         typ.Tuple[typ.Union[int, float], typ.Union[int, float]],
-                                         typ.Tuple[typ.Union[int, float], typ.Union[int, float]],
-                                         typ.Tuple[typ.Union[int, float], typ.Union[int, float]]]] = 0,
-            subdiv: typ.Union[float, int] = 0,
+            shape: TShape,
+            chamfer: TChamfers = 0,
+            subdiv: numbers.Real = 0,
             **tetgen_kargs):
         """
         Construct a ChamferedCuboid instance.

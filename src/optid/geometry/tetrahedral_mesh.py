@@ -15,6 +15,7 @@
 
 # External Imports
 from beartype import beartype
+import numbers
 import typing as typ
 import numpy as np
 import jax.numpy as jnp
@@ -25,12 +26,16 @@ from ..geometry import \
     Geometry
 
 
+TVertices = typ.Union[jnp.ndarray, typ.Sequence[typ.Sequence[numbers.Real]]]
+TFaces    = typ.Union[jnp.ndarray, typ.Sequence[typ.Sequence[int]]]
+
+
 class TetrahedralMesh(Geometry):
 
     @beartype
     def __init__(self,
-            vertices: typ.Union[jnp.ndarray, typ.Sequence[typ.Sequence[typ.Union[float, int]]]],
-            faces: typ.Union[jnp.ndarray, typ.Sequence[typ.Sequence[int]]],
+            vertices: TVertices,
+            faces: TFaces,
             **tetgen_kargs):
         """
         Construct a tetrahedralized mesh from an input triangular surface mesh.
@@ -47,7 +52,7 @@ class TetrahedralMesh(Geometry):
 
         if not isinstance(vertices, jnp.ndarray):
 
-            def is_vertex_not_3d(vertex: typ.Sequence[typ.Union[float, int]]) -> bool:
+            def is_vertex_not_3d(vertex) -> bool:
                 return len(vertex) != 3
 
             if any(map(is_vertex_not_3d, vertices)):
@@ -70,7 +75,7 @@ class TetrahedralMesh(Geometry):
 
         if not isinstance(faces, jnp.ndarray):
 
-            def is_face_not_triangle(face: typ.Sequence[int]) -> bool:
+            def is_face_not_triangle(face) -> bool:
                 return len(face) != 3
 
             if any(map(is_face_not_triangle, faces)):

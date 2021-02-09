@@ -15,6 +15,7 @@
 
 # External Imports
 from beartype import beartype
+import numbers
 import typing as typ
 import numpy as np
 import jax.numpy as jnp
@@ -24,23 +25,20 @@ from ..geometry import \
     ExtrudedPolygon
 
 
+TShape = typ.Union[jnp.ndarray, typ.Sequence[numbers.Real]]
+TCutTuple = typ.Tuple[numbers.Real, numbers.Real]
+TCutCornerScalars = typ.Tuple[numbers.Real, numbers.Real, numbers.Real, numbers.Real]
+TCutCornerTuples = typ.Tuple[TCutTuple, TCutTuple, TCutTuple, TCutTuple]
+TCuts = typ.Union[jnp.ndarray, numbers.Real, TCutTuple, TCutCornerScalars, TCutCornerTuples]
+
+
 class SquareCutCuboid(ExtrudedPolygon):
 
     @beartype
     def __init__(self,
-            shape: typ.Union[jnp.ndarray, typ.Sequence[typ.Union[int, float]]],
-            cuts: typ.Union[jnp.ndarray,
-                            typ.Union[int, float],
-                            typ.Tuple[typ.Union[int, float], typ.Union[int, float]],
-                            typ.Tuple[typ.Union[int, float],
-                                      typ.Union[int, float],
-                                      typ.Union[int, float],
-                                      typ.Union[int, float]],
-                            typ.Tuple[typ.Tuple[typ.Union[int, float], typ.Union[int, float]],
-                                      typ.Tuple[typ.Union[int, float], typ.Union[int, float]],
-                                      typ.Tuple[typ.Union[int, float], typ.Union[int, float]],
-                                      typ.Tuple[typ.Union[int, float], typ.Union[int, float]]]] = 0,
-            subdiv: typ.Union[float, int] = 0,
+            shape: TShape,
+            cuts: TCuts = 0,
+            subdiv: numbers.Real = 0,
             **tetgen_kargs):
         """
         Construct a SquareCutCuboid instance.

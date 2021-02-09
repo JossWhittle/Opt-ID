@@ -15,6 +15,7 @@
 
 # External Imports
 from beartype import beartype
+import numbers
 import typing as typ
 import numpy as np
 import jax.numpy as jnp
@@ -24,12 +25,15 @@ from ..geometry import \
     ExtrudedPolygon
 
 
+TShape = typ.Union[jnp.ndarray, typ.Sequence[numbers.Real]]
+
+
 class Cuboid(ExtrudedPolygon):
 
     @beartype
     def __init__(self,
-            shape: typ.Union[jnp.ndarray, typ.Sequence[typ.Union[int, float]]],
-            subdiv: typ.Union[float, int] = 0,
+            shape: TShape,
+            subdiv: numbers.Real = 0,
             **tetgen_kargs):
         """
         Construct a Cuboid instance.
