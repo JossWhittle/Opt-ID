@@ -178,6 +178,15 @@ class GeometryTest(unittest.TestCase):
         self.assertTrue(np.allclose(geometry.vertices, vertices, atol=1e-5))
         self.assertEqual(geometry.polyhedra, [[[vertex for vertex in face] for face in faces] for faces in polyhedra])
 
+    def test_constructor_bad_polyhedra_empty_list_exception(self):
+
+        vertices = jnp.ones((8, 3), dtype=jnp.float32)
+
+        polyhedra = []
+
+        self.assertRaisesRegex(ValueError, '.*', Geometry,
+                               vertices=vertices, polyhedra=polyhedra)
+
     def test_constructor_bad_polyhedra_vertex_out_of_bounds_raises_exception(self):
 
         vertices = jnp.ones((8, 3), dtype=jnp.float32)
@@ -293,3 +302,99 @@ class GeometryTest(unittest.TestCase):
 
         self.assertRaisesRegex(TypeError, '.*', geometry.transform,
                                matrix=jnp.eye(4, dtype=jnp.int32))
+
+    ####################################################################################################################
+
+    def test_to_radia_array(self):
+
+        vertices = jnp.array([
+            [-0.5, -0.5, -0.5], [-0.5, 0.5, -0.5], [0.5, 0.5, -0.5], [0.5, -0.5, -0.5],
+            [-0.5, -0.5, 0.5], [-0.5, 0.5, 0.5], [0.5, 0.5, 0.5], [0.5, -0.5, 0.5]], dtype=jnp.float32)
+
+        polyhedra = [[
+            [0, 1, 2, 3], [4, 5, 6, 7],
+            [0, 1, 5, 4], [1, 2, 6, 5],
+            [2, 3, 7, 6], [3, 0, 4, 7]]]
+
+        geometry = Geometry(vertices=vertices, polyhedra=polyhedra)
+
+        obj = geometry.to_radia(jnp.ones((3,), dtype=jnp.float32))
+
+    def test_to_radia_list(self):
+
+        vertices = jnp.array([
+            [-0.5, -0.5, -0.5], [-0.5, 0.5, -0.5], [0.5, 0.5, -0.5], [0.5, -0.5, -0.5],
+            [-0.5, -0.5, 0.5], [-0.5, 0.5, 0.5], [0.5, 0.5, 0.5], [0.5, -0.5, 0.5]], dtype=jnp.float32)
+
+        polyhedra = [[
+            [0, 1, 2, 3], [4, 5, 6, 7],
+            [0, 1, 5, 4], [1, 2, 6, 5],
+            [2, 3, 7, 6], [3, 0, 4, 7]]]
+
+        geometry = Geometry(vertices=vertices, polyhedra=polyhedra)
+
+        obj = geometry.to_radia([0, 1, 0])
+
+    def test_to_radia_tuple(self):
+
+        vertices = jnp.array([
+            [-0.5, -0.5, -0.5], [-0.5, 0.5, -0.5], [0.5, 0.5, -0.5], [0.5, -0.5, -0.5],
+            [-0.5, -0.5, 0.5], [-0.5, 0.5, 0.5], [0.5, 0.5, 0.5], [0.5, -0.5, 0.5]], dtype=jnp.float32)
+
+        polyhedra = [[
+            [0, 1, 2, 3], [4, 5, 6, 7],
+            [0, 1, 5, 4], [1, 2, 6, 5],
+            [2, 3, 7, 6], [3, 0, 4, 7]]]
+
+        geometry = Geometry(vertices=vertices, polyhedra=polyhedra)
+
+        obj = geometry.to_radia((0, 1, 0))
+
+    @unittest.skipIf(sys.flags.optimize > 0, 'BearType optimized away.')
+    def test_to_radia_bad_vector_type_raises_exception(self):
+
+        vertices = jnp.array([
+            [-0.5, -0.5, -0.5], [-0.5, 0.5, -0.5], [0.5, 0.5, -0.5], [0.5, -0.5, -0.5],
+            [-0.5, -0.5, 0.5], [-0.5, 0.5, 0.5], [0.5, 0.5, 0.5], [0.5, -0.5, 0.5]], dtype=jnp.float32)
+
+        polyhedra = [[
+            [0, 1, 2, 3], [4, 5, 6, 7],
+            [0, 1, 5, 4], [1, 2, 6, 5],
+            [2, 3, 7, 6], [3, 0, 4, 7]]]
+
+        geometry = Geometry(vertices=vertices, polyhedra=polyhedra)
+
+        self.assertRaisesRegex(BeartypeException, '.*', geometry.to_radia,
+                               vector=None)
+
+    def test_to_radia_bad_vector_shape_raises_exception(self):
+
+        vertices = jnp.array([
+            [-0.5, -0.5, -0.5], [-0.5, 0.5, -0.5], [0.5, 0.5, -0.5], [0.5, -0.5, -0.5],
+            [-0.5, -0.5, 0.5], [-0.5, 0.5, 0.5], [0.5, 0.5, 0.5], [0.5, -0.5, 0.5]], dtype=jnp.float32)
+
+        polyhedra = [[
+            [0, 1, 2, 3], [4, 5, 6, 7],
+            [0, 1, 5, 4], [1, 2, 6, 5],
+            [2, 3, 7, 6], [3, 0, 4, 7]]]
+
+        geometry = Geometry(vertices=vertices, polyhedra=polyhedra)
+
+        self.assertRaisesRegex(ValueError, '.*', geometry.to_radia,
+                               vector=jnp.ones((4,), dtype=jnp.float32))
+
+    def test_to_radia_bad_vector_array_type_raises_exception(self):
+
+        vertices = jnp.array([
+            [-0.5, -0.5, -0.5], [-0.5, 0.5, -0.5], [0.5, 0.5, -0.5], [0.5, -0.5, -0.5],
+            [-0.5, -0.5, 0.5], [-0.5, 0.5, 0.5], [0.5, 0.5, 0.5], [0.5, -0.5, 0.5]], dtype=jnp.float32)
+
+        polyhedra = [[
+            [0, 1, 2, 3], [4, 5, 6, 7],
+            [0, 1, 5, 4], [1, 2, 6, 5],
+            [2, 3, 7, 6], [3, 0, 4, 7]]]
+
+        geometry = Geometry(vertices=vertices, polyhedra=polyhedra)
+
+        self.assertRaisesRegex(TypeError, '.*', geometry.to_radia,
+                                   vector=jnp.ones((3,), dtype=jnp.int32))
