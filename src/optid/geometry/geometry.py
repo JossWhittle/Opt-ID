@@ -25,6 +25,11 @@ import radia as rad
 from ..core.affine import \
     transform_points
 
+from ..bfield import \
+    Lookup
+
+from ..lattice import \
+    Lattice
 
 TVertices  = typ.Union[jnp.ndarray, typ.Sequence[typ.Sequence[numbers.Real]]]
 TPolyhedra = typ.Sequence[typ.Sequence[typ.Sequence[int]]]
