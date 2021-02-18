@@ -269,6 +269,9 @@ class Lattice:
             True if the two lattices have the same unit to world matrix and the same subdivision, otherwise False.
         """
 
+        if self is other:
+            return True
+
         if not isinstance(other, Lattice):
             return False
 

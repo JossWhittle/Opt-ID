@@ -17,3 +17,5 @@
 from . import affine
 from . import lattice
 from . import bfield
+from . import sim
+from . import mutation

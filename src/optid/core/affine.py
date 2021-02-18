@@ -55,6 +55,26 @@ def transform_vectors(lattice, matrix):
 
 
 @jax.jit
+def transform_rescaled_vectors(lattice, matrix):
+    """
+    Apply a 4x4 affine transformation to a lattice of vectors in XZS.
+
+    :param lattice:
+        A tensor of vectors in XZS.
+
+    :param matrix:
+        A single 4x4 affine matrix.
+
+    :return:
+        A tensor of vectors in XZS.
+    """
+    # Transform the candidates field vector into world space at the magnet slot orientation
+    norm = jnp.linalg.norm(lattice, axis=-1, keepdims=True)
+    lattice = transform_vectors((lattice / norm), matrix)
+    return (lattice / jnp.linalg.norm(lattice, axis=-1, keepdims=True)) * norm
+
+
+@jax.jit
 def radians(degrees):
     """
     Convert degrees to radians.

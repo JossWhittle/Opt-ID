@@ -14,4 +14,5 @@
 
 
 # Opt-ID Imports
+from .bfield import Bfield
 from .lookup import Lookup
