@@ -19,6 +19,7 @@ import typing as typ
 import numpy as np
 import jax
 import jax.numpy as jnp
+import pandas as pd
 
 # Opt-ID Imports
 from ..core.affine import \
@@ -121,7 +122,7 @@ class MagnetGenome:
         self._mask.setflags(write=False)
         self._active_candidates = np.argwhere(mask)
         self._active_candidates.setflags(write=False)
-        self._active_slots = np.argwhere( mask[:self.magnet_group.nslot])
+        self._active_slots = np.argwhere(mask[:self.magnet_group.nslot])
         self._active_slots.setflags(write=False)
         self._inactive_slots = np.argwhere(~mask[:self.magnet_group.nslot])
         self._inactive_slots.setflags(write=False)
@@ -353,6 +354,42 @@ class MagnetGenome:
 
         # Apply the mutation
         self.shift_mutation(index_a, index_b, shift)
+
+    @beartype
+    def to_dataframe(self):
+
+        rows = []
+        for index in range(self.magnet_group.nslot):
+
+            # Extract data for this slot
+            slot            = self.magnet_group.slot(index)
+            candidate_index = self.order[index]
+            candidate       = self.magnet_group.candidate(candidate_index)
+            flip_index      = self.flips[index]
+            flip_matrix     = self.magnet_group.flip_matrix(flip_index)
+            world_matrix    = slot.direction_matrix @ flip_matrix @ slot.world_matrix
+            vector          = transform_rescaled_vectors(candidate.vector, world_matrix)
+
+            rows += [{
+                'magnet_group': self.magnet_group.name,
+                'slot_index': index,
+                'slot_name': slot.name,
+                'slot_beam': slot.beam,
+
+                'candidate_index': candidate_index,
+                'candidate_name': candidate.name,
+                'candidate_vector': candidate.vector.tolist(),
+
+                'direction_matrix': slot.direction_matrix.tolist(),
+
+                'flip_index': flip_index,
+                'flip_matrix': flip_matrix.tolist(),
+
+                'world_matrix': world_matrix.tolist(),
+                'world_vector': vector.tolist(),
+            }]
+
+        return pd.DataFrame(rows)
 
     @property
     @beartype

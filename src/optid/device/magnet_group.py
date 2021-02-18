@@ -32,10 +32,6 @@ from ..bfield import \
     Bfield
 
 
-TCandidates = typ.List[MagnetCandidate]
-TSlots = typ.List[MagnetSlot]
-
-
 class MagnetGroup:
 
     @beartype
@@ -44,8 +40,8 @@ class MagnetGroup:
             geometry: Geometry,
             vector: jnp.ndarray,
             flip_matrices: jnp.ndarray,
-            candidates: TCandidates,
-            slots: TSlots):
+            candidates: typ.List[MagnetCandidate],
+            slots: typ.List[MagnetSlot]):
         """
         Construct a Magnet instance pairing a magnet geometry with a field vector.
 

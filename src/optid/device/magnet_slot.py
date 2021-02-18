@@ -27,7 +27,7 @@ class MagnetSlot:
 
     @beartype
     def __init__(self,
-            slot: str,
+            name: str,
             beam: str,
             world_matrix: jnp.ndarray,
             direction_matrix: jnp.ndarray,
@@ -35,7 +35,7 @@ class MagnetSlot:
         """
         Construct a MagnetSlot instance.
 
-        :param slot:
+        :param name:
             String name for the slot.
 
         :param beam:
@@ -51,17 +51,15 @@ class MagnetSlot:
             Bfield lookup table.
         """
 
-        if len(slot) == 0:
+        if len(name) == 0:
             raise ValueError(f'slot must be a non-empty string')
 
-        self._slot = slot
+        self._name = name
 
         if len(beam) == 0:
             raise ValueError(f'beam must be a non-empty string')
 
         self._beam = beam
-
-        self._name = f'{self._beam}::{self._slot}'
 
         if world_matrix.shape != (4, 4):
             raise ValueError(f'world_matrix must be an affine world_matrix with shape (4, 4) but is : '
@@ -72,6 +70,7 @@ class MagnetSlot:
                             f'{world_matrix.dtype}')
 
         self._world_matrix = world_matrix
+        self._world_matrix.setflags(write=False)
 
         if direction_matrix.shape != (4, 4):
             raise ValueError(f'direction_matrix must be an affine direction_matrix with shape (4, 4) but is : '
@@ -82,6 +81,7 @@ class MagnetSlot:
                             f'{direction_matrix.dtype}')
 
         self._direction_matrix = direction_matrix
+        self._direction_matrix.setflags(write=False)
 
         self._lookup = lookup
 
@@ -89,11 +89,6 @@ class MagnetSlot:
     @beartype
     def name(self) -> str:
         return self._name
-
-    @property
-    @beartype
-    def slot(self) -> str:
-        return self._slot
 
     @property
     @beartype
