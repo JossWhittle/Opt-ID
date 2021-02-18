@@ -123,7 +123,7 @@ class MagnetGroup:
 
         self._bfield = self.calculate_expected_bfield()
 
-    def calculate_slot_expected_bfield(self, index: int) -> jnp.ndarray:
+    def calculate_slot_expected_bfield(self, index: int) -> Bfield:
 
         slot = self.slot(index)
 
@@ -136,13 +136,14 @@ class MagnetGroup:
         # Calculate the bfield contribution for the current candidate in the selected slot
         return slot.lookup.bfield(vector)
 
-    def calculate_expected_bfield(self) -> jnp.ndarray:
+    def calculate_expected_bfield(self) -> Bfield:
 
         bfield = self.calculate_slot_expected_bfield(0)
+        lattice, field = bfield.lattice, bfield.field
         for index in range(1, self.nslot):
-            bfield += self.calculate_slot_expected_bfield(index)
+            field += self.calculate_slot_expected_bfield(index).field
 
-        return bfield
+        return Bfield(lattice=lattice, bfield=bfield)
 
     @property
     @beartype
@@ -161,7 +162,7 @@ class MagnetGroup:
 
     @property
     @beartype
-    def bfield(self) -> jnp.ndarray:
+    def bfield(self) -> Bfield:
         return self._bfield
 
     @property

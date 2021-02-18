@@ -35,5 +35,5 @@ def bfield_from_lattice(radia_object: int, lattice: jnp.ndarray) -> jnp.ndarray:
     :return:
         Tensor of 3-space field vectors at each location in the lattice.
     """
-    return jnp.array(rad.Fld(radia_object, lattice.reshape((-1, 3)).tolist()),
+    return jnp.array(rad.Fld(radia_object, 'b', lattice.reshape((-1, 3)).tolist()),
                      dtype=jnp.float32).reshape(lattice.shape)
