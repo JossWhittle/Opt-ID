@@ -25,8 +25,8 @@ import pandas as pd
 from ..core.affine import \
     transform_rescaled_vectors
 
-from ..bfield import \
-    Bfield
+from ..core.bfield import \
+    bfield_from_lookup
 
 from ..device import \
     MagnetGroup
@@ -40,9 +40,9 @@ class MagnetGenome:
             prngkey: jnp.ndarray,
             order: np.ndarray,
             flips: np.ndarray,
-            mask: typ.Optional[jnp.ndarray] = None,
-            masked_bfield: typ.Optional[Bfield] = None,
-            bfield: typ.Optional[Bfield] = None):
+            mask: typ.Optional[np.ndarray] = None,
+            static_bfield: typ.Optional[jnp.ndarray] = None,
+            dynamic_bfield: typ.Optional[jnp.ndarray] = None):
         """
         Construct a MagnetGenome instance.
 
@@ -62,11 +62,11 @@ class MagnetGenome:
             Optional boolean masking of which candidates / slots can be optimised (C,).
             Assumed all active if not given.
 
-        :param masked_bfield:
+        :param static_bfield:
             Optional pre-computed Bfield of just the inactive slots that are masked off.
             Computed if not given. Remains None if all slots are active.
 
-        :param bfield:
+        :param dynamic_bfield:
             Optional pre-computed Bfield of the current genome.
             Computed if not given.
         """
@@ -121,19 +121,47 @@ class MagnetGenome:
         self._mask = mask
         self._mask.setflags(write=False)
         self._active_candidates = np.argwhere(mask)
-        self._active_candidates.setflags(write=False)
         self._active_slots = np.argwhere(mask[:self.magnet_group.nslot])
-        self._active_slots.setflags(write=False)
         self._inactive_slots = np.argwhere(~mask[:self.magnet_group.nslot])
-        self._inactive_slots.setflags(write=False)
 
         # Use the given initial masked bfield for inactive slots or compute it using the mask
-        self._masked_bfield = masked_bfield if (masked_bfield is not None) else self.calculate_masked_bfield()
+        if static_bfield is None:
+            static_bfield = self.calculate_static_bfield()
+        else:
+            if static_bfield.ndim != 4:
+                raise ValueError(f'static_bfield must be a lattice of vectors with shape (X, Z, S, 3) but is : '
+                                 f'{static_bfield.shape}')
+
+            if static_bfield.shape[-1] != 3:
+                raise ValueError(f'static_bfield must be a lattice of vectors with shape (..., 3) but is : '
+                                 f'{static_bfield.shape}')
+
+            if static_bfield.dtype != jnp.float32:
+                raise TypeError(f'static_bfield must have dtype (float32) but is : '
+                                f'{static_bfield.dtype}')
+
+        self._static_bfield  = static_bfield
+
         # Use the given initial full bfield for the magnet group or compute it
-        self._bfield = bfield if (bfield is not None) else self.calculate_bfield()
+        if dynamic_bfield is None:
+            dynamic_bfield = self.calculate_dynamic_bfield()
+        else:
+            if dynamic_bfield.ndim != 4:
+                raise ValueError(f'dynamic_bfield must be a lattice of vectors with shape (X, Z, S, 3) but is : '
+                                 f'{dynamic_bfield.shape}')
+
+            if dynamic_bfield.shape[-1] != 3:
+                raise ValueError(f'dynamic_bfield must be a lattice of vectors with shape (..., 3) but is : '
+                                 f'{dynamic_bfield.shape}')
+
+            if dynamic_bfield.dtype != jnp.float32:
+                raise TypeError(f'dynamic_bfield must have dtype (float32) but is : '
+                                f'{dynamic_bfield.dtype}')
+
+        self._dynamic_bfield = dynamic_bfield
 
     @beartype
-    def calculate_slot_bfield(self, index: int) -> Bfield:
+    def calculate_slot_bfield(self, index: int) -> jnp.ndarray:
 
         if index < 0 or index >= self.magnet_group.nslot:
             raise ValueError(f'index must be in range [0, {self.magnet_group.nslot}) but is : '
@@ -151,37 +179,35 @@ class MagnetGenome:
         vector = transform_rescaled_vectors(candidate.vector, matrix)
 
         # Calculate the bfield contribution for the current candidate in the selected slot
-        return slot.lookup.bfield(vector)
+        return bfield_from_lookup(slot.lookup, vector)
 
     @beartype
-    def calculate_bfield(self) -> Bfield:
+    def calculate_bfield(self) -> jnp.ndarray:
+        return self.calculate_dynamic_bfield() + self.static_bfield
+
+    @beartype
+    def calculate_dynamic_bfield(self) -> jnp.ndarray:
 
         # Compute the contribution over the active slots
-        bfield = self.calculate_slot_bfield(self.active_slots[0])
-        lattice, field = bfield.lattice, bfield.field
-        for index in self.active_slots[1:]:
-            field += self.calculate_slot_bfield(index).field
+        bfield = self.calculate_slot_bfield(self._active_slots[0])
+        for index in self._active_slots[1:]:
+            bfield += self.calculate_slot_bfield(index)
 
-        # If at least one slot is inactive then add in the cached contribution from the inactive slots
-        if self.masked_bfield is not None:
-            field += self.masked_bfield.field
-
-        return Bfield(lattice=lattice, field=field)
+        return bfield
 
     @beartype
-    def calculate_masked_bfield(self) -> typ.Optional[Bfield]:
+    def calculate_static_bfield(self) -> typ.Optional[jnp.ndarray]:
 
         # If no slots are inactive then the masked bfield is None
-        if len(self.inactive_slots) == 0:
+        if len(self._inactive_slots) == 0:
             return None
 
         # Compute the contribution over the inactive slots
-        bfield = self.calculate_slot_bfield(self.inactive_slots[0])
-        lattice, field = bfield.lattice, bfield.field
-        for index in self.inactive_slots[1:]:
-            field += self.calculate_slot_bfield(index).field
+        bfield = self.calculate_slot_bfield(self._inactive_slots[0])
+        for index in self._inactive_slots[1:]:
+            bfield += self.calculate_slot_bfield(index)
 
-        return Bfield(lattice=lattice, field=field)
+        return bfield
 
     @beartype
     def clone(self) -> 'MagnetGenome':
@@ -189,8 +215,8 @@ class MagnetGenome:
         self._children_prngkey, clone_prngkey = jax.random.split(self.children_prngkey)
 
         return MagnetGenome(magnet_group=self.magnet_group, prngkey=clone_prngkey,
-                            order=self.order.copy(), flips=self.flips.copy(), mask=self.mask.copy(),
-                            bfield=self.bfield.copy(), masked_bfield=self.masked_bfield.copy())
+                            order=self.order.copy(), flips=self.flips.copy(), mask=self.mask,
+                            dynamic_bfield=self.dynamic_bfield.copy(), static_bfield=self.static_bfield)
 
     @beartype
     def swap_mutation(self, index_a: int, index_b: int):
@@ -212,22 +238,21 @@ class MagnetGenome:
                              f'{self.mask[index_b]}')
 
         # Compute the bfield contribution before the mutation
-        bfield = self.calculate_slot_bfield(index_a)
-        lattice, field_old = bfield.lattice, bfield.field
+        bfield_old = self.calculate_slot_bfield(index_a)
         if index_b < self.magnet_group.nslot:
-            field_old += self.calculate_slot_bfield(index_b).field
+            bfield_old += self.calculate_slot_bfield(index_b)
 
         # Apply the mutation
         self.order[[index_a, index_b]] = self.order[[index_b, index_a]]
         self.flips[[index_a, index_b]] = self.flips[[index_b, index_a]]
 
         # Compute the bfield contribution after the mutation
-        field_new = self.calculate_slot_bfield(index_a).field
+        bfield_new = self.calculate_slot_bfield(index_a)
         if index_b < self.magnet_group.nslot:
-            field_new += self.calculate_slot_bfield(index_b).field
+            bfield_new += self.calculate_slot_bfield(index_b)
 
         # Compute the additive delta to the bfield that this full mutation (removal+swap+insertion) would produce
-        self._bfield = Bfield(lattice=lattice, field=(self.bfield.field + (field_new - field_old)))
+        self._dynamic_bfield += (bfield_new - bfield_old)
 
     def random_swap_mutation(self):
 
@@ -235,8 +260,8 @@ class MagnetGenome:
         self._mutation_prngkey, prngkey_a, prngkey_b = jax.random.split(self.mutation_prngkey, num=3)
 
         # Sample a pair of uniform random magnet candidates where one candidate is currently in use
-        index_a = jax.random.choice(prngkey_a, a=self.active_slots, shape=())
-        index_b = jax.random.choice(prngkey_b, a=self.active_candidates[self.active_candidates > index_a], shape=())
+        index_a = jax.random.choice(prngkey_a, a=self._active_slots, shape=())
+        index_b = jax.random.choice(prngkey_b, a=self._active_candidates[self._active_candidates > index_a], shape=())
 
         # Apply the mutation
         self.swap_mutation(index_a, index_b)
@@ -260,17 +285,16 @@ class MagnetGenome:
                              f'{self.mask[index]}')
 
         # Compute the bfield contribution before the mutation
-        bfield = self.calculate_slot_bfield(index)
-        lattice, field_old = bfield.lattice, bfield.field
+        bfield_old = self.calculate_slot_bfield(index)
 
         # Apply the mutation
         self.flips[index] = flip
 
         # Compute the bfield contribution after the mutation
-        field_new = self.calculate_slot_bfield(index).field
+        bfield_new = self.calculate_slot_bfield(index)
 
         # Compute the additive delta to the bfield that this full mutation (removal+flip+insertion) would produce
-        self._bfield = Bfield(lattice=lattice, field=(self.bfield.field + (field_new - field_old)))
+        self._dynamic_bfield += (bfield_new - bfield_old)
 
     def random_flip_mutation(self):
 
@@ -278,7 +302,7 @@ class MagnetGenome:
         self._mutation_prngkey, prngkey_index, prngkey_flip = jax.random.split(self.mutation_prngkey, num=3)
 
         # Sample a uniform random magnet slot for candidate in use
-        index = jax.random.choice(prngkey_index, a=self.active_slots, shape=())
+        index = jax.random.choice(prngkey_index, a=self._active_slots, shape=())
 
         # Sample a uniform random flip state excluding the current state
         flip = jax.random.randint(prngkey_flip, shape=(), minval=0, maxval=(self.magnet_group.nflip - 1))
@@ -302,8 +326,8 @@ class MagnetGenome:
             raise ValueError(f'shift must be non-zero')
 
         # Determine range of candidates that will be effected by this mutation
-        candidate_indices = self.active_candidates[(self.active_candidates >= index_a) &
-                                                   (self.active_candidates <= index_b)]
+        candidate_indices = self._active_candidates[(self._active_candidates >= index_a) &
+                                                    (self._active_candidates <= index_b)]
 
         nindices = len(candidate_indices)
         if np.abs(shift) >= nindices:
@@ -318,10 +342,9 @@ class MagnetGenome:
 
         if update_bfield:
             # Compute the bfield contribution before the mutation
-            bfield = self.calculate_slot_bfield(slot_indices[0])
-            lattice, field_old = bfield.lattice, bfield.field
+            bfield_old = self.calculate_slot_bfield(slot_indices[0])
             for index in slot_indices[1:]:
-                field_old += self.calculate_slot_bfield(index).field
+                bfield_old += self.calculate_slot_bfield(index)
 
         # Apply the mutation
         new_indices = np.roll(candidate_indices, axis=0, shift=shift)
@@ -330,15 +353,15 @@ class MagnetGenome:
 
         if update_bfield:
             # Compute the bfield contribution after the mutation
-            field_new = self.calculate_slot_bfield(slot_indices[0]).field
+            bfield_new = self.calculate_slot_bfield(slot_indices[0])
             for index in slot_indices[1:]:
-                field_new += self.calculate_slot_bfield(index).field
+                bfield_new += self.calculate_slot_bfield(index)
 
             # Compute the additive delta to the bfield that this full mutation (removal+shift+insertion) would produce
-            self._bfield = Bfield(lattice=lattice, field=(self.bfield.field + (field_new - field_old)))
+            self._dynamic_bfield += (bfield_new - bfield_old)
 
         else:
-            self._bfield = self.calculate_bfield()
+            self._dynamic_bfield = self.calculate_dynamic_bfield()
 
     def random_shift_mutation(self):
 
@@ -346,8 +369,8 @@ class MagnetGenome:
         self._mutation_prngkey, prngkey_a, prngkey_b, prngkey_shift = jax.random.split(self.mutation_prngkey, num=4)
 
         # Sample a pair of uniform random magnet candidates where one candidate is currently in use
-        index_a = jax.random.choice(prngkey_a, a=self.active_slots, shape=())
-        index_b = jax.random.choice(prngkey_b, a=self.active_candidates[self.active_candidates > index_a], shape=())
+        index_a = jax.random.choice(prngkey_a, a=self._active_slots, shape=())
+        index_b = jax.random.choice(prngkey_b, a=self._active_candidates[self._active_candidates > index_a], shape=())
 
         # Sample an offset for the shift
         shift = jax.random.choice(prngkey_shift, a=[-1, 1], shape=())
@@ -356,7 +379,7 @@ class MagnetGenome:
         self.shift_mutation(index_a, index_b, shift)
 
     @beartype
-    def to_dataframe(self):
+    def to_dataframe(self, include_unused: bool = False):
 
         rows = []
         for index in range(self.magnet_group.nslot):
@@ -368,7 +391,7 @@ class MagnetGenome:
             flip_index      = self.flips[index]
             flip_matrix     = self.magnet_group.flip_matrix(flip_index)
             world_matrix    = slot.direction_matrix @ flip_matrix @ slot.world_matrix
-            vector          = transform_rescaled_vectors(candidate.vector, world_matrix)
+            mask            = self.mask[index]
 
             rows += [{
                 'magnet_group': self.magnet_group.name,
@@ -378,7 +401,8 @@ class MagnetGenome:
 
                 'candidate_index': candidate_index,
                 'candidate_name': candidate.name,
-                'candidate_vector': candidate.vector.tolist(),
+
+                'mask': mask,
 
                 'direction_matrix': slot.direction_matrix.tolist(),
 
@@ -386,8 +410,29 @@ class MagnetGenome:
                 'flip_matrix': flip_matrix.tolist(),
 
                 'world_matrix': world_matrix.tolist(),
-                'world_vector': vector.tolist(),
             }]
+
+        if include_unused:
+            for index in range(self.magnet_group.nslot, self.magnet_group.ncandidate):
+
+                # Extract data for this unused candidate
+                candidate_index = self.order[index]
+                candidate       = self.magnet_group.candidate(candidate_index)
+                mask            = self.mask[index]
+                flip_index      = self.flips[index]
+                flip_matrix     = self.magnet_group.flip_matrix(flip_index)
+
+                rows += [{
+                    'magnet_group': self.magnet_group.name,
+
+                    'candidate_index': candidate_index,
+                    'candidate_name': candidate.name,
+
+                    'mask': mask,
+
+                    'flip_index': flip_index,
+                    'flip_matrix': flip_matrix.tolist(),
+                }]
 
         return pd.DataFrame(rows)
 
@@ -408,13 +453,18 @@ class MagnetGenome:
 
     @property
     @beartype
-    def bfield(self) -> Bfield:
-        return self._bfield
+    def dynamic_bfield(self) -> jnp.ndarray:
+        return self._dynamic_bfield
 
     @property
     @beartype
-    def masked_bfield(self) -> Bfield:
-        return self._masked_bfield
+    def static_bfield(self) -> jnp.ndarray:
+        return self._static_bfield
+
+    @property
+    @beartype
+    def bfield(self) -> jnp.ndarray:
+        return self.dynamic_bfield + self.static_bfield
 
     @property
     @beartype
@@ -430,18 +480,3 @@ class MagnetGenome:
     @beartype
     def mask(self) -> np.ndarray:
         return self._mask
-
-    @property
-    @beartype
-    def active_slots(self) -> np.ndarray:
-        return self._active_slots
-
-    @property
-    @beartype
-    def inactive_slots(self) -> np.ndarray:
-        return self._inactive_slots
-
-    @property
-    @beartype
-    def active_candidates(self) -> np.ndarray:
-        return self._active_candidates

@@ -25,9 +25,6 @@ import radia as rad
 from ..core.affine import \
     transform_points
 
-from ..bfield import \
-    Lookup
-
 from ..lattice import \
     Lattice
 
@@ -186,7 +183,7 @@ class Geometry:
         return rad.ObjCnt(obj) if len(obj) > 1 else obj[0]
 
     @beartype
-    def calculate_lookup(self, lattice: Lattice) -> Lookup:
+    def calculate_lookup(self, lattice: Lattice) -> jnp.ndarray:
 
         world_lattice = lattice.world_lattice
         points = world_lattice.reshape((-1, 3)).tolist()
@@ -196,9 +193,7 @@ class Geometry:
             return jnp.array(rad.Fld(self.to_radia(vector), 'b', points),
                              dtype=jnp.float32).reshape(world_lattice.shape)
 
-        lookup = jnp.stack([bfield(vector) for vector in jnp.eye(3)], axis=-1)
-
-        return Lookup(lattice=lattice, lookup=lookup)
+        return jnp.stack([bfield(vector) for vector in jnp.eye(3)], axis=-1)
 
     @property
     @beartype

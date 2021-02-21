@@ -28,8 +28,8 @@ from ..device import \
 from ..core.affine import \
     transform_rescaled_vectors
 
-from ..bfield import \
-    Bfield
+from ..core.bfield import \
+    bfield_from_lookup
 
 
 class MagnetGroup:
@@ -119,7 +119,7 @@ class MagnetGroup:
 
         self._bfield = self.calculate_expected_bfield()
 
-    def calculate_slot_expected_bfield(self, index: int) -> Bfield:
+    def calculate_slot_expected_bfield(self, index: int) -> jnp.ndarray:
 
         slot = self.slot(index)
 
@@ -130,16 +130,15 @@ class MagnetGroup:
         vector = transform_rescaled_vectors(self.vector, matrix)
 
         # Calculate the bfield contribution for the current candidate in the selected slot
-        return slot.lookup.bfield(vector)
+        return bfield_from_lookup(slot.lookup, vector)
 
-    def calculate_expected_bfield(self) -> Bfield:
+    def calculate_expected_bfield(self) -> jnp.ndarray:
 
         bfield = self.calculate_slot_expected_bfield(0)
-        lattice, field = bfield.lattice, bfield.field
         for index in range(1, self.nslot):
-            field += self.calculate_slot_expected_bfield(index).field
+            bfield += self.calculate_slot_expected_bfield(index)
 
-        return Bfield(lattice=lattice, bfield=bfield)
+        return bfield
 
     @property
     @beartype
@@ -158,7 +157,7 @@ class MagnetGroup:
 
     @property
     @beartype
-    def bfield(self) -> Bfield:
+    def bfield(self) -> jnp.ndarray:
         return self._bfield
 
     @property

@@ -16,7 +16,6 @@
 # Opt-ID Imports
 from . import constants
 from . import core
-from . import bfield
 from . import device
 from . import lattice
 from . import geometry

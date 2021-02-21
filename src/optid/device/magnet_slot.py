@@ -19,8 +19,6 @@ import typing as typ
 import jax.numpy as jnp
 
 # Opt-ID Imports
-from ..bfield import \
-    Lookup
 
 
 class MagnetSlot:
@@ -28,15 +26,19 @@ class MagnetSlot:
     @beartype
     def __init__(self,
             name: str,
+            group: str,
             beam: str,
             world_matrix: jnp.ndarray,
             direction_matrix: jnp.ndarray,
-            lookup: Lookup):
+            lookup: jnp.ndarray):
         """
         Construct a MagnetSlot instance.
 
         :param name:
             String name for the slot.
+
+        :param group:
+            String name for the group such as the period within the beam.
 
         :param beam:
             String name for the beam.
@@ -56,6 +58,11 @@ class MagnetSlot:
 
         self._name = name
 
+        if len(group) == 0:
+            raise ValueError(f'group must be a non-empty string')
+
+        self._group = group
+
         if len(beam) == 0:
             raise ValueError(f'beam must be a non-empty string')
 
@@ -70,7 +77,6 @@ class MagnetSlot:
                             f'{world_matrix.dtype}')
 
         self._world_matrix = world_matrix
-        self._world_matrix.setflags(write=False)
 
         if direction_matrix.shape != (4, 4):
             raise ValueError(f'direction_matrix must be an affine direction_matrix with shape (4, 4) but is : '
@@ -81,7 +87,18 @@ class MagnetSlot:
                             f'{direction_matrix.dtype}')
 
         self._direction_matrix = direction_matrix
-        self._direction_matrix.setflags(write=False)
+
+        if lookup.ndim != 5:
+            raise ValueError(f'lookup must be a lattice of matrices with shape (X, Z, S, 3, 3) but is : '
+                             f'{lookup.shape}')
+
+        if lookup.shape[-2:] != (3, 3):
+            raise ValueError(f'lookup must be a lattice of rotation matrices with shape (..., 3, 3) but is : '
+                             f'{lookup.shape}')
+
+        if lookup.dtype != jnp.float32:
+            raise TypeError(f'lookup must have dtype (float32) but is : '
+                            f'{lookup.dtype}')
 
         self._lookup = lookup
 
@@ -89,6 +106,11 @@ class MagnetSlot:
     @beartype
     def name(self) -> str:
         return self._name
+
+    @property
+    @beartype
+    def group(self) -> str:
+        return self._group
 
     @property
     @beartype
@@ -113,5 +135,5 @@ class MagnetSlot:
 
     @property
     @beartype
-    def lookup(self) -> Lookup:
+    def lookup(self) -> jnp.ndarray:
         return self._lookup
