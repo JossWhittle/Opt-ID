@@ -21,20 +21,26 @@ import jax.numpy as jnp
 
 # Opt-ID Imports
 from ..device import \
-    MagnetSlotType
+    SlotType, Candidate
+
+from ..geometry import \
+    Geometry
 
 
-class MagnetSlot:
+TCandidates = typ.Dict[str, Candidate]
+
+
+class Slot:
 
     @beartype
     def __init__(self,
             beam,
             name: str,
             period: str,
-            slot_type: MagnetSlotType,
+            slot_type: SlotType,
             slot_matrix: jnp.ndarray):
         """
-        Construct a MagnetSlot instance.
+        Construct a Slot instance.
 
         :param beam:
             Parent Beam instance this slot is a member of.
@@ -102,7 +108,7 @@ class MagnetSlot:
 
     @property
     @beartype
-    def slot_type(self) -> MagnetSlotType:
+    def slot_type(self) -> SlotType:
         return self._slot_type
 
     @property
@@ -113,7 +119,7 @@ class MagnetSlot:
     @property
     @beartype
     def qualified_name(self) -> str:
-        return f'{self.beam.qualified_name}::{self.name}::{self.slot_type.qualified_name}'
+        return f'{self.beam.qualified_name}::{self.name}::{self.slot_type.name}::{self.slot_type.magnet.name}'
 
     @property
     @beartype
@@ -124,3 +130,19 @@ class MagnetSlot:
     @beartype
     def slot_matrix(self) -> jnp.ndarray:
         return self._slot_matrix
+
+    @property
+    @beartype
+    def candidates(self) -> TCandidates:
+        return self.slot_type.magnet.candidates
+
+    @property
+    @beartype
+    def geometry(self) -> Geometry:
+        return self.slot_type.magnet.geometry
+
+    @property
+    @beartype
+    def vector(self) -> jnp.ndarray:
+        return self.slot_type.magnet.vector
+

@@ -22,10 +22,12 @@ import jax.numpy as jnp
 
 # Opt-ID Imports
 from ..device import \
-    Beam
+    Beam, Candidate
 
 
-TVector = typ.Union[jnp.ndarray, typ.Sequence[numbers.Real]]
+TVector     = typ.Union[jnp.ndarray, typ.Sequence[numbers.Real]]
+TCandidates = typ.Dict[str, typ.Dict[str, Candidate]]
+TSlots      = typ.Dict[str, typ.Dict[str, Candidate]]
 
 
 class Device:
@@ -84,7 +86,7 @@ class Device:
 
     @property
     @beartype
-    def slots_by_type(self) -> dict:
+    def slots_by_type(self) -> TSlots:
 
         magnet_names = set(slot.slot_type.magnet_type.name for beam in self._beams.values() for slot in beam.slots)
 
@@ -92,6 +94,19 @@ class Device:
                     beam.name: [slot for slot in beam.slots if slot.slot_type.magnet_type.name == magnet_name]
                     for beam in self._beams.values() }
                  for magnet_name in magnet_names }
+
+    @property
+    @beartype
+    def candidates_by_type(self) -> TCandidates:
+
+        candidates = dict()
+        for beam in self._beams.values():
+            for slot in beam.slots:
+                key = slot.slot_type.magnet_type.name
+                if key not in candidates:
+                    candidates[key] = dict(slot.candidates)
+
+        return candidates
 
     @property
     @beartype

@@ -24,7 +24,7 @@ import jax.numpy as jnp
 from ..core.affine import translate
 
 from ..device import \
-    MagnetSlot, MagnetSlotType
+    Slot, SlotType
 
 
 TVector = typ.Union[jnp.ndarray, typ.Sequence[numbers.Real]]
@@ -138,7 +138,7 @@ class Beam:
     @beartype
     def add_slot(self,
             period: str,
-            slot_type: MagnetSlotType,
+            slot_type: SlotType,
             after_spacing: numbers.Real = 0):
 
         bmin, bmax = slot_type.bounds
@@ -154,8 +154,8 @@ class Beam:
 
         self._centre_matrix = translate(0, 0, (-self._smin) - ((self._smax - self._smin) / 2.0))
 
-        slot = MagnetSlot(beam=self, name=f'{self.nslots:06d}', period=period,
-                          slot_type=slot_type, slot_matrix=slot_matrix)
+        slot = Slot(beam=self, name=f'{self.nslots:06d}', period=period,
+                    slot_type=slot_type, slot_matrix=slot_matrix)
 
         self.add_spacing(spacing=after_spacing)
 
@@ -212,7 +212,7 @@ class Beam:
 
     @property
     @beartype
-    def slots(self) -> typ.Sequence[MagnetSlot]:
+    def slots(self) -> typ.Sequence[Slot]:
         return SequenceView(self._slots)
 
     @property

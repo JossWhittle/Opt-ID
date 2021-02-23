@@ -24,15 +24,17 @@ from ..geometry import \
     Geometry
 
 from ..device import \
-    MagnetCandidate
+    Candidate
 
 
-TVector       = typ.Union[jnp.ndarray, typ.Sequence[numbers.Real]]
-TCandidates   = typ.Sequence[MagnetCandidate]
-TFlipMatrices = typ.Union[jnp.ndarray, typ.Sequence[jnp.ndarray]]
-TMaterial     = typ.Callable[[int], int]
+TVector        = typ.Union[jnp.ndarray, typ.Sequence[numbers.Real]]
+TCandidatesSeq = typ.Sequence[Candidate]
+TCandidates    = typ.Dict[str, Candidate]
+TFlipMatrices  = typ.Union[jnp.ndarray, typ.Sequence[jnp.ndarray]]
+TMaterial      = typ.Callable[[int], int]
 
-class MagnetType:
+
+class Magnet:
 
     @beartype
     def __init__(self,
@@ -40,7 +42,7 @@ class MagnetType:
             geometry: Geometry,
             vector: TVector,
             flip_matrices: TFlipMatrices,
-            candidates: TCandidates,
+            candidates: TCandidatesSeq,
             material: typ.Optional[TMaterial] = None):
 
         if len(name) == 0:
@@ -117,7 +119,7 @@ class MagnetType:
 
     @property
     @beartype
-    def candidates(self) -> typ.Dict[str, MagnetCandidate]:
+    def candidates(self) -> TCandidates:
         return dict(self._candidates)
 
 

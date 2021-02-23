@@ -21,17 +21,18 @@ import jax.numpy as jnp
 
 # Opt-ID Imports
 
+
 TVector = typ.Union[jnp.ndarray, typ.Sequence[numbers.Real]]
 
 
-class MagnetCandidate:
+class Candidate:
 
     @beartype
     def __init__(self,
             name: str,
             vector: TVector):
         """
-        Construct a MagnetCandidate instance.
+        Construct a Candidate instance.
 
         :param name:
             String name for the candidate.

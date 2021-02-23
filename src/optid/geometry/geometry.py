@@ -31,6 +31,7 @@ from ..lattice import \
 TVertices  = typ.Union[jnp.ndarray, typ.Sequence[typ.Sequence[numbers.Real]]]
 TPolyhedra = typ.Sequence[typ.Sequence[typ.Sequence[int]]]
 TVector    = typ.Union[jnp.ndarray, typ.Sequence[numbers.Real]]
+TBounds    = typ.Tuple[jnp.ndarray, jnp.ndarray]
 
 
 class Geometry:
@@ -115,6 +116,8 @@ class Geometry:
 
         self._polyhedra = polyhedra
 
+        self._bounds = jnp.min(vertices, axis=0), jnp.max(vertices, axis=0)
+
     @beartype
     def transform(self, matrix: jnp.ndarray) -> 'Geometry':
         """
@@ -197,8 +200,8 @@ class Geometry:
 
     @property
     @beartype
-    def bounds(self) -> typ.Tuple[jnp.ndarray, jnp.ndarray]:
-        return jnp.min(self.vertices, axis=0), jnp.max(self.vertices, axis=0)
+    def bounds(self) -> TBounds:
+        return self._bounds
 
     @property
     @beartype

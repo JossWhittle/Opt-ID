@@ -14,9 +14,9 @@
 
 
 # Opt-ID Imports
-from .magnet_candidate import MagnetCandidate
-from .magnet_type import MagnetType
-from .magnet_slot_type import MagnetSlotType
-from .magnet_slot import MagnetSlot
+from .candidate import Candidate
+from .magnet import Magnet
+from .slot_type import SlotType
+from .slot import Slot
 from .beam import Beam
 from .device import Device

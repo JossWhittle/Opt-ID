@@ -23,7 +23,7 @@ from ..geometry import \
     Geometry
 
 from ..device import \
-    MagnetCandidate, MagnetSlot
+    Candidate, Slot
 
 from ..core.affine import \
     transform_rescaled_vectors
@@ -36,12 +36,12 @@ class MagnetGroup:
 
     @beartype
     def __init__(self,
-            name: str,
-            geometry: Geometry,
-            vector: typ.Union[jnp.ndarray, typ.Sequence[numbers.Real]],
-            flip_matrices: jnp.ndarray,
-            candidates: typ.List[MagnetCandidate],
-            slots: typ.List[MagnetSlot]):
+                 name: str,
+                 geometry: Geometry,
+                 vector: typ.Union[jnp.ndarray, typ.Sequence[numbers.Real]],
+                 flip_matrices: jnp.ndarray,
+                 candidates: typ.List[Candidate],
+                 slots: typ.List[Slot]):
         """
         Construct a Magnet instance pairing a magnet geometry with a field vector.
 
@@ -58,10 +58,10 @@ class MagnetGroup:
             Stack of affine matrices for each flip state.
 
         :param candidates:
-            List of MagnetCandidate objects.
+            List of Candidate objects.
 
         :param slots:
-            List of MagnetSlot objects.
+            List of Slot objects.
         """
 
         if len(name) == 0:
@@ -177,7 +177,7 @@ class MagnetGroup:
         return len(self._candidates)
 
     @beartype
-    def candidate(self, index: int) -> MagnetCandidate:
+    def candidate(self, index: int) -> Candidate:
         return self._candidates[index]
 
     @property
@@ -186,5 +186,5 @@ class MagnetGroup:
         return len(self._slots)
 
     @beartype
-    def slot(self, index: int) -> MagnetSlot:
+    def slot(self, index: int) -> Slot:
         return self._slots[index]

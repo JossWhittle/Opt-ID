@@ -24,27 +24,28 @@ from ..core.affine import \
     translate
 
 from ..device import \
-    MagnetType
+    Magnet
 
 
 TAnchor = typ.Union[jnp.ndarray, typ.Sequence[numbers.Real]]
+TBounds = typ.Tuple[jnp.ndarray, jnp.ndarray]
 
 
-class MagnetSlotType:
+class SlotType:
 
     @beartype
     def __init__(self,
-            name: str,
-            magnet_type: MagnetType,
-            anchor: TAnchor,
-            direction_matrix: jnp.ndarray):
+                 name: str,
+                 magnet: Magnet,
+                 anchor: TAnchor,
+                 direction_matrix: jnp.ndarray):
 
         if len(name) == 0:
             raise ValueError(f'name must be a non-empty string')
 
         self._name = name
 
-        self._magnet_type = magnet_type
+        self._magnet = magnet
 
         if not isinstance(anchor, jnp.ndarray):
             anchor = jnp.array(anchor, dtype=jnp.float32)
@@ -69,12 +70,12 @@ class MagnetSlotType:
 
         self._direction_matrix = direction_matrix
 
-        bmin, bmax = magnet_type.geometry.transform(direction_matrix).bounds
+        bmin, bmax = magnet.geometry.transform(direction_matrix).bounds
         anchor_matrix = translate(*(-((bmin * (1.0 - anchor)) + (bmax * anchor))))
 
         self._anchor_matrix = anchor_matrix
 
-        self._bounds = magnet_type.geometry.transform(direction_matrix @ anchor_matrix).bounds
+        self._bounds = magnet.geometry.transform(direction_matrix @ anchor_matrix).bounds
 
     @property
     @beartype
@@ -83,13 +84,8 @@ class MagnetSlotType:
 
     @property
     @beartype
-    def qualified_name(self) -> str:
-        return f'{self.name}::{self.magnet_type.name}'
-
-    @property
-    @beartype
-    def magnet_type(self) -> MagnetType:
-        return self._magnet_type
+    def magnet(self) -> Magnet:
+        return self._magnet
 
     @property
     @beartype
@@ -108,5 +104,5 @@ class MagnetSlotType:
 
     @property
     @beartype
-    def bounds(self) -> typ.Tuple[jnp.ndarray, jnp.ndarray]:
+    def bounds(self) -> TBounds:
         return self._bounds
