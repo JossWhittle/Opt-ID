@@ -197,6 +197,11 @@ class Geometry:
 
     @property
     @beartype
+    def bounds(self) -> typ.Tuple[jnp.ndarray, jnp.ndarray]:
+        return jnp.min(self.vertices, axis=0), jnp.max(self.vertices, axis=0)
+
+    @property
+    @beartype
     def vertices(self) -> jnp.ndarray:
         """
         Tensor of vertices in 3-space.

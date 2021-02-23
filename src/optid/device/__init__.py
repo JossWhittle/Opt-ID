@@ -14,7 +14,9 @@
 
 
 # Opt-ID Imports
-from .magnet_slot import MagnetSlot
 from .magnet_candidate import MagnetCandidate
-from .magnet_group import MagnetGroup
-from .magnet_genome import MagnetGenome
+from .magnet_type import MagnetType
+from .magnet_slot_type import MagnetSlotType
+from .magnet_slot import MagnetSlot
+from .beam import Beam
+from .device import Device

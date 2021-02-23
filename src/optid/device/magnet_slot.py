@@ -14,93 +14,96 @@
 
 
 # External Imports
+import numbers
 from beartype import beartype
 import typing as typ
 import jax.numpy as jnp
 
 # Opt-ID Imports
+from ..device import \
+    MagnetSlotType
 
 
 class MagnetSlot:
 
     @beartype
     def __init__(self,
+            beam,
             name: str,
-            group: str,
-            beam: str,
-            world_matrix: jnp.ndarray,
-            direction_matrix: jnp.ndarray,
-            lookup: jnp.ndarray):
+            period: str,
+            slot_type: MagnetSlotType,
+            slot_matrix: jnp.ndarray):
         """
         Construct a MagnetSlot instance.
+
+        :param beam:
+            Parent Beam instance this slot is a member of.
 
         :param name:
             String name for the slot.
 
-        :param group:
-            String name for the group such as the period within the beam.
+        :param period:
+            String period name used for calculating device period length.
 
-        :param beam:
-            String name for the beam.
+        :param slot_type:
+            MagnetSlotType instance that this slot is one of.
 
-        :param world_matrix:
-            Affine matrix for where the magnet exists in world space.
-
-        :param direction_matrix:
-            Affine matrix for the major orientation of this slot applied at origin.
-
-        :param lookup:
-            Bfield lookup table.
+        :param slot_matrix:
+            Affine matrix for the placing this slot along its parent beam starting from 0 on the Z axis.
         """
-
-        if len(name) == 0:
-            raise ValueError(f'slot must be a non-empty string')
-
-        self._name = name
-
-        if len(group) == 0:
-            raise ValueError(f'group must be a non-empty string')
-
-        self._group = group
-
-        if len(beam) == 0:
-            raise ValueError(f'beam must be a non-empty string')
 
         self._beam = beam
 
-        if world_matrix.shape != (4, 4):
-            raise ValueError(f'world_matrix must be an affine world_matrix with shape (4, 4) but is : '
-                             f'{world_matrix.shape}')
+        self._slot_type = slot_type
 
-        if world_matrix.dtype != jnp.float32:
-            raise TypeError(f'world_matrix must have dtype (float32) but is : '
-                            f'{world_matrix.dtype}')
+        if len(name) == 0:
+            raise ValueError(f'name must be a non-empty string')
 
-        self._world_matrix = world_matrix
+        self._name = name
 
-        if direction_matrix.shape != (4, 4):
-            raise ValueError(f'direction_matrix must be an affine direction_matrix with shape (4, 4) but is : '
-                             f'{direction_matrix.shape}')
+        if len(period) == 0:
+            raise ValueError(f'period must be a non-empty string')
 
-        if direction_matrix.dtype != jnp.float32:
-            raise TypeError(f'direction_matrix must have dtype (float32) but is : '
-                            f'{direction_matrix.dtype}')
+        self._period = period
 
-        self._direction_matrix = direction_matrix
+        if slot_matrix.shape != (4, 4):
+            raise ValueError(f'slot_matrix must be an affine world_matrix with shape (4, 4) but is : '
+                             f'{slot_matrix.shape}')
 
-        if lookup.ndim != 5:
-            raise ValueError(f'lookup must be a lattice of matrices with shape (X, Z, S, 3, 3) but is : '
-                             f'{lookup.shape}')
+        if slot_matrix.dtype != jnp.float32:
+            raise TypeError(f'slot_matrix must have dtype (float32) but is : '
+                            f'{slot_matrix.dtype}')
 
-        if lookup.shape[-2:] != (3, 3):
-            raise ValueError(f'lookup must be a lattice of rotation matrices with shape (..., 3, 3) but is : '
-                             f'{lookup.shape}')
+        self._slot_matrix = slot_matrix
 
-        if lookup.dtype != jnp.float32:
-            raise TypeError(f'lookup must have dtype (float32) but is : '
-                            f'{lookup.dtype}')
+    @beartype
+    def world_matrix(self, gap: numbers.Real, phase: numbers.Real) -> jnp.ndarray:
+        """
+        Calculate the affine matrix that places this magnet slot into the world in the correct major
+        orientation except flip state.
 
-        self._lookup = lookup
+        :param gap:
+            Device gap value to separate the beams on the Z axis.
+
+        :param phase:
+            Device phase value to shear the beams by on the S axis.
+
+        :return:
+            Affine matrix representing the major position of the slot in world space.
+        """
+        return self.slot_type.direction_matrix @ \
+               self.slot_type.anchor_matrix @ \
+               self.slot_matrix @ \
+               self.beam.world_matrix(gap=gap, phase=phase)
+
+    @property
+    def beam(self):
+        return self._beam
+
+    @property
+    @beartype
+    def slot_type(self) -> MagnetSlotType:
+        return self._slot_type
 
     @property
     @beartype
@@ -109,31 +112,15 @@ class MagnetSlot:
 
     @property
     @beartype
-    def group(self) -> str:
-        return self._group
+    def qualified_name(self) -> str:
+        return f'{self.beam.qualified_name}::{self.name}::{self.slot_type.qualified_name}'
 
     @property
     @beartype
-    def beam(self) -> str:
-        return self._beam
+    def period(self) -> str:
+        return self._period
 
     @property
     @beartype
-    def world_matrix(self) -> jnp.ndarray:
-        """
-        Affine matrix with shape (4, 4) of the main positional transformation.
-        """
-        return self._world_matrix
-
-    @property
-    @beartype
-    def direction_matrix(self) -> jnp.ndarray:
-        """
-        Affine matrix with shape (4, 4) of the major orientation transformation.
-        """
-        return self._direction_matrix
-
-    @property
-    @beartype
-    def lookup(self) -> jnp.ndarray:
-        return self._lookup
+    def slot_matrix(self) -> jnp.ndarray:
+        return self._slot_matrix

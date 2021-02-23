@@ -38,7 +38,7 @@ class MagnetGroup:
     def __init__(self,
             name: str,
             geometry: Geometry,
-            vector: jnp.ndarray,
+            vector: typ.Union[jnp.ndarray, typ.Sequence[numbers.Real]],
             flip_matrices: jnp.ndarray,
             candidates: typ.List[MagnetCandidate],
             slots: typ.List[MagnetSlot]):
@@ -70,6 +70,8 @@ class MagnetGroup:
         self._name = name
 
         self._geometry = geometry
+
+
 
         if vector.shape != (3,):
             raise ValueError(f'vector must be shape (3,) but is : '

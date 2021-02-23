@@ -14,11 +14,14 @@
 
 
 # External Imports
+import numbers
 from beartype import beartype
 import typing as typ
 import jax.numpy as jnp
 
 # Opt-ID Imports
+
+TVector = typ.Union[jnp.ndarray, typ.Sequence[numbers.Real]]
 
 
 class MagnetCandidate:
@@ -26,7 +29,7 @@ class MagnetCandidate:
     @beartype
     def __init__(self,
             name: str,
-            vector: jnp.ndarray):
+            vector: TVector):
         """
         Construct a MagnetCandidate instance.
 
@@ -41,6 +44,9 @@ class MagnetCandidate:
             raise ValueError(f'name must be a non-empty string')
 
         self._name = name
+
+        if not isinstance(vector, jnp.ndarray):
+            vector = jnp.array(vector, dtype=jnp.float32)
 
         if vector.shape != (3,):
             raise ValueError(f'vector must be shape (3,) but is : '
