@@ -13,9 +13,13 @@
 # language governing permissions and limitations under the License.
 
 
-# Opt-ID Imports
-from . import affine
-from . import lattice
-from . import bfield
-from . import sim
-from . import utils
+# External Imports
+from beartype import beartype
+import numpy as np
+
+
+@beartype
+def np_readonly(array: np.ndarray):
+    view = array.view()
+    view.flags.writeable = False
+    return view

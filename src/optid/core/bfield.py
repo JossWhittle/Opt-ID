@@ -17,7 +17,8 @@
 import jax
 
 # Opt-ID Imports
-from .lattice import orthonormal_interpolate
+from .lattice import \
+    orthonormal_interpolate
 
 
 @jax.jit

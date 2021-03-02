@@ -16,13 +16,16 @@
 # External Imports
 import jax
 import jax.numpy as jnp
+import numpy as np
 
 # Opt-ID Imports
-from .affine import translate, scale
+from .affine import \
+    translate, scale, \
+    jnp_translate, jnp_scale
 
 
 @jax.jit
-def unit_limits(n):
+def jnp_unit_limits(n):
     """
     Find the limits along an axis for a unit-cube centred at origin.
 
@@ -39,7 +42,51 @@ def unit_limits(n):
     return -limit, limit
 
 
+def unit_limits(n):
+    """
+    Find the limits along an axis for a unit-cube centred at origin.
+
+    If n = 1 then the only step is centred at 0.
+    If n > 1 then steps are uniformly distributed from -0.5 to +0.5.
+
+    :param n:
+        Number of steps along the axis.
+
+    :return:
+        Min-max limits along the axis.
+    """
+    limit = np.clip((n - 1), 0.0, 1.0) * 0.5
+    return -limit, limit
+
+
 @jax.partial(jax.jit, static_argnums=(0, 1, 2))
+def jnp_unit_lattice(x, z, s):
+    """
+    Generate a 3-lattice of XZS coordinates across the unit-cube at origin.
+
+    Singleton dimensions are centred at 0.
+    Non-singleton dimensions are uniformly distributed from -0.5 to +0.5.
+
+    Note: jax.jit needs static_argnums because x,z,s change the output size.
+
+    :param x:
+        Number of steps along the X-axis.
+
+    :param z:
+        Number of steps along the Z-axis.
+
+    :param s:
+        Number of steps along the S-axis.
+
+    :return:
+        Lattice of XZS coordinates uniformly distributed over the unit-cube at origin.
+    """
+    return jnp.stack(jnp.meshgrid(jnp.linspace(*jnp_unit_limits(x), x),
+                                  jnp.linspace(*jnp_unit_limits(z), z),
+                                  jnp.linspace(*jnp_unit_limits(s), s),
+                                  indexing='ij'), axis=-1)
+
+
 def unit_lattice(x, z, s):
     """
     Generate a 3-lattice of XZS coordinates across the unit-cube at origin.
@@ -61,13 +108,33 @@ def unit_lattice(x, z, s):
     :return:
         Lattice of XZS coordinates uniformly distributed over the unit-cube at origin.
     """
-    return jnp.stack(jnp.meshgrid(jnp.linspace(*unit_limits(x), x),
-                                  jnp.linspace(*unit_limits(z), z),
-                                  jnp.linspace(*unit_limits(s), s),
-                                  indexing='ij'), axis=-1)
+    return np.stack(np.meshgrid(np.linspace(*unit_limits(x), x),
+                                np.linspace(*unit_limits(z), z),
+                                np.linspace(*unit_limits(s), s),
+                                indexing='ij'), axis=-1)
 
 
 @jax.jit
+def jnp_unit_to_orthonormal_matrix(x, z, s):
+    """
+    Starting at a coordinate system centred at origin spanning -0.5 to +0.5 transform the coordinates
+    to a coordinate system spanning from [0, x), [0, z), and [0, s).
+
+    :param x:
+        Size of the resulting span on the X-axis.
+
+    :param z:
+        Size of the resulting span on the Z-axis.
+
+    :param s:
+        Size of the resulting span on the S-axis.
+
+    :return:
+        Affine transformation matrix that converts between coordinate spaces.
+    """
+    return jnp_translate(0.5, 0.5, 0.5) @ jnp_scale((x - 1), (z - 1), (s - 1))
+
+
 def unit_to_orthonormal_matrix(x, z, s):
     """
     Starting at a coordinate system centred at origin spanning -0.5 to +0.5 transform the coordinates
@@ -89,7 +156,7 @@ def unit_to_orthonormal_matrix(x, z, s):
 
 
 @jax.jit
-def any_unit_point_out_of_bounds(point_lattice, eps):
+def jnp_any_unit_point_out_of_bounds(point_lattice, eps):
     """
     Test that all points in the point lattice are within the bounds of the unit lattice centred at origin spanning
     -0.5 to +0.5.
@@ -107,7 +174,53 @@ def any_unit_point_out_of_bounds(point_lattice, eps):
                    (point_lattice < -(0.5 + eps)))
 
 
+def any_unit_point_out_of_bounds(point_lattice, eps):
+    """
+    Test that all points in the point lattice are within the bounds of the unit lattice centred at origin spanning
+    -0.5 to +0.5.
+
+    :param point_lattice:
+        Lattice of points in unit space.
+
+    :param eps:
+        Tolerance value for comparison.
+
+    :return:
+        True if any point lays outside the unit cube.
+    """
+    return np.any((point_lattice > +(0.5 + eps)) |
+                  (point_lattice < -(0.5 + eps)))
+
+
 @jax.jit
+def jnp_any_orthonormal_point_out_of_bounds(point_lattice, x, z, s, eps):
+    """
+    Test that all points in the point lattice are within the bounds of the orthonormal lattice spanning from
+    [0, x), [0, z), and [0, s).
+
+    :param point_lattice:
+        Lattice of points in orthonormal space.
+
+    :param x:
+        Size of the resulting span on the X-axis.
+
+    :param z:
+        Size of the resulting span on the Z-axis.
+
+    :param s:
+        Size of the resulting span on the S-axis.
+
+    :param eps:
+        Tolerance value for comparison.
+
+    :return:
+        True if any point lays outside the orthonormal bounds.
+    """
+    # TODO does this need to be (x-1), (z-1), (s-1) ?
+    return jnp.any((point_lattice > (jnp.array([x, z, s], dtype=jnp.float32) + eps)) |
+                   (point_lattice < -eps))
+
+
 def any_orthonormal_point_out_of_bounds(point_lattice, x, z, s, eps):
     """
     Test that all points in the point lattice are within the bounds of the orthonormal lattice spanning from
@@ -131,8 +244,9 @@ def any_orthonormal_point_out_of_bounds(point_lattice, x, z, s, eps):
     :return:
         True if any point lays outside the orthonormal bounds.
     """
-    return jnp.any((point_lattice > (jnp.array([x, z, s], dtype=jnp.float32) + eps)) |
-                   (point_lattice < -eps))
+    # TODO does this need to be (x-1), (z-1), (s-1) ?
+    return np.any((point_lattice > (np.array([x, z, s], dtype=np.float32) + eps)) |
+                  (point_lattice < -eps))
 
 
 @jax.jit

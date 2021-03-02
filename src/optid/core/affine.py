@@ -16,9 +16,27 @@
 # External Imports
 import jax
 import jax.numpy as jnp
+import numpy as np
 
 
 @jax.jit
+def jnp_transform_points(lattice, matrix):
+    """
+    Apply a 4x4 affine transformation to a lattice of points in XZS.
+
+    :param lattice:
+        A tensor of points in XZS.
+
+    :param matrix:
+        A single 4x4 affine matrix.
+
+    :return:
+        A tensor of points in XZS.
+    """
+    lattice = jnp.concatenate([lattice, jnp.ones(lattice.shape[:-1] + (1,), dtype=lattice.dtype)], axis=-1)
+    return (lattice @ matrix)[..., :-1]
+
+
 def transform_points(lattice, matrix):
     """
     Apply a 4x4 affine transformation to a lattice of points in XZS.
@@ -32,11 +50,29 @@ def transform_points(lattice, matrix):
     :return:
         A tensor of points in XZS.
     """
-    lattice = jnp.concatenate([lattice, jnp.ones(lattice.shape[:-1] + (1,))], axis=-1)
-    return (lattice @ matrix)[..., :-1]
+    # lattice = np.concatenate([lattice, np.ones(lattice.shape[:-1] + (1,), dtype=lattice.dtype)], axis=-1)
+    # return (lattice @ matrix)[..., :-1]
+    return (lattice @ matrix[:3, :3]) + matrix[-1, :3]
 
 
 @jax.jit
+def jnp_transform_vectors(lattice, matrix):
+    """
+    Apply a 4x4 affine transformation to a lattice of vectors in XZS.
+
+    :param lattice:
+        A tensor of vectors in XZS.
+
+    :param matrix:
+        A single 4x4 affine matrix.
+
+    :return:
+        A tensor of vectors in XZS.
+    """
+    lattice = jnp.concatenate([lattice, jnp.zeros(lattice.shape[:-1] + (1,), dtype=lattice.dtype)], axis=-1)
+    return (lattice @ matrix)[..., :-1]
+
+
 def transform_vectors(lattice, matrix):
     """
     Apply a 4x4 affine transformation to a lattice of vectors in XZS.
@@ -50,12 +86,12 @@ def transform_vectors(lattice, matrix):
     :return:
         A tensor of vectors in XZS.
     """
-    lattice = jnp.concatenate([lattice, jnp.zeros(lattice.shape[:-1] + (1,))], axis=-1)
+    lattice = np.concatenate([lattice, np.zeros(lattice.shape[:-1] + (1,), dtype=lattice.dtype)], axis=-1)
     return (lattice @ matrix)[..., :-1]
 
 
 @jax.jit
-def transform_rescaled_vectors(lattice, matrix):
+def jnp_transform_rescaled_vectors(lattice, matrix):
     """
     Apply a 4x4 affine transformation to a lattice of vectors in XZS.
 
@@ -70,12 +106,31 @@ def transform_rescaled_vectors(lattice, matrix):
     """
     # Transform the candidates field vector into world space at the magnet slot orientation
     norm = jnp.linalg.norm(lattice, axis=-1, keepdims=True)
-    lattice = transform_vectors((lattice / norm), matrix)
+    lattice = jnp_transform_vectors((lattice / norm), matrix)
     return (lattice / jnp.linalg.norm(lattice, axis=-1, keepdims=True)) * norm
 
 
+def transform_rescaled_vectors(lattice, matrix):
+    """
+    Apply a 4x4 affine transformation to a lattice of vectors in XZS.
+
+    :param lattice:
+        A tensor of vectors in XZS.
+
+    :param matrix:
+        A single 4x4 affine matrix.
+
+    :return:
+        A tensor of vectors in XZS.
+    """
+    # Transform the candidates field vector into world space at the magnet slot orientation
+    norm = np.linalg.norm(lattice, axis=-1, keepdims=True)
+    lattice = transform_vectors((lattice / norm), matrix)
+    return (lattice / np.linalg.norm(lattice, axis=-1, keepdims=True)) * norm
+
+
 @jax.jit
-def radians(degrees):
+def jnp_radians(degrees):
     """
     Convert degrees to radians.
 
@@ -88,8 +143,21 @@ def radians(degrees):
     return degrees * (jnp.pi / 180.0)
 
 
+def radians(degrees):
+    """
+    Convert degrees to radians.
+
+    :param degrees:
+        Angle in degrees.
+
+    :return:
+        Angle in radians.
+    """
+    return degrees * (np.pi / 180.0)
+
+
 @jax.jit
-def rotate_x(theta):
+def jnp_rotate_x(theta):
     """
     Create a 4x4 affine matrix representing a rotation on the X-axis.
 
@@ -101,14 +169,32 @@ def rotate_x(theta):
     """
     c, s = jnp.cos(theta), jnp.sin(theta)
     return jnp.array([[ 1,  0,  0,  0],
-                      [ 0,  c, -s,  0],
-                      [ 0,  s,  c,  0],
+                      [ 0,  c,  s,  0],
+                      [ 0, -s,  c,  0],
                       [ 0,  0,  0,  1]],
-                     dtype=jnp.float32).T
+                     dtype=jnp.float32)
+
+
+def rotate_x(theta):
+    """
+    Create a 4x4 affine matrix representing a rotation on the X-axis.
+
+    :param theta:
+        Angle in radians to rotate by.
+
+    :return:
+        An 4x4 affine matrix.
+    """
+    c, s = np.cos(theta), np.sin(theta)
+    return np.array([[ 1,  0,  0,  0],
+                     [ 0,  c,  s,  0],
+                     [ 0, -s,  c,  0],
+                     [ 0,  0,  0,  1]],
+                    dtype=np.float32)
 
 
 @jax.jit
-def rotate_z(theta):
+def jnp_rotate_z(theta):
     """
     Create a 4x4 affine matrix representing a rotation on the Z-axis.
 
@@ -119,15 +205,33 @@ def rotate_z(theta):
         An 4x4 affine matrix.
     """
     c, s = jnp.cos(theta), jnp.sin(theta)
-    return jnp.array([[ c,  0,  s,  0],
+    return jnp.array([[ c,  0, -s,  0],
                       [ 0,  1,  0,  0],
-                      [-s,  0,  c,  0],
+                      [ s,  0,  c,  0],
                       [ 0,  0,  0,  1]],
-                     dtype=jnp.float32).T
+                     dtype=jnp.float32)
+
+
+def rotate_z(theta):
+    """
+    Create a 4x4 affine matrix representing a rotation on the Z-axis.
+
+    :param theta:
+        Angle in radians to rotate by.
+
+    :return:
+        An 4x4 affine matrix.
+    """
+    c, s = np.cos(theta), np.sin(theta)
+    return np.array([[ c,  0, -s,  0],
+                     [ 0,  1,  0,  0],
+                     [ s,  0,  c,  0],
+                     [ 0,  0,  0,  1]],
+                    dtype=np.float32)
 
 
 @jax.jit
-def rotate_s(theta):
+def jnp_rotate_s(theta):
     """
     Create a 4x4 affine matrix representing a rotation on the S-axis.
 
@@ -138,15 +242,33 @@ def rotate_s(theta):
         An 4x4 affine matrix.
     """
     c, s = jnp.cos(theta), jnp.sin(theta)
-    return jnp.array([[ c, -s,  0,  0],
-                      [ s,  c,  0,  0],
+    return jnp.array([[ c,  s,  0,  0],
+                      [-s,  c,  0,  0],
                       [ 0,  0,  1,  0],
                       [ 0,  0,  0,  1]],
-                     dtype=jnp.float32).T
+                     dtype=jnp.float32)
+
+
+def rotate_s(theta):
+    """
+    Create a 4x4 affine matrix representing a rotation on the S-axis.
+
+    :param theta:
+        Angle in radians to rotate by.
+
+    :return:
+        An 4x4 affine matrix.
+    """
+    c, s = np.cos(theta), np.sin(theta)
+    return np.array([[ c,  s,  0,  0],
+                     [-s,  c,  0,  0],
+                     [ 0,  0,  1,  0],
+                     [ 0,  0,  0,  1]],
+                    dtype=np.float32)
 
 
 @jax.jit
-def scale(x, z, s):
+def jnp_scale(x, z, s):
     """
     Create a 4x4 affine matrix representing a set of orthogonal scale transformations.
 
@@ -166,11 +288,34 @@ def scale(x, z, s):
                       [0, z, 0, 0],
                       [0, 0, s, 0],
                       [0, 0, 0, 1]],
-                     dtype=jnp.float32).T
+                     dtype=jnp.float32)
+
+
+def scale(x, z, s):
+    """
+    Create a 4x4 affine matrix representing a set of orthogonal scale transformations.
+
+    :param x:
+        Scaling coefficient on the X-axis.
+
+    :param z:
+        Scaling coefficient on the Z-axis.
+
+    :param s:
+        Scaling coefficient on the S-axis.
+
+    :return:
+        An 4x4 affine matrix.
+    """
+    return np.array([[x, 0, 0, 0],
+                     [0, z, 0, 0],
+                     [0, 0, s, 0],
+                     [0, 0, 0, 1]],
+                    dtype=np.float32)
 
 
 @jax.jit
-def translate(x, z, s):
+def jnp_translate(x, z, s):
     """
     Create a 4x4 affine matrix representing a set of orthogonal translation transformations.
 
@@ -186,8 +331,31 @@ def translate(x, z, s):
     :return:
         An 4x4 affine matrix.
     """
-    return jnp.array([[1, 0, 0, x],
-                      [0, 1, 0, z],
-                      [0, 0, 1, s],
-                      [0, 0, 0, 1]],
-                     dtype=jnp.float32).T
+    return jnp.array([[1, 0, 0, 0],
+                      [0, 1, 0, 0],
+                      [0, 0, 1, 0],
+                      [x, z, s, 1]],
+                     dtype=jnp.float32)
+
+
+def translate(x, z, s):
+    """
+    Create a 4x4 affine matrix representing a set of orthogonal translation transformations.
+
+    :param x:
+        Translation offset on the X-axis.
+
+    :param z:
+        Translation offset on the Z-axis.
+
+    :param s:
+        Translation offset on the S-axis.
+
+    :return:
+        An 4x4 affine matrix.
+    """
+    return np.array([[1, 0, 0, 0],
+                     [0, 1, 0, 0],
+                     [0, 0, 1, 0],
+                     [x, z, s, 1]],
+                    dtype=np.float32)

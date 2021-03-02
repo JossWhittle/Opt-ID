@@ -16,20 +16,48 @@
 # External Imports
 import numpy as np
 
+# Opt-ID Imports
+from ..core.utils import np_readonly
 
-MAX_RAND_INT = (np.iinfo(np.int32).max - 1)
 
-VECTOR_ZERO = np.array([0, 0, 0], dtype=np.float32)
+VECTOR_ZERO = np_readonly(np.array([0, 0, 0], dtype=np.float32))
+VECTOR_X    = np_readonly(np.array([1, 0, 0], dtype=np.float32))
+VECTOR_Z    = np_readonly(np.array([0, 1, 0], dtype=np.float32))
+VECTOR_S    = np_readonly(np.array([0, 0, 1], dtype=np.float32))
 
-VECTOR_X = np.array([1, 0, 0], dtype=np.float32)
-VECTOR_Z = np.array([0, 1, 0], dtype=np.float32)
-VECTOR_S = np.array([0, 0, 1], dtype=np.float32)
+MATRIX_IDENTITY          = np_readonly(np.eye(4, dtype=np.float32))
 
-MATRIX_IDENTITY          = np.array([[ 1,  0,  0], [ 0,  1,  0], [ 0,  0,  1]], dtype=np.float32)
-MATRIX_ROTX_180          = np.array([[ 1,  0,  0], [ 0, -1,  0], [ 0,  0, -1]], dtype=np.float32)
-MATRIX_ROTZ_180          = np.array([[-1,  0,  0], [ 0,  1,  0], [ 0,  0, -1]], dtype=np.float32)
-MATRIX_ROTS_90           = np.array([[ 0,  1,  0], [-1,  0,  0], [ 0,  0,  1]], dtype=np.float32)
-MATRIX_ROTS_180          = np.array([[-1,  0,  0], [ 0, -1,  0], [ 0,  0,  1]], dtype=np.float32)
-MATRIX_ROTS_270          = np.array([[ 0, -1,  0], [ 1,  0,  0], [ 0,  0,  1]], dtype=np.float32)
-MATRIX_ROTS_270_ROTX_180 = np.array([[ 0, -1,  0], [-1,  0,  0], [ 0,  0, -1]], dtype=np.float32)
-MATRIX_ROTS_270_ROTZ_180 = np.array([[ 0,  1,  0], [ 1,  0,  0], [ 0,  0, -1]], dtype=np.float32)
+MATRIX_ROTX_180          = np_readonly(np.array([[ 1,  0,  0,  0],
+                                                 [ 0, -1,  0,  0],
+                                                 [ 0,  0, -1,  0],
+                                                 [ 0,  0,  0,  1]], dtype=np.float32))
+
+MATRIX_ROTZ_180          = np_readonly(np.array([[-1,  0,  0,  0],
+                                                 [ 0,  1,  0,  0],
+                                                 [ 0,  0, -1,  0],
+                                                 [ 0,  0,  0,  1]], dtype=np.float32))
+
+MATRIX_ROTS_90           = np_readonly(np.array([[ 0, -1,  0,  0],
+                                                 [ 1,  0,  0,  0],
+                                                 [ 0,  0,  1,  0],
+                                                 [ 0,  0,  0,  1]], dtype=np.float32))
+
+MATRIX_ROTS_180          = np_readonly(np.array([[-1,  0,  0,  0],
+                                                 [ 0, -1,  0,  0],
+                                                 [ 0,  0,  1,  0],
+                                                 [ 0,  0,  0,  1]], dtype=np.float32))
+
+MATRIX_ROTS_270          = np_readonly(np.array([[ 0,  1,  0,  0],
+                                                 [-1,  0,  0,  0],
+                                                 [ 0,  0,  1,  0],
+                                                 [ 0,  0,  0,  1]], dtype=np.float32))
+
+MATRIX_ROTS_270_ROTX_180 = np_readonly(np.array([[ 0, -1,  0,  0],
+                                                 [-1,  0,  0,  0],
+                                                 [ 0,  0, -1,  0],
+                                                 [ 0,  0,  0,  1]], dtype=np.float32))
+
+MATRIX_ROTS_270_ROTZ_180 = np_readonly(np.array([[ 0,  1,  0,  0],
+                                                 [ 1,  0,  0,  0],
+                                                 [ 0,  0, -1,  0],
+                                                 [ 0,  0,  0,  1]], dtype=np.float32).T)
