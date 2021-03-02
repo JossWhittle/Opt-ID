@@ -19,11 +19,18 @@ import numpy as np
 import numbers
 import typing as typ
 import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 from matplotlib.patches import Polygon
 from matplotlib.collections import PatchCollection
 
 # Opt-ID Imports
+from ..constants import \
+    VECTOR_X, VECTOR_Z, VECTOR_S, VECTOR_ZERO
+
+from ..core.affine import \
+    transform_points, transform_rescaled_vectors
+
 from ..device import \
     Device, Beam
 
@@ -62,27 +69,27 @@ def setup_axes3d(fig, rows: int, cols: int, subplot: int, title: str = '', proj:
 
 
 @beartype
-def plot_geometry(ax, vertices, polyhedra, color, axes3d: bool = False):
+def plot_geometry(ax, vertices, polyhedra, color, alpha: float, axes3d: bool = False):
     if axes3d:
         ax.add_collection3d(Poly3DCollection(
             [[vertices[vertex, [0, 2, 1]] for vertex in face] for faces in polyhedra for face in faces],
-            facecolors=[color], edgecolors=['k'], linewidth=0.5, alpha=1))
+            facecolors=[color], edgecolors=['k'], linewidth=0.5, alpha=alpha))
         ax.plot(*vertices[:, [0, 2, 1]].T, ' .', color='k', alpha=0)
     else:
         ax.add_collection(PatchCollection(
             [Polygon([vertices[vertex, [2, 1]] for vertex in face]) for faces in polyhedra for face in faces],
-            facecolors=[color], edgecolors=['k'], linewidth=0.5, alpha=1))
+            facecolors=[color], edgecolors=['k'], linewidth=0.5, alpha=alpha))
         ax.plot(*vertices[:, [2, 1]].T, ' .', color='k', alpha=0)
 
 
 @beartype
-def plot_device(device: Device, *args, ax=None, cmap=plt.get_cmap('tab10'), axes3d: bool = False, **kargs):
+def plot_device(device: Device, *args, ax=None, cmap=plt.get_cmap('tab10'), alpha: float = 1, axes3d: bool = False, **kargs):
 
     if ax is None:
         ax = plt.gca()
 
     colors = dict()
-
+    legend = list()
     for beam in device.beams.values():
         for idx, slot in enumerate(beam.slots):
 
@@ -91,11 +98,49 @@ def plot_device(device: Device, *args, ax=None, cmap=plt.get_cmap('tab10'), axes
                 color = colors[color_key]
             else:
                 color = colors[color_key] = cmap(len(colors))
+                legend += [mpatches.Patch(color=color, label=f'{slot.slot_type.qualified_name} = {slot.vector}')]
+
+            geometry = slot.geometry.transform(slot.world_matrix(*args, **kargs))
+
+            plot_geometry(ax, geometry.vertices, geometry.polyhedra, color, alpha, axes3d)
+
+    ax.legend(handles=legend)
+
+
+@beartype
+def plot_device_direction_matrices(device: Device, *args, ax=None, axes3d: bool = False, **kargs):
+
+    if ax is None:
+        ax = plt.gca()
+
+    x_color, z_color, s_color = 'rgb'
+
+    def plot_vector(vertices, color, style):
+        if axes3d:
+            ax.plot(*vertices[:, [0, 2, 1]].T, style, color=color, alpha=1)
+        else:
+            ax.plot(*vertices[:, [2, 1]].T, style, color=color, alpha=1)
+
+    for beam in device.beams.values():
+        for idx, slot in enumerate(beam.slots):
 
             matrix = slot.world_matrix(*args, **kargs)
-            geometry = slot.slot_type.magnet_type.geometry.transform(matrix)
+            origin = transform_points(VECTOR_ZERO, matrix)
 
-            plot_geometry(ax, geometry.vertices, geometry.polyhedra, color, axes3d)
+            bmin, bmax = slot.slot_type.bounds
+            size = np.min(bmax - bmin) / 2.2
+
+            plot_vector(np.stack([origin, origin + (slot.vector * size)], axis=0), 'k', '-o')
+            plot_vector(np.stack([origin, origin + (transform_rescaled_vectors(VECTOR_X, matrix) * size)], axis=0),
+                        x_color, '-.')
+            plot_vector(np.stack([origin, origin + (transform_rescaled_vectors(VECTOR_Z, matrix) * size)], axis=0),
+                        z_color, '-.')
+            plot_vector(np.stack([origin, origin + (transform_rescaled_vectors(VECTOR_S, matrix) * size)], axis=0),
+                        s_color, '-.')
+
+    ax.legend(handles=[mpatches.Patch(color=x_color, label=f'X'),
+                       mpatches.Patch(color=z_color, label=f'Z'),
+                       mpatches.Patch(color=s_color, label=f'S')])
 
 
 @beartype
@@ -114,7 +159,6 @@ def plot_beam(beam: Beam, *args, ax=None, cmap=plt.get_cmap('tab10'), axes3d: bo
         else:
             color = colors[color_key] = cmap(len(colors))
 
-        matrix = slot.world_matrix(*args, **kargs)
-        geometry = slot.slot_type.magnet_type.geometry.transform(matrix)
+        geometry = slot.geometry.transform(slot.world_matrix(*args, **kargs))
 
         plot_geometry(ax, geometry.vertices, geometry.polyhedra, color, axes3d)
