@@ -39,7 +39,7 @@ WORKDIR /
 # Install python packages
 RUN pip3 install --no-cache-dir --upgrade \
         mock pytest pytest-cov PyYAML coverage \
-        numpy nptyping beartype h5py pandas matplotlib \
+        numpy nptyping beartype h5py pandas pandera matplotlib \
         sect vtk pyvista tetgen && \
     env MPICC=/usr/local/bin/mpicc pip3 install --no-cache-dir --upgrade \
         mpi4py && \

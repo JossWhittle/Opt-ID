@@ -47,6 +47,7 @@ setup(
         'beartype',
         'h5py',
         'pandas',
+        'pandera',
         'sect',
         'vtk',
         'pyvista',

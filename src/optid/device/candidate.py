@@ -18,6 +18,8 @@ import numbers
 from beartype import beartype
 import typing as typ
 import jax.numpy as jnp
+import pandas as pd
+import pandera as pa
 
 # Opt-ID Imports
 
@@ -58,6 +60,49 @@ class Candidate:
                             f'{vector.dtype}')
 
         self._vector = vector
+
+    @staticmethod
+    @beartype
+    def from_dataframe(
+            df: pd.DataFrame,
+            name: str = 'name',
+            x: str = 'x',
+            z: str = 'z',
+            s: str = 's'):
+        """
+        Parse pandas Dataframe to produce a list of candidates.
+
+        :param df:
+            Pandas Dataframe with the name and vector data.
+
+        :param name:
+            String column name for the name field.
+
+        :param x:
+            String column name for the x vector field.
+
+        :param z:
+            String column name for the z vector field.
+
+        :param s:
+            String column name for the s vector field.
+
+        :return:
+            List of Candidate instances.
+        """
+
+        schema = pa.DataFrameSchema({
+            name: pa.Column(pa.String, pa.Check((lambda col: (len(col.unique()) == len(col))),
+                                                error='candidate names must be unique'), coerce=True),
+            x: pa.Column(pa.Float, coerce=True),
+            z: pa.Column(pa.Float, coerce=True),
+            s: pa.Column(pa.Float, coerce=True)
+        })
+
+        df = schema.validate(df)
+
+        return [Candidate(name=row[name], vector=(float(row[x]), float(row[z]), float(row[s])))
+                for _, row in df.sort_values(name).iterrows()]
 
     @property
     @beartype
