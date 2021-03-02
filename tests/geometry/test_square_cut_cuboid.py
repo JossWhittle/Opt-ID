@@ -18,7 +18,6 @@ from beartype.roar import BeartypeException
 import sys
 import unittest
 import numpy as np
-import jax.numpy as jnp
 
 # Test imports
 import optid
@@ -37,13 +36,13 @@ class SquareCutCuboidTest(unittest.TestCase):
 
     def test_constructor_shape_array(self):
 
-        shape = jnp.array([1, 1, 1], dtype=jnp.float32)
+        shape = np.array([1, 1, 1], dtype=np.float32)
 
         geometry = SquareCutCuboid(shape=shape)
 
-        vertices = jnp.array([
+        vertices = np.array([
             [-0.5, -0.5, -0.5], [-0.5,  0.5, -0.5], [0.5,  0.5, -0.5], [0.5, -0.5, -0.5],
-            [-0.5, -0.5,  0.5], [-0.5,  0.5,  0.5], [0.5,  0.5,  0.5], [0.5, -0.5,  0.5]], dtype=jnp.float32)
+            [-0.5, -0.5,  0.5], [-0.5,  0.5,  0.5], [0.5,  0.5,  0.5], [0.5, -0.5,  0.5]], dtype=np.float32)
 
         polyhedra = [
             [[0, 1, 6], [1, 6, 2], [6, 2, 0], [2, 0, 1]],
@@ -62,9 +61,9 @@ class SquareCutCuboidTest(unittest.TestCase):
 
         geometry = SquareCutCuboid(shape=shape)
 
-        vertices = jnp.array([
+        vertices = np.array([
             [-0.5, -0.5, -0.5], [-0.5,  0.5, -0.5], [0.5,  0.5, -0.5], [0.5, -0.5, -0.5],
-            [-0.5, -0.5,  0.5], [-0.5,  0.5,  0.5], [0.5,  0.5,  0.5], [0.5, -0.5,  0.5]], dtype=jnp.float32)
+            [-0.5, -0.5,  0.5], [-0.5,  0.5,  0.5], [0.5,  0.5,  0.5], [0.5, -0.5,  0.5]], dtype=np.float32)
 
         polyhedra = [
             [[0, 1, 6], [1, 6, 2], [6, 2, 0], [2, 0, 1]],
@@ -83,9 +82,9 @@ class SquareCutCuboidTest(unittest.TestCase):
 
         geometry = SquareCutCuboid(shape=shape)
 
-        vertices = jnp.array([
+        vertices = np.array([
             [-0.5, -0.5, -0.5], [-0.5,  0.5, -0.5], [0.5,  0.5, -0.5], [0.5, -0.5, -0.5],
-            [-0.5, -0.5,  0.5], [-0.5,  0.5,  0.5], [0.5,  0.5,  0.5], [0.5, -0.5,  0.5]], dtype=jnp.float32)
+            [-0.5, -0.5,  0.5], [-0.5,  0.5,  0.5], [0.5,  0.5,  0.5], [0.5, -0.5,  0.5]], dtype=np.float32)
 
         polyhedra = [
             [[0, 1, 6], [1, 6, 2], [6, 2, 0], [2, 0, 1]],
@@ -106,36 +105,36 @@ class SquareCutCuboidTest(unittest.TestCase):
 
     def test_constructor_bad_shape_shape_raises_exception(self):
 
-        shape = jnp.ones((2,), dtype=jnp.float32)
+        shape = np.ones((2,), dtype=np.float32)
 
         self.assertRaisesRegex(ValueError, '.*', SquareCutCuboid,
                                shape=shape)
 
     def test_constructor_bad_shape_array_type_raises_exception(self):
 
-        shape = jnp.ones((3,), dtype=jnp.int32)
+        shape = np.ones((3,), dtype=np.int32)
 
         self.assertRaisesRegex(TypeError, '.*', SquareCutCuboid,
                                shape=shape)
 
     def test_constructor_bad_shape_raises_exception(self):
 
-        shape = jnp.array([-1, 1, 1], dtype=jnp.float32)
+        shape = np.array([-1, 1, 1], dtype=np.float32)
 
         self.assertRaisesRegex(ValueError, '.*', SquareCutCuboid,
                                shape=shape)
 
     def test_constructor_cuts_array_scalar(self):
 
-        shape = jnp.array([1, 1, 1], dtype=jnp.float32)
+        shape = np.array([1, 1, 1], dtype=np.float32)
 
-        cuts = jnp.zeros((), dtype=jnp.float32)
+        cuts = np.zeros((), dtype=np.float32)
 
         geometry = SquareCutCuboid(shape=shape, cuts=cuts)
 
-        vertices = jnp.array([
+        vertices = np.array([
             [-0.5, -0.5, -0.5], [-0.5,  0.5, -0.5], [0.5,  0.5, -0.5], [0.5, -0.5, -0.5],
-            [-0.5, -0.5,  0.5], [-0.5,  0.5,  0.5], [0.5,  0.5,  0.5], [0.5, -0.5,  0.5]], dtype=jnp.float32)
+            [-0.5, -0.5,  0.5], [-0.5,  0.5,  0.5], [0.5,  0.5,  0.5], [0.5, -0.5,  0.5]], dtype=np.float32)
 
         polyhedra = [
             [[0, 1, 6], [1, 6, 2], [6, 2, 0], [2, 0, 1]],
@@ -150,15 +149,15 @@ class SquareCutCuboidTest(unittest.TestCase):
 
     def test_constructor_cuts_array_xz(self):
 
-        shape = jnp.array([1, 1, 1], dtype=jnp.float32)
+        shape = np.array([1, 1, 1], dtype=np.float32)
 
-        cuts = jnp.zeros((2,), dtype=jnp.float32)
+        cuts = np.zeros((2,), dtype=np.float32)
 
         geometry = SquareCutCuboid(shape=shape, cuts=cuts)
 
-        vertices = jnp.array([
+        vertices = np.array([
             [-0.5, -0.5, -0.5], [-0.5,  0.5, -0.5], [0.5,  0.5, -0.5], [0.5, -0.5, -0.5],
-            [-0.5, -0.5,  0.5], [-0.5,  0.5,  0.5], [0.5,  0.5,  0.5], [0.5, -0.5,  0.5]], dtype=jnp.float32)
+            [-0.5, -0.5,  0.5], [-0.5,  0.5,  0.5], [0.5,  0.5,  0.5], [0.5, -0.5,  0.5]], dtype=np.float32)
 
         polyhedra = [
             [[0, 1, 6], [1, 6, 2], [6, 2, 0], [2, 0, 1]],
@@ -173,15 +172,15 @@ class SquareCutCuboidTest(unittest.TestCase):
 
     def test_constructor_cuts_array_scalar_corners(self):
 
-        shape = jnp.array([1, 1, 1], dtype=jnp.float32)
+        shape = np.array([1, 1, 1], dtype=np.float32)
 
-        cuts = jnp.zeros((4,), dtype=jnp.float32)
+        cuts = np.zeros((4,), dtype=np.float32)
 
         geometry = SquareCutCuboid(shape=shape, cuts=cuts)
 
-        vertices = jnp.array([
+        vertices = np.array([
             [-0.5, -0.5, -0.5], [-0.5,  0.5, -0.5], [0.5,  0.5, -0.5], [0.5, -0.5, -0.5],
-            [-0.5, -0.5,  0.5], [-0.5,  0.5,  0.5], [0.5,  0.5,  0.5], [0.5, -0.5,  0.5]], dtype=jnp.float32)
+            [-0.5, -0.5,  0.5], [-0.5,  0.5,  0.5], [0.5,  0.5,  0.5], [0.5, -0.5,  0.5]], dtype=np.float32)
 
         polyhedra = [
             [[0, 1, 6], [1, 6, 2], [6, 2, 0], [2, 0, 1]],
@@ -196,15 +195,15 @@ class SquareCutCuboidTest(unittest.TestCase):
 
     def test_constructor_cuts_array_xz_corners(self):
 
-        shape = jnp.array([1, 1, 1], dtype=jnp.float32)
+        shape = np.array([1, 1, 1], dtype=np.float32)
 
-        cuts = jnp.zeros((4, 2), dtype=jnp.float32)
+        cuts = np.zeros((4, 2), dtype=np.float32)
 
         geometry = SquareCutCuboid(shape=shape, cuts=cuts)
 
-        vertices = jnp.array([
+        vertices = np.array([
             [-0.5, -0.5, -0.5], [-0.5,  0.5, -0.5], [0.5,  0.5, -0.5], [0.5, -0.5, -0.5],
-            [-0.5, -0.5,  0.5], [-0.5,  0.5,  0.5], [0.5,  0.5,  0.5], [0.5, -0.5,  0.5]], dtype=jnp.float32)
+            [-0.5, -0.5,  0.5], [-0.5,  0.5,  0.5], [0.5,  0.5,  0.5], [0.5, -0.5,  0.5]], dtype=np.float32)
 
         polyhedra = [
             [[0, 1, 6], [1, 6, 2], [6, 2, 0], [2, 0, 1]],
@@ -219,15 +218,15 @@ class SquareCutCuboidTest(unittest.TestCase):
 
     def test_constructor_cuts_scalar(self):
 
-        shape = jnp.array([1, 1, 1], dtype=jnp.float32)
+        shape = np.array([1, 1, 1], dtype=np.float32)
 
         cuts = 0
 
         geometry = SquareCutCuboid(shape=shape, cuts=cuts)
 
-        vertices = jnp.array([
+        vertices = np.array([
             [-0.5, -0.5, -0.5], [-0.5,  0.5, -0.5], [0.5,  0.5, -0.5], [0.5, -0.5, -0.5],
-            [-0.5, -0.5,  0.5], [-0.5,  0.5,  0.5], [0.5,  0.5,  0.5], [0.5, -0.5,  0.5]], dtype=jnp.float32)
+            [-0.5, -0.5,  0.5], [-0.5,  0.5,  0.5], [0.5,  0.5,  0.5], [0.5, -0.5,  0.5]], dtype=np.float32)
 
         polyhedra = [
             [[0, 1, 6], [1, 6, 2], [6, 2, 0], [2, 0, 1]],
@@ -242,15 +241,15 @@ class SquareCutCuboidTest(unittest.TestCase):
 
     def test_constructor_cuts_tuple_xz(self):
 
-        shape = jnp.array([1, 1, 1], dtype=jnp.float32)
+        shape = np.array([1, 1, 1], dtype=np.float32)
 
         cuts = (0, 0)
 
         geometry = SquareCutCuboid(shape=shape, cuts=cuts)
 
-        vertices = jnp.array([
+        vertices = np.array([
             [-0.5, -0.5, -0.5], [-0.5,  0.5, -0.5], [0.5,  0.5, -0.5], [0.5, -0.5, -0.5],
-            [-0.5, -0.5,  0.5], [-0.5,  0.5,  0.5], [0.5,  0.5,  0.5], [0.5, -0.5,  0.5]], dtype=jnp.float32)
+            [-0.5, -0.5,  0.5], [-0.5,  0.5,  0.5], [0.5,  0.5,  0.5], [0.5, -0.5,  0.5]], dtype=np.float32)
 
         polyhedra = [
             [[0, 1, 6], [1, 6, 2], [6, 2, 0], [2, 0, 1]],
@@ -265,15 +264,15 @@ class SquareCutCuboidTest(unittest.TestCase):
 
     def test_constructor_cuts_tuple_scalar_corners(self):
 
-        shape = jnp.array([1, 1, 1], dtype=jnp.float32)
+        shape = np.array([1, 1, 1], dtype=np.float32)
 
         cuts = (0, 0, 0, 0)
 
         geometry = SquareCutCuboid(shape=shape, cuts=cuts)
 
-        vertices = jnp.array([
+        vertices = np.array([
             [-0.5, -0.5, -0.5], [-0.5,  0.5, -0.5], [0.5,  0.5, -0.5], [0.5, -0.5, -0.5],
-            [-0.5, -0.5,  0.5], [-0.5,  0.5,  0.5], [0.5,  0.5,  0.5], [0.5, -0.5,  0.5]], dtype=jnp.float32)
+            [-0.5, -0.5,  0.5], [-0.5,  0.5,  0.5], [0.5,  0.5,  0.5], [0.5, -0.5,  0.5]], dtype=np.float32)
 
         polyhedra = [
             [[0, 1, 6], [1, 6, 2], [6, 2, 0], [2, 0, 1]],
@@ -288,15 +287,15 @@ class SquareCutCuboidTest(unittest.TestCase):
 
     def test_constructor_cuts_tuple_xz_corners(self):
 
-        shape = jnp.array([1, 1, 1], dtype=jnp.float32)
+        shape = np.array([1, 1, 1], dtype=np.float32)
 
         cuts = ((0, 0), (0, 0), (0, 0), (0, 0))
 
         geometry = SquareCutCuboid(shape=shape, cuts=cuts)
 
-        vertices = jnp.array([
+        vertices = np.array([
             [-0.5, -0.5, -0.5], [-0.5,  0.5, -0.5], [0.5,  0.5, -0.5], [0.5, -0.5, -0.5],
-            [-0.5, -0.5,  0.5], [-0.5,  0.5,  0.5], [0.5,  0.5,  0.5], [0.5, -0.5,  0.5]], dtype=jnp.float32)
+            [-0.5, -0.5,  0.5], [-0.5,  0.5,  0.5], [0.5,  0.5,  0.5], [0.5, -0.5,  0.5]], dtype=np.float32)
 
         polyhedra = [
             [[0, 1, 6], [1, 6, 2], [6, 2, 0], [2, 0, 1]],
@@ -311,19 +310,19 @@ class SquareCutCuboidTest(unittest.TestCase):
 
     def test_constructor_cuts_bl(self):
 
-        shape = jnp.array([1, 1, 1], dtype=jnp.float32)
+        shape = np.array([1, 1, 1], dtype=np.float32)
 
         cuts = ((0.2, 0.1), (0, 0), (0, 0), (0, 0))
 
         geometry = SquareCutCuboid(shape=shape, cuts=cuts, nobisect=True)
 
-        vertices = jnp.array([
+        vertices = np.array([
             [-0.30000001192092896, -0.5, -0.5], [-0.30000001192092896, -0.4000000059604645, -0.5],
             [-0.5, -0.4000000059604645, -0.5], [-0.5, 0.5, -0.5], [0.5, 0.5, -0.5],
             [0.5, -0.5, -0.5], [-0.30000001192092896, -0.5, 0.5], [-0.30000001192092896, -0.4000000059604645, 0.5],
             [-0.5, -0.4000000059604645, 0.5], [-0.5, 0.5, 0.5], [0.5, 0.5, 0.5], [0.5, -0.5, 0.5],
             [-0.4333333373069763, -0.09999999403953552, 0.018803969025611877]],
-            dtype=jnp.float32)
+            dtype=np.float32)
 
         polyhedra = [
             [[3, 8, 12], [8, 12, 9], [12, 9, 3], [9, 3, 8]],
@@ -351,19 +350,19 @@ class SquareCutCuboidTest(unittest.TestCase):
 
     def test_constructor_cuts_tl(self):
 
-        shape = jnp.array([1, 1, 1], dtype=jnp.float32)
+        shape = np.array([1, 1, 1], dtype=np.float32)
 
         cuts = ((0, 0), (0.2, 0.1), (0, 0), (0, 0))
 
         geometry = SquareCutCuboid(shape=shape, cuts=cuts, nobisect=True)
 
-        vertices = jnp.array([
+        vertices = np.array([
             [-0.5, -0.5, -0.5], [-0.5, 0.4000000059604645, -0.5], [-0.30000001192092896, 0.4000000059604645, -0.5],
             [-0.30000001192092896, 0.5, -0.5], [0.5, 0.5, -0.5], [0.5, -0.5, -0.5], [-0.5, -0.5, 0.5],
             [-0.5, 0.4000000059604645, 0.5], [-0.30000001192092896, 0.4000000059604645, 0.5],
             [-0.30000001192092896, 0.5, 0.5], [0.5, 0.5, 0.5], [0.5, -0.5, 0.5],
             [0.23333333432674408, 0.13333332538604736, -0.05661701038479805]],
-            dtype=jnp.float32)
+            dtype=np.float32)
 
         polyhedra = [
             [[1, 12, 2], [12, 2, 7], [2, 7, 1], [7, 1, 12]],
@@ -392,19 +391,19 @@ class SquareCutCuboidTest(unittest.TestCase):
 
     def test_constructor_cuts_tr(self):
 
-        shape = jnp.array([1, 1, 1], dtype=jnp.float32)
+        shape = np.array([1, 1, 1], dtype=np.float32)
 
         cuts = ((0, 0), (0, 0), (0.2, 0.1), (0, 0))
 
         geometry = SquareCutCuboid(shape=shape, cuts=cuts, nobisect=True)
 
-        vertices = jnp.array([
+        vertices = np.array([
             [-0.5, -0.5, -0.5], [-0.5, 0.5, -0.5], [0.30000001192092896, 0.5, -0.5],
             [0.30000001192092896, 0.4000000059604645, -0.5], [0.5, 0.4000000059604645, -0.5],
             [0.5, -0.5, -0.5], [-0.5, -0.5, 0.5], [-0.5, 0.5, 0.5], [0.30000001192092896, 0.5, 0.5],
             [0.30000001192092896, 0.4000000059604645, 0.5], [0.5, 0.4000000059604645, 0.5], [0.5, -0.5, 0.5],
             [0.03333333507180214, 0.46666666865348816, 0.01981320045888424]],
-            dtype=jnp.float32)
+            dtype=np.float32)
 
         polyhedra = [
             [[5, 12, 3], [12, 3, 0], [3, 0, 5], [0, 5, 12]],
@@ -432,19 +431,19 @@ class SquareCutCuboidTest(unittest.TestCase):
 
     def test_constructor_cuts_br(self):
 
-        shape = jnp.array([1, 1, 1], dtype=jnp.float32)
+        shape = np.array([1, 1, 1], dtype=np.float32)
 
         cuts = ((0, 0), (0, 0), (0, 0), (0.2, 0.1))
 
         geometry = SquareCutCuboid(shape=shape, cuts=cuts, nobisect=True)
 
-        vertices = jnp.array([
+        vertices = np.array([
             [-0.5, -0.5, -0.5], [-0.5, 0.5, -0.5], [0.5, 0.5, -0.5], [0.5, -0.4000000059604645, -0.5],
             [0.30000001192092896, -0.4000000059604645, -0.5], [0.30000001192092896, -0.5, -0.5], [-0.5, -0.5, 0.5],
             [-0.5, 0.5, 0.5], [0.5, 0.5, 0.5], [0.5, -0.4000000059604645, 0.5],
             [0.30000001192092896, -0.4000000059604645, 0.5], [0.30000001192092896, -0.5, 0.5],
             [0.4333333373069763, -0.10000001639127731, 0.01864202693104744]],
-            dtype=jnp.float32)
+            dtype=np.float32)
 
         polyhedra = [
             [[4, 9, 3], [9, 3, 12], [3, 12, 4], [12, 4, 9]],
@@ -473,30 +472,30 @@ class SquareCutCuboidTest(unittest.TestCase):
     @unittest.skipIf(sys.flags.optimize > 0, 'BearType optimized away.')
     def test_constructor_bad_cuts_type_raises_exception(self):
 
-        shape = jnp.array([1, 1, 1], dtype=jnp.float32)
+        shape = np.array([1, 1, 1], dtype=np.float32)
 
         self.assertRaisesRegex(BeartypeException, '.*', SquareCutCuboid,
                                shape=shape, cuts=None)
 
     def test_constructor_bad_cuts_negative_raises_exception(self):
 
-        shape = jnp.array([1, 1, 1], dtype=jnp.float32)
+        shape = np.array([1, 1, 1], dtype=np.float32)
 
         self.assertRaisesRegex(ValueError, '.*', SquareCutCuboid,
                                shape=shape, cuts=-0.1)
 
     def test_constructor_bad_cuts_shape_raises_exception(self):
 
-        shape = jnp.array([1, 1, 1], dtype=jnp.float32)
+        shape = np.array([1, 1, 1], dtype=np.float32)
 
-        cuts = jnp.zeros((4, 3), dtype=jnp.float32)
+        cuts = np.zeros((4, 3), dtype=np.float32)
 
         self.assertRaisesRegex(ValueError, '.*', SquareCutCuboid,
                                shape=shape, cuts=cuts)
 
     def test_constructor_bad_cuts_imbalanced_raises_exception(self):
 
-        shape = jnp.array([1, 1, 1], dtype=jnp.float32)
+        shape = np.array([1, 1, 1], dtype=np.float32)
 
         cuts = (0.1, 0)
 
@@ -505,7 +504,7 @@ class SquareCutCuboidTest(unittest.TestCase):
 
     def test_constructor_bad_cuts_left_collision_raises_exception(self):
 
-        shape = jnp.array([1, 1, 1], dtype=jnp.float32)
+        shape = np.array([1, 1, 1], dtype=np.float32)
 
         cuts = ((0.6, 0.6), (0.6, 0.6), (0, 0), (0, 0))
 
@@ -514,7 +513,7 @@ class SquareCutCuboidTest(unittest.TestCase):
 
     def test_constructor_bad_cuts_top_collision_raises_exception(self):
 
-        shape = jnp.array([1, 1, 1], dtype=jnp.float32)
+        shape = np.array([1, 1, 1], dtype=np.float32)
 
         cuts = ((0, 0), (0.6, 0.6), (0.6, 0.6), (0, 0))
 
@@ -523,7 +522,7 @@ class SquareCutCuboidTest(unittest.TestCase):
 
     def test_constructor_bad_cuts_right_collision_raises_exception(self):
 
-        shape = jnp.array([1, 1, 1], dtype=jnp.float32)
+        shape = np.array([1, 1, 1], dtype=np.float32)
 
         cuts = ((0, 0), (0, 0), (0.6, 0.6), (0.6, 0.6))
 
@@ -532,7 +531,7 @@ class SquareCutCuboidTest(unittest.TestCase):
 
     def test_constructor_bad_cuts_bottom_collision_raises_exception(self):
 
-        shape = jnp.array([1, 1, 1], dtype=jnp.float32)
+        shape = np.array([1, 1, 1], dtype=np.float32)
 
         cuts = ((0.6, 0.6), (0, 0), (0, 0), (0.6, 0.6))
 

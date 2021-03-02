@@ -25,7 +25,7 @@ from ..geometry import \
     ExtrudedPolygon
 
 
-TShape = typ.Union[jnp.ndarray, typ.Sequence[numbers.Real]]
+TShape = typ.Union[np.ndarray, typ.Sequence[numbers.Real]]
 
 
 class Cuboid(ExtrudedPolygon):
@@ -48,14 +48,14 @@ class Cuboid(ExtrudedPolygon):
             All additional parameters are forwarded to TetGen's tetrahedralize function.
         """
 
-        if not isinstance(shape, jnp.ndarray):
-            shape = jnp.array(shape, dtype=jnp.float32)
+        if not isinstance(shape, np.ndarray):
+            shape = np.array(shape, dtype=np.float32)
 
         if shape.shape != (3,):
             raise ValueError(f'shape must be a vector of shape (3,) but is : '
                              f'{shape.shape}')
 
-        if shape.dtype != jnp.float32:
+        if shape.dtype != np.float32:
             raise TypeError(f'shape must have dtype (float32) but is : '
                             f'{shape.dtype}')
 
@@ -67,7 +67,7 @@ class Cuboid(ExtrudedPolygon):
         x *= 0.5
         z *= 0.5
 
-        polygon = jnp.array(
-            [[-x, -z], [-x, z], [x, z], [x, -z]], dtype=jnp.float32)
+        polygon = np.array(
+            [[-x, -z], [-x, z], [x, z], [x, -z]], dtype=np.float32)
 
         super().__init__(polygon=polygon, thickness=s, subdiv=subdiv, **tetgen_kargs)

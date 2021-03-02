@@ -18,7 +18,6 @@ from beartype.roar import BeartypeException
 import sys
 import unittest
 import numpy as np
-import jax.numpy as jnp
 
 # Test imports
 import optid
@@ -37,14 +36,14 @@ class ExtrudedPolygonTest(unittest.TestCase):
 
     def test_constructor_polygon_array(self):
 
-        polygon = jnp.array([
-            [-0.5, -0.5], [-0.5,  0.5], [0.5,  0.5], [0.5, -0.5]], dtype=jnp.float32)
+        polygon = np.array([
+            [-0.5, -0.5], [-0.5,  0.5], [0.5,  0.5], [0.5, -0.5]], dtype=np.float32)
 
         geometry = ExtrudedPolygon(polygon=polygon, thickness=1.0)
 
-        vertices = jnp.array([
+        vertices = np.array([
             [-0.5, -0.5, -0.5], [-0.5,  0.5, -0.5], [0.5,  0.5, -0.5], [0.5, -0.5, -0.5],
-            [-0.5, -0.5,  0.5], [-0.5,  0.5,  0.5], [0.5,  0.5,  0.5], [0.5, -0.5,  0.5]], dtype=jnp.float32)
+            [-0.5, -0.5,  0.5], [-0.5,  0.5,  0.5], [0.5,  0.5,  0.5], [0.5, -0.5,  0.5]], dtype=np.float32)
 
         polyhedra = [
             [[0, 1, 6], [1, 6, 2], [6, 2, 0], [2, 0, 1]],
@@ -64,9 +63,9 @@ class ExtrudedPolygonTest(unittest.TestCase):
 
         geometry = ExtrudedPolygon(polygon=polygon, thickness=1.0)
 
-        vertices = jnp.array([
+        vertices = np.array([
             [-0.5, -0.5, -0.5], [-0.5,  0.5, -0.5], [0.5,  0.5, -0.5], [0.5, -0.5, -0.5],
-            [-0.5, -0.5,  0.5], [-0.5,  0.5,  0.5], [0.5,  0.5,  0.5], [0.5, -0.5,  0.5]], dtype=jnp.float32)
+            [-0.5, -0.5,  0.5], [-0.5,  0.5,  0.5], [0.5,  0.5,  0.5], [0.5, -0.5,  0.5]], dtype=np.float32)
 
         polyhedra = [
             [[0, 1, 6], [1, 6, 2], [6, 2, 0], [2, 0, 1]],
@@ -104,28 +103,28 @@ class ExtrudedPolygonTest(unittest.TestCase):
 
     def test_constructor_bad_polygon_shape_raises_exception(self):
 
-        polygon = jnp.ones((2, 2), dtype=jnp.float32)
+        polygon = np.ones((2, 2), dtype=np.float32)
 
         self.assertRaisesRegex(ValueError, '.*', ExtrudedPolygon,
                                polygon=polygon, thickness=1.0)
 
     def test_constructor_bad_polygon_array_vertices_shape_raises_exception(self):
 
-        polygon = jnp.ones((4, 3), dtype=jnp.float32)
+        polygon = np.ones((4, 3), dtype=np.float32)
 
         self.assertRaisesRegex(ValueError, '.*', ExtrudedPolygon,
                                polygon=polygon, thickness=1.0)
 
     def test_constructor_bad_polygon_array_type_raises_exception(self):
 
-        polygon = jnp.ones((4, 2), dtype=jnp.int32)
+        polygon = np.ones((4, 2), dtype=np.int32)
 
         self.assertRaisesRegex(TypeError, '.*', ExtrudedPolygon,
                                polygon=polygon, thickness=1.0)
 
     def test_constructor_bad_thickness_raises_exception(self):
 
-        polygon = jnp.ones((4, 2), dtype=jnp.float32)
+        polygon = np.ones((4, 2), dtype=np.float32)
 
         self.assertRaisesRegex(TypeError, '.*', ExtrudedPolygon,
                                polygon=polygon, thickness=-1.0)

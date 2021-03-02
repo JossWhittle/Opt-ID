@@ -25,11 +25,11 @@ from ..geometry import \
     ExtrudedPolygon
 
 
-TShape = typ.Union[jnp.ndarray, typ.Sequence[numbers.Real]]
+TShape = typ.Union[np.ndarray, typ.Sequence[numbers.Real]]
 TChamferTuple = typ.Tuple[numbers.Real, numbers.Real]
 TChamferCornerScalars = typ.Tuple[numbers.Real, numbers.Real, numbers.Real, numbers.Real]
 TChamferCornerTuples = typ.Tuple[TChamferTuple, TChamferTuple, TChamferTuple, TChamferTuple]
-TChamfers = typ.Union[jnp.ndarray, numbers.Real, TChamferTuple, TChamferCornerScalars, TChamferCornerTuples]
+TChamfers = typ.Union[np.ndarray, numbers.Real, TChamferTuple, TChamferCornerScalars, TChamferCornerTuples]
 
 
 class ChamferedCuboid(ExtrudedPolygon):
@@ -62,14 +62,14 @@ class ChamferedCuboid(ExtrudedPolygon):
             All additional parameters are forwarded to TetGen's tetrahedralize function.
         """
 
-        if not isinstance(shape, jnp.ndarray):
-            shape = jnp.array(shape, dtype=jnp.float32)
+        if not isinstance(shape, np.ndarray):
+            shape = np.array(shape, dtype=np.float32)
 
         if shape.shape != (3,):
             raise ValueError(f'shape must be a vector of shape (3,) but is : '
                              f'{shape.shape}')
 
-        if shape.dtype != jnp.float32:
+        if shape.dtype != np.float32:
             raise TypeError(f'shape must have dtype (float32) but is : '
                             f'{shape.dtype}')
 
@@ -81,8 +81,8 @@ class ChamferedCuboid(ExtrudedPolygon):
         x *= 0.5
         z *= 0.5
 
-        if not isinstance(chamfer, jnp.ndarray):
-            chamfer = jnp.array(chamfer, dtype=jnp.float32)
+        if not isinstance(chamfer, np.ndarray):
+            chamfer = np.array(chamfer, dtype=np.float32)
 
         if np.any(chamfer < 0):
             raise ValueError(f'chamfer must be greater than or equal to zero but is : '
@@ -90,13 +90,13 @@ class ChamferedCuboid(ExtrudedPolygon):
 
         if chamfer.shape == () or chamfer.shape == (1,):
             # Common value for X and Z shared on all corners
-            chamfer = jnp.tile(jnp.reshape(chamfer, (1, 1)), (4, 2))
+            chamfer = np.tile(np.reshape(chamfer, (1, 1)), (4, 2))
         elif chamfer.shape == (2,):
             # Separate value for X and Z shared on all corners
-            chamfer = jnp.tile(jnp.reshape(chamfer, (1, 2)), (4, 1))
+            chamfer = np.tile(np.reshape(chamfer, (1, 2)), (4, 1))
         elif chamfer.shape == (4,):
             # Common value for X and Z separate on all corners
-            chamfer = jnp.tile(jnp.reshape(chamfer, (4, 1)), (1, 2))
+            chamfer = np.tile(np.reshape(chamfer, (4, 1)), (1, 2))
 
         if chamfer.shape != (4, 2):
             # Separate value for X and Z separate on all corners
@@ -132,10 +132,10 @@ class ChamferedCuboid(ExtrudedPolygon):
         # Which corners have a non zero chamfer?
         bl, tl, tr, br = (~np.logical_and(chamfer_zeros[:, 0], chamfer_zeros[:, 1])).tolist()
 
-        polygon = jnp.array([
+        polygon = np.array([
             *([[-(x - blx), -z], [-x, -(z - blz)]] if bl else [[-x, -z]]),
             *([[-x,  (z - tlz)], [-(x - tlx),  z]] if tl else [[-x,  z]]),
             *([[ (x - trx),  z], [ x,  (z - trz)]] if tr else [[ x,  z]]),
-            *([[ x, -(z - brz)], [ (x - brx), -z]] if br else [[ x, -z]])], dtype=jnp.float32)
+            *([[ x, -(z - brz)], [ (x - brx), -z]] if br else [[ x, -z]])], dtype=np.float32)
 
         super().__init__(polygon=polygon, thickness=s, subdiv=subdiv, **tetgen_kargs)

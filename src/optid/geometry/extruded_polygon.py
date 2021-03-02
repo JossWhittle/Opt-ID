@@ -26,7 +26,7 @@ from ..geometry import \
     TetrahedralMesh
 
 
-TPolygon = typ.Union[jnp.ndarray, typ.Sequence[typ.Sequence[numbers.Real]]]
+TPolygon = typ.Union[np.ndarray, typ.Sequence[typ.Sequence[numbers.Real]]]
 
 
 class ExtrudedPolygon(TetrahedralMesh):
@@ -53,7 +53,7 @@ class ExtrudedPolygon(TetrahedralMesh):
             All additional parameters are forwarded to TetGen's tetrahedralize function.
         """
 
-        if not isinstance(polygon, jnp.ndarray):
+        if not isinstance(polygon, np.ndarray):
 
             def is_vertex_not_2d(vertex) -> bool:
                 return len(vertex) != 2
@@ -62,7 +62,7 @@ class ExtrudedPolygon(TetrahedralMesh):
                 raise ValueError(f'polygon must be a list of 2D XZ coordinates but is : '
                                  f'{polygon}')
 
-            polygon = jnp.array(polygon, dtype=jnp.float32)
+            polygon = np.array(polygon, dtype=np.float32)
 
         if polygon.shape[-1] != 2:
             raise ValueError(f'polygon must be a list of 2D XZ coordinates (N, 2) but is : '
@@ -72,7 +72,7 @@ class ExtrudedPolygon(TetrahedralMesh):
             raise ValueError(f'polygon must be a list of at least 3 2D XZ coordinates (N >= 3, 2) but is : '
                              f'{polygon.shape}')
 
-        if polygon.dtype != jnp.float32:
+        if polygon.dtype != np.float32:
             raise TypeError(f'polygon must have dtype (float32) but is : '
                             f'{polygon.dtype}')
 
@@ -101,8 +101,8 @@ class ExtrudedPolygon(TetrahedralMesh):
         # Project end polygon 2D vertices into 3D vertices for each slice
         s_limit = thickness * 0.5
         s_slices = 2 if subdiv <= 0 else max(2, int(np.ceil(thickness / subdiv)))
-        vertices = jnp.concatenate([
-            jnp.pad(cap_polygon, ((0, 0), (0, 1)), constant_values=s)
+        vertices = np.concatenate([
+            np.pad(cap_polygon, ((0, 0), (0, 1)), constant_values=s)
             for s in np.linspace(-s_limit, +s_limit, s_slices)])
 
         faces = [*cap_mesh_polygons]
@@ -120,8 +120,8 @@ class ExtrudedPolygon(TetrahedralMesh):
                 a, b, c, d = (v1 + (n * s)), (v0 + (n * s)), (v0 + (n * (s + 1))), (v1 + (n * (s + 1)))
                 faces += [[a, b, c], [a, c, d]]
 
-        faces = jnp.array(faces, dtype=jnp.int32)
-        vertices = jnp.array(vertices, dtype=jnp.float32)
+        faces = np.array(faces, dtype=np.int32)
+        vertices = np.array(vertices, dtype=np.float32)
 
         super().__init__(vertices=vertices, faces=faces, **tetgen_kargs)
 

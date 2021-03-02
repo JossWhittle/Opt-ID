@@ -18,7 +18,6 @@ from beartype.roar import BeartypeException
 import sys
 import unittest
 import numpy as np
-import jax.numpy as jnp
 
 # Test imports
 import optid
@@ -38,9 +37,9 @@ class GeometryTest(unittest.TestCase):
 
     def test_constructor_vertices_array(self):
 
-        vertices = jnp.array([
+        vertices = np.array([
             [-0.5, -0.5, -0.5], [-0.5,  0.5, -0.5], [0.5,  0.5, -0.5], [0.5, -0.5, -0.5],
-            [-0.5, -0.5,  0.5], [-0.5,  0.5,  0.5], [0.5,  0.5,  0.5], [0.5, -0.5,  0.5]], dtype=jnp.float32)
+            [-0.5, -0.5,  0.5], [-0.5,  0.5,  0.5], [0.5,  0.5,  0.5], [0.5, -0.5,  0.5]], dtype=np.float32)
 
         polyhedra = [[
             [0, 1, 2, 3], [4, 5, 6, 7],
@@ -65,7 +64,7 @@ class GeometryTest(unittest.TestCase):
 
         geometry = Geometry(vertices=vertices, polyhedra=polyhedra)
 
-        self.assertTrue(np.allclose(geometry.vertices, jnp.array(vertices, dtype=jnp.float32), atol=1e-5))
+        self.assertTrue(np.allclose(geometry.vertices, np.array(vertices, dtype=np.float32), atol=1e-5))
         self.assertEqual(geometry.polyhedra, polyhedra)
 
     @unittest.skipIf(sys.flags.optimize > 0, 'BearType optimized away.')
@@ -105,7 +104,7 @@ class GeometryTest(unittest.TestCase):
 
     def test_constructor_bad_vertices_array_vertices_shape_raises_exception(self):
 
-        vertices = jnp.ones((8, 2), dtype=jnp.float32)
+        vertices = np.ones((8, 2), dtype=np.float32)
 
         polyhedra = [[
             [0, 1, 2, 3], [4, 5, 6, 7],
@@ -117,7 +116,7 @@ class GeometryTest(unittest.TestCase):
 
     def test_constructor_bad_vertices_array_type_raises_exception(self):
 
-        vertices = jnp.ones((8, 3), dtype=jnp.int32)
+        vertices = np.ones((8, 3), dtype=np.int32)
 
         polyhedra = [[
             [0, 1, 2, 3], [4, 5, 6, 7],
@@ -129,10 +128,10 @@ class GeometryTest(unittest.TestCase):
 
     def test_constructor_polyhedra_list_of_list_of_sequences(self):
 
-        vertices = jnp.array([
+        vertices = np.array([
             [-0.5, -0.5, -0.5], [-0.5,  0.5, -0.5], [0.5,  0.5, -0.5], [0.5, -0.5, -0.5],
             [-0.5, -0.5,  0.5], [-0.5,  0.5,  0.5], [0.5,  0.5,  0.5], [0.5, -0.5,  0.5]],
-            dtype=jnp.float32)
+            dtype=np.float32)
 
         polyhedra = [[
             [0, 1, 2, 3], (4, 5, 6, 7),
@@ -146,10 +145,10 @@ class GeometryTest(unittest.TestCase):
 
     def test_constructor_polyhedra_list_of_sequences_of_lists(self):
 
-        vertices = jnp.array([
+        vertices = np.array([
             [-0.5, -0.5, -0.5], [-0.5,  0.5, -0.5], [0.5,  0.5, -0.5], [0.5, -0.5, -0.5],
             [-0.5, -0.5,  0.5], [-0.5,  0.5,  0.5], [0.5,  0.5,  0.5], [0.5, -0.5,  0.5]],
-            dtype=jnp.float32)
+            dtype=np.float32)
 
         polyhedra = [(
             [0, 1, 2, 3], [4, 5, 6, 7],
@@ -163,10 +162,10 @@ class GeometryTest(unittest.TestCase):
 
     def test_constructor_polyhedra_sequence_of_lists_of_lists(self):
 
-        vertices = jnp.array([
+        vertices = np.array([
             [-0.5, -0.5, -0.5], [-0.5,  0.5, -0.5], [0.5,  0.5, -0.5], [0.5, -0.5, -0.5],
             [-0.5, -0.5,  0.5], [-0.5,  0.5,  0.5], [0.5,  0.5,  0.5], [0.5, -0.5,  0.5]],
-            dtype=jnp.float32)
+            dtype=np.float32)
 
         polyhedra = ([
             [0, 1, 2, 3], [4, 5, 6, 7],
@@ -180,7 +179,7 @@ class GeometryTest(unittest.TestCase):
 
     def test_constructor_bad_polyhedra_empty_list_exception(self):
 
-        vertices = jnp.ones((8, 3), dtype=jnp.float32)
+        vertices = np.ones((8, 3), dtype=np.float32)
 
         polyhedra = []
 
@@ -189,7 +188,7 @@ class GeometryTest(unittest.TestCase):
 
     def test_constructor_bad_polyhedra_vertex_out_of_bounds_raises_exception(self):
 
-        vertices = jnp.ones((8, 3), dtype=jnp.float32)
+        vertices = np.ones((8, 3), dtype=np.float32)
 
         polyhedra = [[
             [8, 1, 2, 3], [4, 5, 6, 7],
@@ -201,7 +200,7 @@ class GeometryTest(unittest.TestCase):
 
     def test_constructor_bad_polyhedra_vertex_duplicated_raises_exception(self):
 
-        vertices = jnp.ones((8, 3), dtype=jnp.float32)
+        vertices = np.ones((8, 3), dtype=np.float32)
 
         polyhedra = [[
             [0, 0, 2, 3], [4, 5, 6, 7],
@@ -213,7 +212,7 @@ class GeometryTest(unittest.TestCase):
 
     def test_constructor_bad_polyhedra_face_not_polygon_raises_exception(self):
 
-        vertices = jnp.ones((8, 3), dtype=jnp.float32)
+        vertices = np.ones((8, 3), dtype=np.float32)
 
         polyhedra = [[
             [0, 1], [4, 5, 6, 7],
@@ -225,7 +224,7 @@ class GeometryTest(unittest.TestCase):
 
     def test_constructor_bad_polyhedra_not_polyhedra_raises_exception(self):
 
-        vertices = jnp.ones((8, 3), dtype=jnp.float32)
+        vertices = np.ones((8, 3), dtype=np.float32)
 
         polyhedra = [[
             [0, 1, 2, 3], [4, 5, 6, 7], [0, 1, 5, 4]]]
@@ -237,9 +236,9 @@ class GeometryTest(unittest.TestCase):
 
     def test_transform(self):
 
-        vertices = jnp.array([
+        vertices = np.array([
             [-0.5, -0.5, -0.5], [-0.5,  0.5, -0.5], [0.5,  0.5, -0.5], [0.5, -0.5, -0.5],
-            [-0.5, -0.5,  0.5], [-0.5,  0.5,  0.5], [0.5,  0.5,  0.5], [0.5, -0.5,  0.5]], dtype=jnp.float32)
+            [-0.5, -0.5,  0.5], [-0.5,  0.5,  0.5], [0.5,  0.5,  0.5], [0.5, -0.5,  0.5]], dtype=np.float32)
 
         polyhedra = [[
             [0, 1, 2, 3], [4, 5, 6, 7],
@@ -257,9 +256,9 @@ class GeometryTest(unittest.TestCase):
     @unittest.skipIf(sys.flags.optimize > 0, 'BearType optimized away.')
     def test_transform_bad_matrix_type_raises_exception(self):
 
-        vertices = jnp.array([
+        vertices = np.array([
             [-0.5, -0.5, -0.5], [-0.5,  0.5, -0.5], [0.5,  0.5, -0.5], [0.5, -0.5, -0.5],
-            [-0.5, -0.5,  0.5], [-0.5,  0.5,  0.5], [0.5,  0.5,  0.5], [0.5, -0.5,  0.5]], dtype=jnp.float32)
+            [-0.5, -0.5,  0.5], [-0.5,  0.5,  0.5], [0.5,  0.5,  0.5], [0.5, -0.5,  0.5]], dtype=np.float32)
 
         polyhedra = [[
             [0, 1, 2, 3], [4, 5, 6, 7],
@@ -273,9 +272,9 @@ class GeometryTest(unittest.TestCase):
 
     def test_transform_bad_matrix_shape_raises_exception(self):
 
-        vertices = jnp.array([
+        vertices = np.array([
             [-0.5, -0.5, -0.5], [-0.5,  0.5, -0.5], [0.5,  0.5, -0.5], [0.5, -0.5, -0.5],
-            [-0.5, -0.5,  0.5], [-0.5,  0.5,  0.5], [0.5,  0.5,  0.5], [0.5, -0.5,  0.5]], dtype=jnp.float32)
+            [-0.5, -0.5,  0.5], [-0.5,  0.5,  0.5], [0.5,  0.5,  0.5], [0.5, -0.5,  0.5]], dtype=np.float32)
 
         polyhedra = [[
             [0, 1, 2, 3], [4, 5, 6, 7],
@@ -285,13 +284,13 @@ class GeometryTest(unittest.TestCase):
         geometry = Geometry(vertices=vertices, polyhedra=polyhedra)
 
         self.assertRaisesRegex(ValueError, '.*', geometry.transform,
-                               matrix=jnp.eye(3, dtype=jnp.float32))
+                               matrix=np.eye(3, dtype=np.float32))
 
     def test_transform_bad_matrix_array_type_raises_exception(self):
 
-        vertices = jnp.array([
+        vertices = np.array([
             [-0.5, -0.5, -0.5], [-0.5,  0.5, -0.5], [0.5,  0.5, -0.5], [0.5, -0.5, -0.5],
-            [-0.5, -0.5,  0.5], [-0.5,  0.5,  0.5], [0.5,  0.5,  0.5], [0.5, -0.5,  0.5]], dtype=jnp.float32)
+            [-0.5, -0.5,  0.5], [-0.5,  0.5,  0.5], [0.5,  0.5,  0.5], [0.5, -0.5,  0.5]], dtype=np.float32)
 
         polyhedra = [[
             [0, 1, 2, 3], [4, 5, 6, 7],
@@ -301,15 +300,15 @@ class GeometryTest(unittest.TestCase):
         geometry = Geometry(vertices=vertices, polyhedra=polyhedra)
 
         self.assertRaisesRegex(TypeError, '.*', geometry.transform,
-                               matrix=jnp.eye(4, dtype=jnp.int32))
+                               matrix=np.eye(4, dtype=np.int32))
 
     ####################################################################################################################
 
     def test_to_radia_array(self):
 
-        vertices = jnp.array([
+        vertices = np.array([
             [-0.5, -0.5, -0.5], [-0.5, 0.5, -0.5], [0.5, 0.5, -0.5], [0.5, -0.5, -0.5],
-            [-0.5, -0.5, 0.5], [-0.5, 0.5, 0.5], [0.5, 0.5, 0.5], [0.5, -0.5, 0.5]], dtype=jnp.float32)
+            [-0.5, -0.5, 0.5], [-0.5, 0.5, 0.5], [0.5, 0.5, 0.5], [0.5, -0.5, 0.5]], dtype=np.float32)
 
         polyhedra = [[
             [0, 1, 2, 3], [4, 5, 6, 7],
@@ -318,13 +317,13 @@ class GeometryTest(unittest.TestCase):
 
         geometry = Geometry(vertices=vertices, polyhedra=polyhedra)
 
-        obj = geometry.to_radia(jnp.ones((3,), dtype=jnp.float32))
+        obj = geometry.to_radia(np.ones((3,), dtype=np.float32))
 
     def test_to_radia_list(self):
 
-        vertices = jnp.array([
+        vertices = np.array([
             [-0.5, -0.5, -0.5], [-0.5, 0.5, -0.5], [0.5, 0.5, -0.5], [0.5, -0.5, -0.5],
-            [-0.5, -0.5, 0.5], [-0.5, 0.5, 0.5], [0.5, 0.5, 0.5], [0.5, -0.5, 0.5]], dtype=jnp.float32)
+            [-0.5, -0.5, 0.5], [-0.5, 0.5, 0.5], [0.5, 0.5, 0.5], [0.5, -0.5, 0.5]], dtype=np.float32)
 
         polyhedra = [[
             [0, 1, 2, 3], [4, 5, 6, 7],
@@ -337,9 +336,9 @@ class GeometryTest(unittest.TestCase):
 
     def test_to_radia_tuple(self):
 
-        vertices = jnp.array([
+        vertices = np.array([
             [-0.5, -0.5, -0.5], [-0.5, 0.5, -0.5], [0.5, 0.5, -0.5], [0.5, -0.5, -0.5],
-            [-0.5, -0.5, 0.5], [-0.5, 0.5, 0.5], [0.5, 0.5, 0.5], [0.5, -0.5, 0.5]], dtype=jnp.float32)
+            [-0.5, -0.5, 0.5], [-0.5, 0.5, 0.5], [0.5, 0.5, 0.5], [0.5, -0.5, 0.5]], dtype=np.float32)
 
         polyhedra = [[
             [0, 1, 2, 3], [4, 5, 6, 7],
@@ -353,9 +352,9 @@ class GeometryTest(unittest.TestCase):
     @unittest.skipIf(sys.flags.optimize > 0, 'BearType optimized away.')
     def test_to_radia_bad_vector_type_raises_exception(self):
 
-        vertices = jnp.array([
+        vertices = np.array([
             [-0.5, -0.5, -0.5], [-0.5, 0.5, -0.5], [0.5, 0.5, -0.5], [0.5, -0.5, -0.5],
-            [-0.5, -0.5, 0.5], [-0.5, 0.5, 0.5], [0.5, 0.5, 0.5], [0.5, -0.5, 0.5]], dtype=jnp.float32)
+            [-0.5, -0.5, 0.5], [-0.5, 0.5, 0.5], [0.5, 0.5, 0.5], [0.5, -0.5, 0.5]], dtype=np.float32)
 
         polyhedra = [[
             [0, 1, 2, 3], [4, 5, 6, 7],
@@ -369,9 +368,9 @@ class GeometryTest(unittest.TestCase):
 
     def test_to_radia_bad_vector_shape_raises_exception(self):
 
-        vertices = jnp.array([
+        vertices = np.array([
             [-0.5, -0.5, -0.5], [-0.5, 0.5, -0.5], [0.5, 0.5, -0.5], [0.5, -0.5, -0.5],
-            [-0.5, -0.5, 0.5], [-0.5, 0.5, 0.5], [0.5, 0.5, 0.5], [0.5, -0.5, 0.5]], dtype=jnp.float32)
+            [-0.5, -0.5, 0.5], [-0.5, 0.5, 0.5], [0.5, 0.5, 0.5], [0.5, -0.5, 0.5]], dtype=np.float32)
 
         polyhedra = [[
             [0, 1, 2, 3], [4, 5, 6, 7],
@@ -381,13 +380,13 @@ class GeometryTest(unittest.TestCase):
         geometry = Geometry(vertices=vertices, polyhedra=polyhedra)
 
         self.assertRaisesRegex(ValueError, '.*', geometry.to_radia,
-                               vector=jnp.ones((4,), dtype=jnp.float32))
+                               vector=np.ones((4,), dtype=np.float32))
 
     def test_to_radia_bad_vector_array_type_raises_exception(self):
 
-        vertices = jnp.array([
+        vertices = np.array([
             [-0.5, -0.5, -0.5], [-0.5, 0.5, -0.5], [0.5, 0.5, -0.5], [0.5, -0.5, -0.5],
-            [-0.5, -0.5, 0.5], [-0.5, 0.5, 0.5], [0.5, 0.5, 0.5], [0.5, -0.5, 0.5]], dtype=jnp.float32)
+            [-0.5, -0.5, 0.5], [-0.5, 0.5, 0.5], [0.5, 0.5, 0.5], [0.5, -0.5, 0.5]], dtype=np.float32)
 
         polyhedra = [[
             [0, 1, 2, 3], [4, 5, 6, 7],
@@ -397,4 +396,4 @@ class GeometryTest(unittest.TestCase):
         geometry = Geometry(vertices=vertices, polyhedra=polyhedra)
 
         self.assertRaisesRegex(TypeError, '.*', geometry.to_radia,
-                                   vector=jnp.ones((3,), dtype=jnp.int32))
+                                   vector=np.ones((3,), dtype=np.int32))

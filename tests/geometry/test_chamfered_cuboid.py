@@ -18,7 +18,6 @@ from beartype.roar import BeartypeException
 import sys
 import unittest
 import numpy as np
-import jax.numpy as jnp
 
 # Test imports
 import optid
@@ -37,13 +36,13 @@ class ChamferedCuboidTest(unittest.TestCase):
 
     def test_constructor_shape_array(self):
 
-        shape = jnp.array([1, 1, 1], dtype=jnp.float32)
+        shape = np.array([1, 1, 1], dtype=np.float32)
 
         geometry = ChamferedCuboid(shape=shape)
 
-        vertices = jnp.array([
+        vertices = np.array([
             [-0.5, -0.5, -0.5], [-0.5,  0.5, -0.5], [0.5,  0.5, -0.5], [0.5, -0.5, -0.5],
-            [-0.5, -0.5,  0.5], [-0.5,  0.5,  0.5], [0.5,  0.5,  0.5], [0.5, -0.5,  0.5]], dtype=jnp.float32)
+            [-0.5, -0.5,  0.5], [-0.5,  0.5,  0.5], [0.5,  0.5,  0.5], [0.5, -0.5,  0.5]], dtype=np.float32)
 
         polyhedra = [
             [[0, 1, 6], [1, 6, 2], [6, 2, 0], [2, 0, 1]],
@@ -62,9 +61,9 @@ class ChamferedCuboidTest(unittest.TestCase):
 
         geometry = ChamferedCuboid(shape=shape)
 
-        vertices = jnp.array([
+        vertices = np.array([
             [-0.5, -0.5, -0.5], [-0.5,  0.5, -0.5], [0.5,  0.5, -0.5], [0.5, -0.5, -0.5],
-            [-0.5, -0.5,  0.5], [-0.5,  0.5,  0.5], [0.5,  0.5,  0.5], [0.5, -0.5,  0.5]], dtype=jnp.float32)
+            [-0.5, -0.5,  0.5], [-0.5,  0.5,  0.5], [0.5,  0.5,  0.5], [0.5, -0.5,  0.5]], dtype=np.float32)
 
         polyhedra = [
             [[0, 1, 6], [1, 6, 2], [6, 2, 0], [2, 0, 1]],
@@ -83,9 +82,9 @@ class ChamferedCuboidTest(unittest.TestCase):
 
         geometry = ChamferedCuboid(shape=shape)
 
-        vertices = jnp.array([
+        vertices = np.array([
             [-0.5, -0.5, -0.5], [-0.5,  0.5, -0.5], [0.5,  0.5, -0.5], [0.5, -0.5, -0.5],
-            [-0.5, -0.5,  0.5], [-0.5,  0.5,  0.5], [0.5,  0.5,  0.5], [0.5, -0.5,  0.5]], dtype=jnp.float32)
+            [-0.5, -0.5,  0.5], [-0.5,  0.5,  0.5], [0.5,  0.5,  0.5], [0.5, -0.5,  0.5]], dtype=np.float32)
 
         polyhedra = [
             [[0, 1, 6], [1, 6, 2], [6, 2, 0], [2, 0, 1]],
@@ -106,36 +105,36 @@ class ChamferedCuboidTest(unittest.TestCase):
 
     def test_constructor_bad_shape_shape_raises_exception(self):
 
-        shape = jnp.ones((2,), dtype=jnp.float32)
+        shape = np.ones((2,), dtype=np.float32)
 
         self.assertRaisesRegex(ValueError, '.*', ChamferedCuboid,
                                shape=shape)
 
     def test_constructor_bad_shape_array_type_raises_exception(self):
 
-        shape = jnp.ones((3,), dtype=jnp.int32)
+        shape = np.ones((3,), dtype=np.int32)
 
         self.assertRaisesRegex(TypeError, '.*', ChamferedCuboid,
                                shape=shape)
 
     def test_constructor_bad_shape_raises_exception(self):
 
-        shape = jnp.array([-1, 1, 1], dtype=jnp.float32)
+        shape = np.array([-1, 1, 1], dtype=np.float32)
 
         self.assertRaisesRegex(ValueError, '.*', ChamferedCuboid,
                                shape=shape)
 
     def test_constructor_chamfer_array_scalar(self):
 
-        shape = jnp.array([1, 1, 1], dtype=jnp.float32)
+        shape = np.array([1, 1, 1], dtype=np.float32)
 
-        chamfer = jnp.zeros((), dtype=jnp.float32)
+        chamfer = np.zeros((), dtype=np.float32)
 
         geometry = ChamferedCuboid(shape=shape, chamfer=chamfer)
 
-        vertices = jnp.array([
+        vertices = np.array([
             [-0.5, -0.5, -0.5], [-0.5,  0.5, -0.5], [0.5,  0.5, -0.5], [0.5, -0.5, -0.5],
-            [-0.5, -0.5,  0.5], [-0.5,  0.5,  0.5], [0.5,  0.5,  0.5], [0.5, -0.5,  0.5]], dtype=jnp.float32)
+            [-0.5, -0.5,  0.5], [-0.5,  0.5,  0.5], [0.5,  0.5,  0.5], [0.5, -0.5,  0.5]], dtype=np.float32)
 
         polyhedra = [
             [[0, 1, 6], [1, 6, 2], [6, 2, 0], [2, 0, 1]],
@@ -150,15 +149,15 @@ class ChamferedCuboidTest(unittest.TestCase):
 
     def test_constructor_chamfer_array_xz(self):
 
-        shape = jnp.array([1, 1, 1], dtype=jnp.float32)
+        shape = np.array([1, 1, 1], dtype=np.float32)
 
-        chamfer = jnp.zeros((2,), dtype=jnp.float32)
+        chamfer = np.zeros((2,), dtype=np.float32)
 
         geometry = ChamferedCuboid(shape=shape, chamfer=chamfer)
 
-        vertices = jnp.array([
+        vertices = np.array([
             [-0.5, -0.5, -0.5], [-0.5,  0.5, -0.5], [0.5,  0.5, -0.5], [0.5, -0.5, -0.5],
-            [-0.5, -0.5,  0.5], [-0.5,  0.5,  0.5], [0.5,  0.5,  0.5], [0.5, -0.5,  0.5]], dtype=jnp.float32)
+            [-0.5, -0.5,  0.5], [-0.5,  0.5,  0.5], [0.5,  0.5,  0.5], [0.5, -0.5,  0.5]], dtype=np.float32)
 
         polyhedra = [
             [[0, 1, 6], [1, 6, 2], [6, 2, 0], [2, 0, 1]],
@@ -173,15 +172,15 @@ class ChamferedCuboidTest(unittest.TestCase):
 
     def test_constructor_chamfer_array_scalar_corners(self):
 
-        shape = jnp.array([1, 1, 1], dtype=jnp.float32)
+        shape = np.array([1, 1, 1], dtype=np.float32)
 
-        chamfer = jnp.zeros((4,), dtype=jnp.float32)
+        chamfer = np.zeros((4,), dtype=np.float32)
 
         geometry = ChamferedCuboid(shape=shape, chamfer=chamfer)
 
-        vertices = jnp.array([
+        vertices = np.array([
             [-0.5, -0.5, -0.5], [-0.5,  0.5, -0.5], [0.5,  0.5, -0.5], [0.5, -0.5, -0.5],
-            [-0.5, -0.5,  0.5], [-0.5,  0.5,  0.5], [0.5,  0.5,  0.5], [0.5, -0.5,  0.5]], dtype=jnp.float32)
+            [-0.5, -0.5,  0.5], [-0.5,  0.5,  0.5], [0.5,  0.5,  0.5], [0.5, -0.5,  0.5]], dtype=np.float32)
 
         polyhedra = [
             [[0, 1, 6], [1, 6, 2], [6, 2, 0], [2, 0, 1]],
@@ -196,15 +195,15 @@ class ChamferedCuboidTest(unittest.TestCase):
 
     def test_constructor_chamfer_array_xz_corners(self):
 
-        shape = jnp.array([1, 1, 1], dtype=jnp.float32)
+        shape = np.array([1, 1, 1], dtype=np.float32)
 
-        chamfer = jnp.zeros((4, 2), dtype=jnp.float32)
+        chamfer = np.zeros((4, 2), dtype=np.float32)
 
         geometry = ChamferedCuboid(shape=shape, chamfer=chamfer)
 
-        vertices = jnp.array([
+        vertices = np.array([
             [-0.5, -0.5, -0.5], [-0.5,  0.5, -0.5], [0.5,  0.5, -0.5], [0.5, -0.5, -0.5],
-            [-0.5, -0.5,  0.5], [-0.5,  0.5,  0.5], [0.5,  0.5,  0.5], [0.5, -0.5,  0.5]], dtype=jnp.float32)
+            [-0.5, -0.5,  0.5], [-0.5,  0.5,  0.5], [0.5,  0.5,  0.5], [0.5, -0.5,  0.5]], dtype=np.float32)
 
         polyhedra = [
             [[0, 1, 6], [1, 6, 2], [6, 2, 0], [2, 0, 1]],
@@ -219,15 +218,15 @@ class ChamferedCuboidTest(unittest.TestCase):
 
     def test_constructor_chamfer_scalar(self):
 
-        shape = jnp.array([1, 1, 1], dtype=jnp.float32)
+        shape = np.array([1, 1, 1], dtype=np.float32)
 
         chamfer = 0
 
         geometry = ChamferedCuboid(shape=shape, chamfer=chamfer)
 
-        vertices = jnp.array([
+        vertices = np.array([
             [-0.5, -0.5, -0.5], [-0.5,  0.5, -0.5], [0.5,  0.5, -0.5], [0.5, -0.5, -0.5],
-            [-0.5, -0.5,  0.5], [-0.5,  0.5,  0.5], [0.5,  0.5,  0.5], [0.5, -0.5,  0.5]], dtype=jnp.float32)
+            [-0.5, -0.5,  0.5], [-0.5,  0.5,  0.5], [0.5,  0.5,  0.5], [0.5, -0.5,  0.5]], dtype=np.float32)
 
         polyhedra = [
             [[0, 1, 6], [1, 6, 2], [6, 2, 0], [2, 0, 1]],
@@ -242,15 +241,15 @@ class ChamferedCuboidTest(unittest.TestCase):
 
     def test_constructor_chamfer_tuple_xz(self):
 
-        shape = jnp.array([1, 1, 1], dtype=jnp.float32)
+        shape = np.array([1, 1, 1], dtype=np.float32)
 
         chamfer = (0, 0)
 
         geometry = ChamferedCuboid(shape=shape, chamfer=chamfer)
 
-        vertices = jnp.array([
+        vertices = np.array([
             [-0.5, -0.5, -0.5], [-0.5,  0.5, -0.5], [0.5,  0.5, -0.5], [0.5, -0.5, -0.5],
-            [-0.5, -0.5,  0.5], [-0.5,  0.5,  0.5], [0.5,  0.5,  0.5], [0.5, -0.5,  0.5]], dtype=jnp.float32)
+            [-0.5, -0.5,  0.5], [-0.5,  0.5,  0.5], [0.5,  0.5,  0.5], [0.5, -0.5,  0.5]], dtype=np.float32)
 
         polyhedra = [
             [[0, 1, 6], [1, 6, 2], [6, 2, 0], [2, 0, 1]],
@@ -265,15 +264,15 @@ class ChamferedCuboidTest(unittest.TestCase):
 
     def test_constructor_chamfer_tuple_scalar_corners(self):
 
-        shape = jnp.array([1, 1, 1], dtype=jnp.float32)
+        shape = np.array([1, 1, 1], dtype=np.float32)
 
         chamfer = (0, 0, 0, 0)
 
         geometry = ChamferedCuboid(shape=shape, chamfer=chamfer)
 
-        vertices = jnp.array([
+        vertices = np.array([
             [-0.5, -0.5, -0.5], [-0.5,  0.5, -0.5], [0.5,  0.5, -0.5], [0.5, -0.5, -0.5],
-            [-0.5, -0.5,  0.5], [-0.5,  0.5,  0.5], [0.5,  0.5,  0.5], [0.5, -0.5,  0.5]], dtype=jnp.float32)
+            [-0.5, -0.5,  0.5], [-0.5,  0.5,  0.5], [0.5,  0.5,  0.5], [0.5, -0.5,  0.5]], dtype=np.float32)
 
         polyhedra = [
             [[0, 1, 6], [1, 6, 2], [6, 2, 0], [2, 0, 1]],
@@ -288,15 +287,15 @@ class ChamferedCuboidTest(unittest.TestCase):
 
     def test_constructor_chamfer_tuple_xz_corners(self):
 
-        shape = jnp.array([1, 1, 1], dtype=jnp.float32)
+        shape = np.array([1, 1, 1], dtype=np.float32)
 
         chamfer = ((0, 0), (0, 0), (0, 0), (0, 0))
 
         geometry = ChamferedCuboid(shape=shape, chamfer=chamfer)
 
-        vertices = jnp.array([
+        vertices = np.array([
             [-0.5, -0.5, -0.5], [-0.5,  0.5, -0.5], [0.5,  0.5, -0.5], [0.5, -0.5, -0.5],
-            [-0.5, -0.5,  0.5], [-0.5,  0.5,  0.5], [0.5,  0.5,  0.5], [0.5, -0.5,  0.5]], dtype=jnp.float32)
+            [-0.5, -0.5,  0.5], [-0.5,  0.5,  0.5], [0.5,  0.5,  0.5], [0.5, -0.5,  0.5]], dtype=np.float32)
 
         polyhedra = [
             [[0, 1, 6], [1, 6, 2], [6, 2, 0], [2, 0, 1]],
@@ -311,18 +310,18 @@ class ChamferedCuboidTest(unittest.TestCase):
 
     def test_constructor_chamfer_bl(self):
 
-        shape = jnp.array([1, 1, 1], dtype=jnp.float32)
+        shape = np.array([1, 1, 1], dtype=np.float32)
 
         chamfer = ((0.2, 0.1), (0, 0), (0, 0), (0, 0))
 
         geometry = ChamferedCuboid(shape=shape, chamfer=chamfer, nobisect=True)
 
-        vertices = jnp.array([
+        vertices = np.array([
             [-0.30000001192092896, -0.5, -0.5], [-0.5, -0.4000000059604645, -0.5], [-0.5, 0.5, -0.5],
             [0.5, 0.5, -0.5], [0.5, -0.5, -0.5], [-0.30000001192092896, -0.5, 0.5],
             [-0.5, -0.4000000059604645, 0.5], [-0.5, 0.5, 0.5], [0.5, 0.5, 0.5],
             [0.5, -0.5, 0.5], [-0.4333333373069763, -0.13333332538604736, 0.1218147948384285]],
-            dtype=jnp.float32)
+            dtype=np.float32)
 
         polyhedra = [
             [[2, 6, 10], [6, 10, 7], [10, 7, 2], [7, 2, 6]],
@@ -347,18 +346,18 @@ class ChamferedCuboidTest(unittest.TestCase):
 
     def test_constructor_chamfer_tl(self):
 
-        shape = jnp.array([1, 1, 1], dtype=jnp.float32)
+        shape = np.array([1, 1, 1], dtype=np.float32)
 
         chamfer = ((0, 0), (0.2, 0.1), (0, 0), (0, 0))
 
         geometry = ChamferedCuboid(shape=shape, chamfer=chamfer, nobisect=True)
 
-        vertices = jnp.array([
+        vertices = np.array([
             [-0.5, -0.5, -0.5], [-0.5, 0.4000000059604645, -0.5], [-0.30000001192092896, 0.5, -0.5],
             [0.5, 0.5, -0.5], [0.5, -0.5, -0.5], [-0.5, -0.5, 0.5],
             [-0.5, 0.4000000059604645, 0.5], [-0.30000001192092896, 0.5, 0.5], [0.5, 0.5, 0.5],
             [0.5, -0.5, 0.5], [-0.4333333373069763, 0.13333334028720856, -0.02029827982187271]],
-            dtype=jnp.float32)
+            dtype=np.float32)
 
         polyhedra = [
             [[10, 8, 9], [8, 9, 4], [9, 4, 10], [4, 10, 8]],
@@ -383,18 +382,18 @@ class ChamferedCuboidTest(unittest.TestCase):
 
     def test_constructor_chamfer_tr(self):
 
-        shape = jnp.array([1, 1, 1], dtype=jnp.float32)
+        shape = np.array([1, 1, 1], dtype=np.float32)
 
         chamfer = ((0, 0), (0, 0), (0.2, 0.1), (0, 0))
 
         geometry = ChamferedCuboid(shape=shape, chamfer=chamfer, nobisect=True)
 
-        vertices = jnp.array([
+        vertices = np.array([
             [-0.5, -0.5, -0.5], [-0.5, 0.5, -0.5], [0.30000001192092896, 0.5, -0.5],
             [0.5, 0.4000000059604645, -0.5], [0.5, -0.5, -0.5], [-0.5, -0.5, 0.5],
             [-0.5, 0.5, 0.5], [0.30000001192092896, 0.5, 0.5], [0.5, 0.4000000059604645, 0.5],
             [0.5, -0.5, 0.5], [0.4333333373069763, 0.13333332538604736, 0.12245573103427887]],
-            dtype=jnp.float32)
+            dtype=np.float32)
 
         polyhedra = [
             [[6, 10, 7], [10, 7, 5], [7, 5, 6], [5, 6, 10]],
@@ -419,18 +418,18 @@ class ChamferedCuboidTest(unittest.TestCase):
 
     def test_constructor_chamfer_br(self):
 
-        shape = jnp.array([1, 1, 1], dtype=jnp.float32)
+        shape = np.array([1, 1, 1], dtype=np.float32)
 
         chamfer = ((0, 0), (0, 0), (0, 0), (0.2, 0.1))
 
         geometry = ChamferedCuboid(shape=shape, chamfer=chamfer, nobisect=True)
 
-        vertices = jnp.array([
+        vertices = np.array([
             [-0.5, -0.5, -0.5], [-0.5, 0.5, -0.5], [0.5, 0.5, -0.5],
             [0.5, -0.4000000059604645, -0.5], [0.30000001192092896, -0.5, -0.5], [-0.5, -0.5, 0.5],
             [-0.5, 0.5, 0.5], [0.5, 0.5, 0.5], [0.5, -0.4000000059604645, 0.5],
             [0.30000001192092896, -0.5, 0.5], [0.4333333373069763, -0.13333332538604736, -0.11244573444128036]],
-            dtype=jnp.float32)
+            dtype=np.float32)
 
         polyhedra = [
             [[5, 10, 6], [10, 6, 9], [6, 9, 5], [9, 5, 10]],
@@ -456,30 +455,30 @@ class ChamferedCuboidTest(unittest.TestCase):
     @unittest.skipIf(sys.flags.optimize > 0, 'BearType optimized away.')
     def test_constructor_bad_chamfer_type_raises_exception(self):
 
-        shape = jnp.array([1, 1, 1], dtype=jnp.float32)
+        shape = np.array([1, 1, 1], dtype=np.float32)
 
         self.assertRaisesRegex(BeartypeException, '.*', ChamferedCuboid,
                                shape=shape, chamfer=None)
 
     def test_constructor_bad_chamfer_negative_raises_exception(self):
 
-        shape = jnp.array([1, 1, 1], dtype=jnp.float32)
+        shape = np.array([1, 1, 1], dtype=np.float32)
 
         self.assertRaisesRegex(ValueError, '.*', ChamferedCuboid,
                                shape=shape, chamfer=-0.1)
 
     def test_constructor_bad_chamfer_shape_raises_exception(self):
 
-        shape = jnp.array([1, 1, 1], dtype=jnp.float32)
+        shape = np.array([1, 1, 1], dtype=np.float32)
 
-        chamfer = jnp.zeros((4, 3), dtype=jnp.float32)
+        chamfer = np.zeros((4, 3), dtype=np.float32)
 
         self.assertRaisesRegex(ValueError, '.*', ChamferedCuboid,
                                shape=shape, chamfer=chamfer)
 
     def test_constructor_bad_chamfer_imbalanced_raises_exception(self):
 
-        shape = jnp.array([1, 1, 1], dtype=jnp.float32)
+        shape = np.array([1, 1, 1], dtype=np.float32)
 
         chamfer = (0.1, 0)
 
@@ -488,7 +487,7 @@ class ChamferedCuboidTest(unittest.TestCase):
 
     def test_constructor_bad_chamfer_left_collision_raises_exception(self):
 
-        shape = jnp.array([1, 1, 1], dtype=jnp.float32)
+        shape = np.array([1, 1, 1], dtype=np.float32)
 
         chamfer = ((0.6, 0.6), (0.6, 0.6), (0, 0), (0, 0))
 
@@ -497,7 +496,7 @@ class ChamferedCuboidTest(unittest.TestCase):
 
     def test_constructor_bad_chamfer_top_collision_raises_exception(self):
 
-        shape = jnp.array([1, 1, 1], dtype=jnp.float32)
+        shape = np.array([1, 1, 1], dtype=np.float32)
 
         chamfer = ((0, 0), (0.6, 0.6), (0.6, 0.6), (0, 0))
 
@@ -506,7 +505,7 @@ class ChamferedCuboidTest(unittest.TestCase):
 
     def test_constructor_bad_chamfer_right_collision_raises_exception(self):
 
-        shape = jnp.array([1, 1, 1], dtype=jnp.float32)
+        shape = np.array([1, 1, 1], dtype=np.float32)
 
         chamfer = ((0, 0), (0, 0), (0.6, 0.6), (0.6, 0.6))
 
@@ -515,7 +514,7 @@ class ChamferedCuboidTest(unittest.TestCase):
 
     def test_constructor_bad_chamfer_bottom_collision_raises_exception(self):
 
-        shape = jnp.array([1, 1, 1], dtype=jnp.float32)
+        shape = np.array([1, 1, 1], dtype=np.float32)
 
         chamfer = ((0.6, 0.6), (0, 0), (0, 0), (0.6, 0.6))
 

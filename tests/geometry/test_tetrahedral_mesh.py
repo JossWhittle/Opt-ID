@@ -18,7 +18,6 @@ from beartype.roar import BeartypeException
 import sys
 import unittest
 import numpy as np
-import jax.numpy as jnp
 
 # Test imports
 import optid
@@ -37,9 +36,9 @@ class TetrahedralMeshTest(unittest.TestCase):
 
     def test_constructor_vertices_array(self):
 
-        vertices = jnp.array([
+        vertices = np.array([
             [-0.5, -0.5, -0.5], [-0.5, 0.5, -0.5], [0.5, 0.5, -0.5], [0.5, -0.5, -0.5],
-            [-0.5, -0.5, 0.5], [-0.5, 0.5, 0.5], [0.5, 0.5, 0.5], [0.5, -0.5, 0.5]], dtype=jnp.float32)
+            [-0.5, -0.5, 0.5], [-0.5, 0.5, 0.5], [0.5, 0.5, 0.5], [0.5, -0.5, 0.5]], dtype=np.float32)
 
         faces = [
             [1, 3, 2], [0, 3, 1], [5, 6, 7], [4, 5, 7], [1, 0, 4], [1, 4, 5],
@@ -47,9 +46,9 @@ class TetrahedralMeshTest(unittest.TestCase):
 
         geometry = TetrahedralMesh(vertices=vertices, faces=faces)
 
-        vertices = jnp.array([
+        vertices = np.array([
             [-0.5, -0.5, -0.5], [-0.5, 0.5, -0.5], [0.5, 0.5, -0.5], [0.5, -0.5, -0.5],
-            [-0.5, -0.5, 0.5], [-0.5, 0.5, 0.5], [0.5, 0.5, 0.5], [0.5, -0.5, 0.5]], dtype=jnp.float32)
+            [-0.5, -0.5, 0.5], [-0.5, 0.5, 0.5], [0.5, 0.5, 0.5], [0.5, -0.5, 0.5]], dtype=np.float32)
 
         polyhedra = [
             [[0, 1, 6], [1, 6, 2], [6, 2, 0], [2, 0, 1]],
@@ -74,9 +73,9 @@ class TetrahedralMeshTest(unittest.TestCase):
 
         geometry = TetrahedralMesh(vertices=vertices, faces=faces)
 
-        vertices = jnp.array([
+        vertices = np.array([
             [-0.5, -0.5, -0.5], [-0.5, 0.5, -0.5], [0.5, 0.5, -0.5], [0.5, -0.5, -0.5],
-            [-0.5, -0.5, 0.5], [-0.5, 0.5, 0.5], [0.5, 0.5, 0.5], [0.5, -0.5, 0.5]], dtype=jnp.float32)
+            [-0.5, -0.5, 0.5], [-0.5, 0.5, 0.5], [0.5, 0.5, 0.5], [0.5, -0.5, 0.5]], dtype=np.float32)
 
         polyhedra = [
             [[0, 1, 6], [1, 6, 2], [6, 2, 0], [2, 0, 1]],
@@ -124,24 +123,24 @@ class TetrahedralMeshTest(unittest.TestCase):
 
     def test_constructor_bad_vertices_shape_raises_exception(self):
 
-        vertices = jnp.ones((3, 3), dtype=jnp.float32)
-        faces = jnp.ones((4, 3), dtype=jnp.int32)
+        vertices = np.ones((3, 3), dtype=np.float32)
+        faces = np.ones((4, 3), dtype=np.int32)
 
         self.assertRaisesRegex(ValueError, '.*', TetrahedralMesh,
                                vertices=vertices, faces=faces)
 
     def test_constructor_bad_vertices_array_vertices_shape_raises_exception(self):
 
-        vertices = jnp.ones((4, 4), dtype=jnp.float32)
-        faces = jnp.ones((4, 3), dtype=jnp.int32)
+        vertices = np.ones((4, 4), dtype=np.float32)
+        faces = np.ones((4, 3), dtype=np.int32)
 
         self.assertRaisesRegex(ValueError, '.*', TetrahedralMesh,
                                vertices=vertices, faces=faces)
 
     def test_constructor_bad_vertices_array_type_raises_exception(self):
 
-        vertices = jnp.ones((4, 3), dtype=jnp.int32)
-        faces = jnp.ones((4, 3), dtype=jnp.int32)
+        vertices = np.ones((4, 3), dtype=np.int32)
+        faces = np.ones((4, 3), dtype=np.int32)
 
         self.assertRaisesRegex(TypeError, '.*', TetrahedralMesh,
                                vertices=vertices, faces=faces)
@@ -161,24 +160,24 @@ class TetrahedralMeshTest(unittest.TestCase):
 
     def test_constructor_bad_faces_shape_raises_exception(self):
 
-        vertices = jnp.ones((4, 3), dtype=jnp.float32)
-        faces = jnp.ones((3, 3), dtype=jnp.int32)
+        vertices = np.ones((4, 3), dtype=np.float32)
+        faces = np.ones((3, 3), dtype=np.int32)
 
         self.assertRaisesRegex(ValueError, '.*', TetrahedralMesh,
                                vertices=vertices, faces=faces)
 
     def test_constructor_bad_faces_array_face_shape_raises_exception(self):
 
-        vertices = jnp.ones((4, 3), dtype=jnp.float32)
-        faces = jnp.ones((4, 4), dtype=jnp.int32)
+        vertices = np.ones((4, 3), dtype=np.float32)
+        faces = np.ones((4, 4), dtype=np.int32)
 
         self.assertRaisesRegex(ValueError, '.*', TetrahedralMesh,
                                vertices=vertices, faces=faces)
 
     def test_constructor_bad_faces_array_type_raises_exception(self):
 
-        vertices = jnp.ones((4, 3), dtype=jnp.float32)
-        faces = jnp.ones((4, 3), dtype=jnp.float32)
+        vertices = np.ones((4, 3), dtype=np.float32)
+        faces = np.ones((4, 3), dtype=np.float32)
 
         self.assertRaisesRegex(TypeError, '.*', TetrahedralMesh,
                                vertices=vertices, faces=faces)

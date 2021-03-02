@@ -26,8 +26,8 @@ from ..geometry import \
     Geometry
 
 
-TVertices = typ.Union[jnp.ndarray, typ.Sequence[typ.Sequence[numbers.Real]]]
-TFaces    = typ.Union[jnp.ndarray, typ.Sequence[typ.Sequence[int]]]
+TVertices = typ.Union[np.ndarray, typ.Sequence[typ.Sequence[numbers.Real]]]
+TFaces    = typ.Union[np.ndarray, typ.Sequence[typ.Sequence[int]]]
 
 
 class TetrahedralMesh(Geometry):
@@ -50,7 +50,7 @@ class TetrahedralMesh(Geometry):
             All additional parameters are forwarded to TetGen's tetrahedralize function.
         """
 
-        if not isinstance(vertices, jnp.ndarray):
+        if not isinstance(vertices, np.ndarray):
 
             def is_vertex_not_3d(vertex) -> bool:
                 return len(vertex) != 3
@@ -59,7 +59,7 @@ class TetrahedralMesh(Geometry):
                 raise ValueError(f'vertices must be a list of 3D XZS coordinates but is : '
                                  f'{vertices}')
 
-            vertices = jnp.array(vertices, dtype=jnp.float32)
+            vertices = np.array(vertices, dtype=np.float32)
 
         if vertices.shape[-1] != 3:
             raise ValueError(f'vertices must be a list of 3D XZS coordinates (N, 3) but is : '
@@ -69,11 +69,11 @@ class TetrahedralMesh(Geometry):
             raise ValueError(f'vertices must be a list of at least 4 3D XZS coordinates (N >= 4, 3) but is : '
                              f'{vertices.shape}')
 
-        if vertices.dtype != jnp.float32:
+        if vertices.dtype != np.float32:
             raise TypeError(f'vertices must have dtype (float32) but is : '
                             f'{vertices.dtype}')
 
-        if not isinstance(faces, jnp.ndarray):
+        if not isinstance(faces, np.ndarray):
 
             def is_face_not_triangle(face) -> bool:
                 return len(face) != 3
@@ -82,7 +82,7 @@ class TetrahedralMesh(Geometry):
                 raise ValueError(f'faces must be a list of 3 integer face IDs but is : '
                                  f'{faces}')
 
-            faces = jnp.array(faces, dtype=jnp.int32)
+            faces = np.array(faces, dtype=np.int32)
 
         if faces.shape[-1] != 3:
             raise ValueError(f'faces must be a list of 3 ID triangles (M, 3) but is : '
@@ -92,7 +92,7 @@ class TetrahedralMesh(Geometry):
             raise ValueError(f'faces must be a list of at least 4 faces (M >= 4, 3) but is : '
                              f'{faces.shape}')
 
-        if faces.dtype != jnp.int32:
+        if faces.dtype != np.int32:
             raise TypeError(f'faces must have dtype (int32) but is : '
                             f'{faces.dtype}')
 
@@ -101,7 +101,7 @@ class TetrahedralMesh(Geometry):
         tet = tetgen.TetGen(np.array(vertices, dtype=np.float32), np.array(faces, dtype=np.int32))
         tet.tetrahedralize(order=1, **kargs)
 
-        vertices = jnp.array(tet.grid.points.astype(np.float32))
+        vertices = np.array(tet.grid.points.astype(np.float32))
 
         tetrahedron_faces = [[0, 1, 2], [1, 2, 3], [2, 3, 0], [3, 0, 1]]
         polyhedra = [[[int(cell[vertex]) for vertex in face] for face in tetrahedron_faces]

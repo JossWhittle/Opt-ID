@@ -25,11 +25,11 @@ from ..geometry import \
     ExtrudedPolygon
 
 
-TShape = typ.Union[jnp.ndarray, typ.Sequence[numbers.Real]]
+TShape = typ.Union[np.ndarray, typ.Sequence[numbers.Real]]
 TCutTuple = typ.Tuple[numbers.Real, numbers.Real]
 TCutCornerScalars = typ.Tuple[numbers.Real, numbers.Real, numbers.Real, numbers.Real]
 TCutCornerTuples = typ.Tuple[TCutTuple, TCutTuple, TCutTuple, TCutTuple]
-TCuts = typ.Union[jnp.ndarray, numbers.Real, TCutTuple, TCutCornerScalars, TCutCornerTuples]
+TCuts = typ.Union[np.ndarray, numbers.Real, TCutTuple, TCutCornerScalars, TCutCornerTuples]
 
 
 class SquareCutCuboid(ExtrudedPolygon):
@@ -62,14 +62,14 @@ class SquareCutCuboid(ExtrudedPolygon):
             All additional parameters are forwarded to TetGen's tetrahedralize function.
         """
 
-        if not isinstance(shape, jnp.ndarray):
-            shape = jnp.array(shape, dtype=jnp.float32)
+        if not isinstance(shape, np.ndarray):
+            shape = np.array(shape, dtype=np.float32)
 
         if shape.shape != (3,):
             raise ValueError(f'shape must be a vector of shape (3,) but is : '
                              f'{shape.shape}')
 
-        if shape.dtype != jnp.float32:
+        if shape.dtype != np.float32:
             raise TypeError(f'shape must have dtype (float32) but is : '
                             f'{shape.dtype}')
 
@@ -81,8 +81,8 @@ class SquareCutCuboid(ExtrudedPolygon):
         x *= 0.5
         z *= 0.5
 
-        if not isinstance(cuts, jnp.ndarray):
-            cuts = jnp.array(cuts, dtype=jnp.float32)
+        if not isinstance(cuts, np.ndarray):
+            cuts = np.array(cuts, dtype=np.float32)
 
         if np.any(cuts < 0):
             raise ValueError(f'cuts must be greater than or equal to zero but is : '
@@ -90,13 +90,13 @@ class SquareCutCuboid(ExtrudedPolygon):
 
         if cuts.shape == () or cuts.shape == (1,):
             # Common value for X and Z shared on all corners
-            cuts = jnp.tile(jnp.reshape(cuts, (1, 1)), (4, 2))
+            cuts = np.tile(np.reshape(cuts, (1, 1)), (4, 2))
         elif cuts.shape == (2,):
             # Separate value for X and Z shared on all corners
-            cuts = jnp.tile(jnp.reshape(cuts, (1, 2)), (4, 1))
+            cuts = np.tile(np.reshape(cuts, (1, 2)), (4, 1))
         elif cuts.shape == (4,):
             # Common value for X and Z separate on all corners
-            cuts = jnp.tile(jnp.reshape(cuts, (4, 1)), (1, 2))
+            cuts = np.tile(np.reshape(cuts, (4, 1)), (1, 2))
 
         if cuts.shape != (4, 2):
             # Separate value for X and Z separate on all corners
@@ -132,11 +132,11 @@ class SquareCutCuboid(ExtrudedPolygon):
         # Which corners have a non zero cuts?
         bl, tl, tr, br = (~np.logical_and(cuts_zeros[:, 0], cuts_zeros[:, 1])).tolist()
 
-        polygon = jnp.array([
+        polygon = np.array([
             *([[-(x - blx), -z], [-(x - blx), -(z - blz)], [-x, -(z - blz)]] if bl else [[-x, -z]]),
             *([[-x,  (z - tlz)], [-(x - tlx),  (z - tlz)], [-(x - tlx),  z]] if tl else [[-x,  z]]),
             *([[ (x - trx),  z], [ (x - trx),  (z - trz)], [ x,  (z - trz)]] if tr else [[ x,  z]]),
             *([[ x, -(z - brz)], [ (x - brx), -(z - brz)], [ (x - brx), -z]] if br else [[ x, -z]])],
-            dtype=jnp.float32)
+            dtype=np.float32)
 
         super().__init__(polygon=polygon, thickness=s, subdiv=subdiv, **tetgen_kargs)

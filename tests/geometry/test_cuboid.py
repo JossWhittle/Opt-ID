@@ -18,7 +18,6 @@ from beartype.roar import BeartypeException
 import sys
 import unittest
 import numpy as np
-import jax.numpy as jnp
 
 # Test imports
 import optid
@@ -37,13 +36,13 @@ class CuboidTest(unittest.TestCase):
 
     def test_constructor_shape_array(self):
 
-        shape = jnp.array([1, 1, 1], dtype=jnp.float32)
+        shape = np.array([1, 1, 1], dtype=np.float32)
 
         geometry = Cuboid(shape=shape)
 
-        vertices = jnp.array([
+        vertices = np.array([
             [-0.5, -0.5, -0.5], [-0.5,  0.5, -0.5], [0.5,  0.5, -0.5], [0.5, -0.5, -0.5],
-            [-0.5, -0.5,  0.5], [-0.5,  0.5,  0.5], [0.5,  0.5,  0.5], [0.5, -0.5,  0.5]], dtype=jnp.float32)
+            [-0.5, -0.5,  0.5], [-0.5,  0.5,  0.5], [0.5,  0.5,  0.5], [0.5, -0.5,  0.5]], dtype=np.float32)
 
         polyhedra = [
             [[0, 1, 6], [1, 6, 2], [6, 2, 0], [2, 0, 1]],
@@ -62,9 +61,9 @@ class CuboidTest(unittest.TestCase):
 
         geometry = Cuboid(shape=shape)
 
-        vertices = jnp.array([
+        vertices = np.array([
             [-0.5, -0.5, -0.5], [-0.5,  0.5, -0.5], [0.5,  0.5, -0.5], [0.5, -0.5, -0.5],
-            [-0.5, -0.5,  0.5], [-0.5,  0.5,  0.5], [0.5,  0.5,  0.5], [0.5, -0.5,  0.5]], dtype=jnp.float32)
+            [-0.5, -0.5,  0.5], [-0.5,  0.5,  0.5], [0.5,  0.5,  0.5], [0.5, -0.5,  0.5]], dtype=np.float32)
 
         polyhedra = [
             [[0, 1, 6], [1, 6, 2], [6, 2, 0], [2, 0, 1]],
@@ -83,9 +82,9 @@ class CuboidTest(unittest.TestCase):
 
         geometry = Cuboid(shape=shape)
 
-        vertices = jnp.array([
+        vertices = np.array([
             [-0.5, -0.5, -0.5], [-0.5,  0.5, -0.5], [0.5,  0.5, -0.5], [0.5, -0.5, -0.5],
-            [-0.5, -0.5,  0.5], [-0.5,  0.5,  0.5], [0.5,  0.5,  0.5], [0.5, -0.5,  0.5]], dtype=jnp.float32)
+            [-0.5, -0.5,  0.5], [-0.5,  0.5,  0.5], [0.5,  0.5,  0.5], [0.5, -0.5,  0.5]], dtype=np.float32)
 
         polyhedra = [
             [[0, 1, 6], [1, 6, 2], [6, 2, 0], [2, 0, 1]],
@@ -106,21 +105,21 @@ class CuboidTest(unittest.TestCase):
 
     def test_constructor_bad_shape_shape_raises_exception(self):
 
-        shape = jnp.ones((2,), dtype=jnp.float32)
+        shape = np.ones((2,), dtype=np.float32)
 
         self.assertRaisesRegex(ValueError, '.*', Cuboid,
                                shape=shape)
 
     def test_constructor_bad_shape_array_type_raises_exception(self):
 
-        shape = jnp.ones((3,), dtype=jnp.int32)
+        shape = np.ones((3,), dtype=np.int32)
 
         self.assertRaisesRegex(TypeError, '.*', Cuboid,
                                shape=shape)
 
     def test_constructor_bad_shape_raises_exception(self):
 
-        shape = jnp.array([-1, 1, 1], dtype=jnp.float32)
+        shape = np.array([-1, 1, 1], dtype=np.float32)
 
         self.assertRaisesRegex(ValueError, '.*', Cuboid,
                                shape=shape)

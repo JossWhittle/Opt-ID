@@ -14,6 +14,7 @@
 
 
 # External Imports
+from more_itertools import SequenceView
 from beartype import beartype
 import numbers
 import typing as typ
@@ -22,16 +23,20 @@ import jax.numpy as jnp
 import radia as rad
 
 # Opt-ID Imports
+
+from ..core.utils import \
+    np_readonly
+
 from ..core.affine import \
     transform_points
 
 from ..lattice import \
     Lattice
 
-TVertices  = typ.Union[jnp.ndarray, typ.Sequence[typ.Sequence[numbers.Real]]]
+TVertices  = typ.Union[np.ndarray, typ.Sequence[typ.Sequence[numbers.Real]]]
 TPolyhedra = typ.Sequence[typ.Sequence[typ.Sequence[int]]]
-TVector    = typ.Union[jnp.ndarray, typ.Sequence[numbers.Real]]
-TBounds    = typ.Tuple[jnp.ndarray, jnp.ndarray]
+TVector    = typ.Union[np.ndarray, typ.Sequence[numbers.Real]]
+TBounds    = typ.Tuple[np.ndarray, np.ndarray]
 
 
 class Geometry:
@@ -51,7 +56,7 @@ class Geometry:
             Each polyhedra must have at least 4 faces. Each face must have at least 3 vertices.
         """
 
-        if not isinstance(vertices, jnp.ndarray):
+        if not isinstance(vertices, np.ndarray):
 
             def is_vertex_not_3d(vertex) -> bool:
                 return len(vertex) != 3
@@ -60,13 +65,13 @@ class Geometry:
                 raise ValueError(f'vertices must be a list of 3D XZS coordinates but is : '
                                  f'{vertices}')
 
-            vertices = jnp.array(vertices, dtype=jnp.float32)
+            vertices = np.array(vertices, dtype=np.float32)
 
         if vertices.ndim != 2 or vertices.shape[-1] != 3:
             raise ValueError(f'vertices must be shape (N, 3) but is : '
                              f'{vertices.shape}')
 
-        if vertices.dtype != jnp.float32:
+        if vertices.dtype != np.float32:
             raise TypeError(f'vertices must have dtype (float32) but is : '
                             f'{vertices.dtype}')
 
@@ -116,10 +121,11 @@ class Geometry:
 
         self._polyhedra = polyhedra
 
-        self._bounds = jnp.min(vertices, axis=0), jnp.max(vertices, axis=0)
+        self._bounds = np_readonly(np.min(vertices, axis=0)), \
+                       np_readonly(np.max(vertices, axis=0))
 
     @beartype
-    def transform(self, matrix: jnp.ndarray) -> 'Geometry':
+    def transform(self, matrix: np.ndarray) -> 'Geometry':
         """
         Apply an affine matrix transformation to the vertices of this Geometry instance.
 
@@ -134,7 +140,7 @@ class Geometry:
             raise ValueError(f'matrix must be an affine matrix with shape (4, 4) but is : '
                              f'{matrix.shape}')
 
-        if matrix.dtype != jnp.float32:
+        if matrix.dtype != np.float32:
             raise TypeError(f'matrix must have dtype (float32) but is : '
                             f'{matrix.dtype}')
 
@@ -154,14 +160,14 @@ class Geometry:
             Integer handle to a Radia object.
         """
 
-        if not isinstance(vector, jnp.ndarray):
-            vector = jnp.array(vector, dtype=jnp.float32)
+        if not isinstance(vector, np.ndarray):
+            vector = np.array(vector, dtype=np.float32)
 
         if vector.shape != (3,):
             raise ValueError(f'vector must be shape (3,) but is : '
                              f'{vector.shape}')
 
-        if vector.dtype != jnp.float32:
+        if vector.dtype != np.float32:
             raise TypeError(f'vector must have dtype (float32) but is : '
                             f'{vector.dtype}')
 
@@ -185,19 +191,6 @@ class Geometry:
 
         return rad.ObjCnt(obj) if len(obj) > 1 else obj[0]
 
-    @beartype
-    def calculate_lookup(self, lattice: Lattice) -> jnp.ndarray:
-
-        world_lattice = lattice.world_lattice
-        points = world_lattice.reshape((-1, 3)).tolist()
-
-        def bfield(vector):
-            rad.UtiDel()
-            return jnp.array(rad.Fld(self.to_radia(vector), 'b', points),
-                             dtype=jnp.float32).reshape(world_lattice.shape)
-
-        return jnp.stack([bfield(vector) for vector in jnp.eye(3)], axis=-1)
-
     @property
     @beartype
     def bounds(self) -> TBounds:
@@ -209,7 +202,7 @@ class Geometry:
         """
         Tensor of vertices in 3-space.
         """
-        return self._vertices
+        return np_readonly(self._vertices)
 
     @property
     @beartype
