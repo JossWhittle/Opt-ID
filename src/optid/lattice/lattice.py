@@ -17,9 +17,11 @@
 from beartype import beartype
 import typing as typ
 import numpy as np
-import jax.numpy as jnp
 
 # Opt-ID Imports
+from ..core.utils import \
+    np_readonly
+
 from ..core.affine import \
     transform_points
 
@@ -31,7 +33,7 @@ class Lattice:
 
     @beartype
     def __init__(self,
-            unit_to_world_matrix: jnp.ndarray,
+            unit_to_world_matrix: np.ndarray,
             shape: typ.Tuple[int, int, int]):
         """
         Construct a Lattice instance from a subdivision of a unit cube at origin and a matrix that transforms it
@@ -48,21 +50,21 @@ class Lattice:
             raise ValueError(f'unit_to_world_matrix must be an affine matrix with shape (4, 4) but is : '
                              f'{unit_to_world_matrix.shape}')
 
-        if unit_to_world_matrix.dtype != jnp.float32:
+        if unit_to_world_matrix.dtype != np.float32:
             raise TypeError(f'unit_to_world_matrix must have dtype (float32) but is : '
                             f'{unit_to_world_matrix.dtype}')
 
         self._unit_to_world_matrix = unit_to_world_matrix
 
-        if jnp.any(jnp.array(shape) <= 0):
+        if np.any(np.array(shape) <= 0):
             raise ValueError(f'shape must be a 3-tuple of positive integers but is : '
                              f'{shape}')
         self._shape = shape
 
     @beartype
     def transform_points_unit_to_world(self,
-            point_lattice: jnp.ndarray,
-            raise_out_of_bounds: bool = True) -> jnp.ndarray:
+            point_lattice: np.ndarray,
+            raise_out_of_bounds: bool = True) -> np.ndarray:
         """
         Transform the lattice of points in the unit cube at origin spanning -0.5 to +0.5 into world space.
 
@@ -80,7 +82,7 @@ class Lattice:
             raise ValueError(f'point_lattice must be shape (..., 3) but is : '
                              f'{point_lattice.shape}')
 
-        if point_lattice.dtype != jnp.float32:
+        if point_lattice.dtype != np.float32:
             raise TypeError(f'point_lattice must have dtype (float32) but is : '
                             f'{point_lattice.dtype}')
 
@@ -94,8 +96,8 @@ class Lattice:
 
     @beartype
     def transform_points_unit_to_orthonormal(self,
-            point_lattice: jnp.ndarray,
-            raise_out_of_bounds: bool = True) -> jnp.ndarray:
+            point_lattice: np.ndarray,
+            raise_out_of_bounds: bool = True) -> np.ndarray:
         """
         Transform the lattice of points in the unit cube at origin spanning -0.5 to +0.5 into orthonormal space.
 
@@ -113,7 +115,7 @@ class Lattice:
             raise ValueError(f'point_lattice must be shape (..., 3) but is : '
                              f'{point_lattice.shape}')
 
-        if point_lattice.dtype != jnp.float32:
+        if point_lattice.dtype != np.float32:
             raise TypeError(f'point_lattice must have dtype (float32) but is : '
                             f'{point_lattice.dtype}')
 
@@ -127,8 +129,8 @@ class Lattice:
 
     @beartype
     def transform_points_orthonormal_to_unit(self,
-            point_lattice: jnp.ndarray,
-            raise_out_of_bounds: bool = True) -> jnp.ndarray:
+            point_lattice: np.ndarray,
+            raise_out_of_bounds: bool = True) -> np.ndarray:
         """
         Transform the lattice of points in orthonormal space into the unit cube at origin spanning -0.5 to +0.5.
 
@@ -146,7 +148,7 @@ class Lattice:
             raise ValueError(f'point_lattice must be shape (..., 3) but is : '
                              f'{point_lattice.shape}')
 
-        if point_lattice.dtype != jnp.float32:
+        if point_lattice.dtype != np.float32:
             raise TypeError(f'point_lattice must have dtype (float32) but is : '
                             f'{point_lattice.dtype}')
 
@@ -160,8 +162,8 @@ class Lattice:
 
     @beartype
     def transform_points_orthonormal_to_world(self,
-            point_lattice: jnp.ndarray,
-            raise_out_of_bounds: bool = True) -> jnp.ndarray:
+            point_lattice: np.ndarray,
+            raise_out_of_bounds: bool = True) -> np.ndarray:
         """
         Transform the lattice of points in orthonormal space into the world space.
 
@@ -179,7 +181,7 @@ class Lattice:
             raise ValueError(f'point_lattice must be shape (..., 3) but is : '
                              f'{point_lattice.shape}')
 
-        if point_lattice.dtype != jnp.float32:
+        if point_lattice.dtype != np.float32:
             raise TypeError(f'point_lattice must have dtype (float32) but is : '
                             f'{point_lattice.dtype}')
 
@@ -193,8 +195,8 @@ class Lattice:
 
     @beartype
     def transform_points_world_to_unit(self,
-            point_lattice: jnp.ndarray,
-            raise_out_of_bounds: bool = True) -> jnp.ndarray:
+            point_lattice: np.ndarray,
+            raise_out_of_bounds: bool = True) -> np.ndarray:
         """
         Transform the lattice of points in world space into the unit cube at origin spanning -0.5 to +0.5.
 
@@ -212,7 +214,7 @@ class Lattice:
             raise ValueError(f'point_lattice must be shape (..., 3) but is : '
                              f'{point_lattice.shape}')
 
-        if point_lattice.dtype != jnp.float32:
+        if point_lattice.dtype != np.float32:
             raise TypeError(f'point_lattice must have dtype (float32) but is : '
                             f'{point_lattice.dtype}')
 
@@ -226,8 +228,8 @@ class Lattice:
 
     @beartype
     def transform_points_world_to_orthonormal(self,
-            point_lattice: jnp.ndarray,
-            raise_out_of_bounds: bool = True) -> jnp.ndarray:
+            point_lattice: np.ndarray,
+            raise_out_of_bounds: bool = True) -> np.ndarray:
         """
         Transform the lattice of points in world space into the orthonormal space.
 
@@ -245,7 +247,7 @@ class Lattice:
             raise ValueError(f'point_lattice must be shape (..., 3) but is : '
                              f'{point_lattice.shape}')
 
-        if point_lattice.dtype != jnp.float32:
+        if point_lattice.dtype != np.float32:
             raise TypeError(f'point_lattice must have dtype (float32) but is : '
                             f'{point_lattice.dtype}')
 
@@ -296,7 +298,7 @@ class Lattice:
 
     @property
     @beartype
-    def unit_lattice(self) -> jnp.ndarray:
+    def unit_lattice(self) -> np.ndarray:
         """
         Lattice tensor with the desired shape centred at origin spanning -0.5 to +0.5
         """
@@ -304,7 +306,7 @@ class Lattice:
 
     @property
     @beartype
-    def world_lattice(self) -> jnp.ndarray:
+    def world_lattice(self) -> np.ndarray:
         """
         Lattice tensor with the desired shape in world coordinates.
         """
@@ -312,15 +314,15 @@ class Lattice:
 
     @property
     @beartype
-    def world_to_unit_matrix(self) -> jnp.ndarray:
+    def world_to_unit_matrix(self) -> np.ndarray:
         """
         Matrix that maps world space coordinates to unit coordinates centred at origin -0.5 to +0.5.
         """
-        return jnp.linalg.inv(self.unit_to_world_matrix)
+        return np.linalg.inv(self.unit_to_world_matrix)
 
     @property
     @beartype
-    def world_to_orthonormal_matrix(self) -> jnp.ndarray:
+    def world_to_orthonormal_matrix(self) -> np.ndarray:
         """
         Matrix that maps world space coordinates to orthonormal space.
         """
@@ -328,15 +330,15 @@ class Lattice:
 
     @property
     @beartype
-    def orthonormal_to_unit_matrix(self) -> jnp.ndarray:
+    def orthonormal_to_unit_matrix(self) -> np.ndarray:
         """
         Matrix that maps orthonormal space coordinates to unit coordinates centred at origin -0.5 to +0.5.
         """
-        return jnp.linalg.inv(self.unit_to_orthonormal_matrix)
+        return np.linalg.inv(self.unit_to_orthonormal_matrix)
 
     @property
     @beartype
-    def orthonormal_to_world_matrix(self) -> jnp.ndarray:
+    def orthonormal_to_world_matrix(self) -> np.ndarray:
         """
         Matrix that maps orthonormal space coordinates to world space.
         """
@@ -344,7 +346,7 @@ class Lattice:
 
     @property
     @beartype
-    def unit_to_orthonormal_matrix(self) -> jnp.ndarray:
+    def unit_to_orthonormal_matrix(self) -> np.ndarray:
         """
         Matrix that maps from unit coordinates centred at origin -0.5 to +0.5 to orthonormal space.
         """
@@ -352,11 +354,11 @@ class Lattice:
 
     @property
     @beartype
-    def unit_to_world_matrix(self) -> jnp.ndarray:
+    def unit_to_world_matrix(self) -> np.ndarray:
         """
         Matrix that maps unit coordinates centred at origin -0.5 to +0.5 to world space.
         """
-        return self._unit_to_world_matrix
+        return np_readonly(self._unit_to_world_matrix)
 
     @property
     @beartype

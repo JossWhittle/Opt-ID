@@ -18,12 +18,12 @@ from beartype.roar import BeartypeException
 import sys
 import unittest
 import numpy as np
-import jax.numpy as jnp
 
 # Test imports
 import optid
 from optid.lattice import Lattice
 from optid.core.affine import scale
+from optid.constants import MATRIX_IDENTITY
 
 # Configure debug logging
 optid.utils.logging.attach_console_logger(remove_existing=True)
@@ -38,49 +38,49 @@ class LatticeTest(unittest.TestCase):
 
     def test_constructor(self):
 
-        Lattice(unit_to_world_matrix=jnp.eye(4, dtype=jnp.float32), shape=(1, 1, 1))
+        Lattice(unit_to_world_matrix=MATRIX_IDENTITY, shape=(1, 1, 1))
 
     @unittest.skipIf(sys.flags.optimize > 0, 'BearType optimized away.')
     def test_constructor_bad_shape_raises_exception(self):
 
         self.assertRaisesRegex(BeartypeException, '.*', Lattice,
-                               unit_to_world_matrix=jnp.eye(4, dtype=jnp.float32), shape=(1, 1, 1.5))
+                               unit_to_world_matrix=MATRIX_IDENTITY, shape=(1, 1, 1.5))
 
         self.assertRaisesRegex(BeartypeException, '.*', Lattice,
-                               unit_to_world_matrix=jnp.eye(4, dtype=jnp.float32), shape=(1,))
+                               unit_to_world_matrix=MATRIX_IDENTITY, shape=(1,))
 
         self.assertRaisesRegex(BeartypeException, '.*', Lattice,
-                               unit_to_world_matrix=jnp.eye(4, dtype=jnp.float32), shape=(1, 1))
+                               unit_to_world_matrix=MATRIX_IDENTITY, shape=(1, 1))
 
         self.assertRaisesRegex(BeartypeException, '.*', Lattice,
-                               unit_to_world_matrix=jnp.eye(4, dtype=jnp.float32), shape=(1, 1, 1, 1))
+                               unit_to_world_matrix=MATRIX_IDENTITY, shape=(1, 1, 1, 1))
 
         self.assertRaisesRegex(BeartypeException, '.*', Lattice,
-                               unit_to_world_matrix=jnp.eye(4, dtype=jnp.float32), shape=None)
+                               unit_to_world_matrix=MATRIX_IDENTITY, shape=None)
 
     def test_constructor_bad_shape_x_raises_exception(self):
 
         self.assertRaisesRegex(ValueError, '.*', Lattice,
-                               unit_to_world_matrix=jnp.eye(4, dtype=jnp.float32), shape=(0, 2, 10))
+                               unit_to_world_matrix=MATRIX_IDENTITY, shape=(0, 2, 10))
 
         self.assertRaisesRegex(ValueError, '.*', Lattice,
-                               unit_to_world_matrix=jnp.eye(4, dtype=jnp.float32), shape=(-1, 2, 10))
+                               unit_to_world_matrix=MATRIX_IDENTITY, shape=(-1, 2, 10))
 
     def test_constructor_bad_shape_z_raises_exception(self):
 
         self.assertRaisesRegex(ValueError, '.*', Lattice,
-                               unit_to_world_matrix=jnp.eye(4, dtype=jnp.float32), shape=(2, 0, 10))
+                               unit_to_world_matrix=MATRIX_IDENTITY, shape=(2, 0, 10))
 
         self.assertRaisesRegex(ValueError, '.*', Lattice,
-                               unit_to_world_matrix=jnp.eye(4, dtype=jnp.float32), shape=(2, -1, 10))
+                               unit_to_world_matrix=MATRIX_IDENTITY, shape=(2, -1, 10))
 
     def test_constructor_bad_shape_s_raises_exception(self):
 
         self.assertRaisesRegex(ValueError, '.*', Lattice,
-                               unit_to_world_matrix=jnp.eye(4, dtype=jnp.float32), shape=(2, 2, 0))
+                               unit_to_world_matrix=MATRIX_IDENTITY, shape=(2, 2, 0))
 
         self.assertRaisesRegex(ValueError, '.*', Lattice,
-                               unit_to_world_matrix=jnp.eye(4, dtype=jnp.float32), shape=(2, 2, -1))
+                               unit_to_world_matrix=MATRIX_IDENTITY, shape=(2, 2, -1))
 
     @unittest.skipIf(sys.flags.optimize > 0, 'BearType optimized away.')
     def test_constructor_bad_matrix_raises_exception(self):
@@ -91,12 +91,12 @@ class LatticeTest(unittest.TestCase):
     def test_constructor_bad_matrix_type_raises_exception(self):
 
         self.assertRaisesRegex(TypeError, '.*', Lattice,
-                               unit_to_world_matrix=jnp.eye(4, dtype=jnp.int32), shape=(2, 2, 10))
+                               unit_to_world_matrix=np.eye(4, dtype=np.int32), shape=(2, 2, 10))
 
     def test_constructor_bad_matrix_shape_raises_exception(self):
 
         self.assertRaisesRegex(ValueError, '.*', Lattice,
-                               unit_to_world_matrix=jnp.eye(2, dtype=jnp.float32), shape=(2, 2, 10))
+                               unit_to_world_matrix=np.eye(2, dtype=np.float32), shape=(2, 2, 10))
 
     ####################################################################################################################
 
@@ -105,7 +105,7 @@ class LatticeTest(unittest.TestCase):
         lattice = Lattice(unit_to_world_matrix=scale(2, 2, 10), shape=(2, 2, 10))
 
         self.assertTrue(np.allclose(lattice.transform_points_unit_to_world(
-            jnp.array([0.5, 0.5, 0.5], dtype=jnp.float32)), jnp.array([1, 1, 5], dtype=jnp.float32), atol=1e-5))
+            np.array([0.5, 0.5, 0.5], dtype=np.float32)), np.array([1, 1, 5], dtype=np.float32), atol=1e-5))
 
     @unittest.skipIf(sys.flags.optimize > 0, 'BearType optimized away.')
     def test_transform_points_unit_to_world_bad_point_lattice_raises_exception(self):
@@ -120,30 +120,30 @@ class LatticeTest(unittest.TestCase):
         lattice = Lattice(unit_to_world_matrix=scale(2, 2, 10), shape=(2, 2, 10))
 
         self.assertRaisesRegex(ValueError, '.*', lattice.transform_points_unit_to_world,
-                               point_lattice=jnp.ones((2,), dtype=jnp.float32))
+                               point_lattice=np.ones((2,), dtype=np.float32))
 
     def test_transform_points_unit_to_world_bad_point_lattice_type_raises_exception(self):
 
         lattice = Lattice(unit_to_world_matrix=scale(2, 2, 10), shape=(2, 2, 10))
 
         self.assertRaisesRegex(TypeError, '.*', lattice.transform_points_unit_to_world,
-                               point_lattice=jnp.ones((3,), dtype=jnp.int32))
+                               point_lattice=np.ones((3,), dtype=np.int32))
 
     def test_transform_points_unit_to_world_bad_point_lattice_point_raises_exception(self):
 
         lattice = Lattice(unit_to_world_matrix=scale(2, 2, 10), shape=(2, 2, 10))
 
-        lattice.transform_points_unit_to_world(jnp.array([0, 0, 0], dtype=jnp.float32),
+        lattice.transform_points_unit_to_world(np.array([0, 0, 0], dtype=np.float32),
                                                raise_out_of_bounds=True)
 
-        lattice.transform_points_unit_to_world(jnp.array([0, 0, 0], dtype=jnp.float32),
+        lattice.transform_points_unit_to_world(np.array([0, 0, 0], dtype=np.float32),
                                                raise_out_of_bounds=False)
 
-        lattice.transform_points_unit_to_world(jnp.array([-0.6, -0.5, -0.5], dtype=jnp.float32),
+        lattice.transform_points_unit_to_world(np.array([-0.6, -0.5, -0.5], dtype=np.float32),
                                                raise_out_of_bounds=False)
 
         self.assertRaisesRegex(ValueError, '.*', lattice.transform_points_unit_to_world,
-                               point_lattice=jnp.array([-0.6, -0.5, -0.5], dtype=jnp.float32),
+                               point_lattice=np.array([-0.6, -0.5, -0.5], dtype=np.float32),
                                raise_out_of_bounds=True)
 
     @unittest.skipIf(sys.flags.optimize > 0, 'BearType optimized away.')
@@ -152,7 +152,7 @@ class LatticeTest(unittest.TestCase):
         lattice = Lattice(unit_to_world_matrix=scale(2, 2, 10), shape=(2, 2, 10))
 
         self.assertRaisesRegex(BeartypeException, '.*', lattice.transform_points_unit_to_world,
-                               point_lattice=jnp.array([0, 0, 0], dtype=jnp.float32),
+                               point_lattice=np.array([0, 0, 0], dtype=np.float32),
                                raise_out_of_bounds=None)
 
     ####################################################################################################################
@@ -162,7 +162,7 @@ class LatticeTest(unittest.TestCase):
         lattice = Lattice(unit_to_world_matrix=scale(2, 2, 10), shape=(2, 2, 10))
 
         self.assertTrue(np.allclose(lattice.transform_points_unit_to_orthonormal(
-            jnp.array([0.5, 0.5, 0.5], dtype=jnp.float32)), jnp.array([1, 1, 9], dtype=jnp.float32), atol=1e-5))
+            np.array([0.5, 0.5, 0.5], dtype=np.float32)), np.array([1, 1, 9], dtype=np.float32), atol=1e-5))
 
     @unittest.skipIf(sys.flags.optimize > 0, 'BearType optimized away.')
     def test_transform_points_unit_to_orthonormal_bad_point_lattice_raises_exception(self):
@@ -177,30 +177,30 @@ class LatticeTest(unittest.TestCase):
         lattice = Lattice(unit_to_world_matrix=scale(2, 2, 10), shape=(2, 2, 10))
 
         self.assertRaisesRegex(ValueError, '.*', lattice.transform_points_unit_to_orthonormal,
-                               point_lattice=jnp.ones((2,), dtype=jnp.float32))
+                               point_lattice=np.ones((2,), dtype=np.float32))
 
     def test_transform_points_unit_to_orthonormal_bad_point_lattice_type_raises_exception(self):
 
         lattice = Lattice(unit_to_world_matrix=scale(2, 2, 10), shape=(2, 2, 10))
 
         self.assertRaisesRegex(TypeError, '.*', lattice.transform_points_unit_to_orthonormal,
-                               point_lattice=jnp.ones((3,), dtype=jnp.int32))
+                               point_lattice=np.ones((3,), dtype=np.int32))
 
     def test_transform_points_unit_to_orthonormal_bad_point_lattice_point_raises_exception(self):
 
         lattice = Lattice(unit_to_world_matrix=scale(2, 2, 10), shape=(2, 2, 10))
 
-        lattice.transform_points_unit_to_orthonormal(jnp.array([0, 0, 0], dtype=jnp.float32),
+        lattice.transform_points_unit_to_orthonormal(np.array([0, 0, 0], dtype=np.float32),
                                                raise_out_of_bounds=True)
 
-        lattice.transform_points_unit_to_orthonormal(jnp.array([0, 0, 0], dtype=jnp.float32),
+        lattice.transform_points_unit_to_orthonormal(np.array([0, 0, 0], dtype=np.float32),
                                                raise_out_of_bounds=False)
 
-        lattice.transform_points_unit_to_orthonormal(jnp.array([-0.6, -0.5, -0.5], dtype=jnp.float32),
+        lattice.transform_points_unit_to_orthonormal(np.array([-0.6, -0.5, -0.5], dtype=np.float32),
                                                raise_out_of_bounds=False)
 
         self.assertRaisesRegex(ValueError, '.*', lattice.transform_points_unit_to_orthonormal,
-                               point_lattice=jnp.array([-0.6, -0.5, -0.5], dtype=jnp.float32),
+                               point_lattice=np.array([-0.6, -0.5, -0.5], dtype=np.float32),
                                raise_out_of_bounds=True)
 
     @unittest.skipIf(sys.flags.optimize > 0, 'BearType optimized away.')
@@ -209,7 +209,7 @@ class LatticeTest(unittest.TestCase):
         lattice = Lattice(unit_to_world_matrix=scale(2, 2, 10), shape=(2, 2, 10))
 
         self.assertRaisesRegex(BeartypeException, '.*', lattice.transform_points_unit_to_orthonormal,
-                               point_lattice=jnp.array([0, 0, 0], dtype=jnp.float32),
+                               point_lattice=np.array([0, 0, 0], dtype=np.float32),
                                raise_out_of_bounds=None)
 
     ####################################################################################################################
@@ -218,8 +218,8 @@ class LatticeTest(unittest.TestCase):
 
         lattice = Lattice(unit_to_world_matrix=scale(2, 2, 10), shape=(2, 2, 10))
 
-        self.assertTrue(np.allclose(lattice.transform_points_world_to_unit(jnp.array([1, 1, 5], dtype=jnp.float32)),
-                                    jnp.array([0.5, 0.5, 0.5], dtype=jnp.float32), atol=1e-5))
+        self.assertTrue(np.allclose(lattice.transform_points_world_to_unit(np.array([1, 1, 5], dtype=np.float32)),
+                                    np.array([0.5, 0.5, 0.5], dtype=np.float32), atol=1e-5))
 
     @unittest.skipIf(sys.flags.optimize > 0, 'BearType optimized away.')
     def test_transform_points_world_to_unit_bad_point_lattice_raises_exception(self):
@@ -234,30 +234,30 @@ class LatticeTest(unittest.TestCase):
         lattice = Lattice(unit_to_world_matrix=scale(2, 2, 10), shape=(2, 2, 10))
 
         self.assertRaisesRegex(ValueError, '.*', lattice.transform_points_world_to_unit,
-                               point_lattice=jnp.ones((2,), dtype=jnp.float32))
+                               point_lattice=np.ones((2,), dtype=np.float32))
 
     def test_transform_points_world_to_unit_bad_point_lattice_type_raises_exception(self):
 
         lattice = Lattice(unit_to_world_matrix=scale(2, 2, 10), shape=(2, 2, 10))
 
         self.assertRaisesRegex(TypeError, '.*', lattice.transform_points_world_to_unit,
-                               point_lattice=jnp.ones((3,), dtype=jnp.int32))
+                               point_lattice=np.ones((3,), dtype=np.int32))
 
     def test_transform_points_world_to_unit_bad_point_lattice_point_raises_exception(self):
 
         lattice = Lattice(unit_to_world_matrix=scale(2, 2, 10), shape=(2, 2, 10))
 
-        lattice.transform_points_world_to_unit(jnp.array([0, 0, 0], dtype=jnp.float32),
+        lattice.transform_points_world_to_unit(np.array([0, 0, 0], dtype=np.float32),
                                                raise_out_of_bounds=True)
 
-        lattice.transform_points_world_to_unit(jnp.array([0, 0, 0], dtype=jnp.float32),
+        lattice.transform_points_world_to_unit(np.array([0, 0, 0], dtype=np.float32),
                                                raise_out_of_bounds=False)
 
-        lattice.transform_points_world_to_unit(jnp.array([-1.1, -1, -5], dtype=jnp.float32),
+        lattice.transform_points_world_to_unit(np.array([-1.1, -1, -5], dtype=np.float32),
                                                raise_out_of_bounds=False)
 
         self.assertRaisesRegex(ValueError, '.*', lattice.transform_points_world_to_unit,
-                               point_lattice=jnp.array([-1.1, -1, -5], dtype=jnp.float32),
+                               point_lattice=np.array([-1.1, -1, -5], dtype=np.float32),
                                raise_out_of_bounds=True)
 
     @unittest.skipIf(sys.flags.optimize > 0, 'BearType optimized away.')
@@ -266,7 +266,7 @@ class LatticeTest(unittest.TestCase):
         lattice = Lattice(unit_to_world_matrix=scale(2, 2, 10), shape=(2, 2, 10))
 
         self.assertRaisesRegex(BeartypeException, '.*', lattice.transform_points_world_to_unit,
-                               point_lattice=jnp.array([0, 0, 0], dtype=jnp.float32),
+                               point_lattice=np.array([0, 0, 0], dtype=np.float32),
                                raise_out_of_bounds=None)
 
     ####################################################################################################################
@@ -276,8 +276,8 @@ class LatticeTest(unittest.TestCase):
         lattice = Lattice(unit_to_world_matrix=scale(2, 2, 10), shape=(2, 2, 10))
 
         self.assertTrue(np.allclose(lattice.transform_points_world_to_orthonormal(
-            point_lattice=jnp.array([1, 1, 5], dtype=jnp.float32)),
-            jnp.array([1, 1, 9], dtype=jnp.float32), atol=1e-5))
+            point_lattice=np.array([1, 1, 5], dtype=np.float32)),
+            np.array([1, 1, 9], dtype=np.float32), atol=1e-5))
 
     @unittest.skipIf(sys.flags.optimize > 0, 'BearType optimized away.')
     def test_transform_points_world_to_orthonormal_bad_point_lattice_raises_exception(self):
@@ -292,30 +292,30 @@ class LatticeTest(unittest.TestCase):
         lattice = Lattice(unit_to_world_matrix=scale(2, 2, 10), shape=(2, 2, 10))
 
         self.assertRaisesRegex(ValueError, '.*', lattice.transform_points_world_to_orthonormal,
-                               point_lattice=jnp.ones((2,), dtype=jnp.float32))
+                               point_lattice=np.ones((2,), dtype=np.float32))
 
     def test_transform_points_world_to_orthonormal_bad_point_lattice_type_raises_exception(self):
 
         lattice = Lattice(unit_to_world_matrix=scale(2, 2, 10), shape=(2, 2, 10))
 
         self.assertRaisesRegex(TypeError, '.*', lattice.transform_points_world_to_orthonormal,
-                               point_lattice=jnp.ones((3,), dtype=jnp.int32))
+                               point_lattice=np.ones((3,), dtype=np.int32))
 
     def test_transform_points_world_to_orthonormal_bad_point_lattice_point_raises_exception(self):
 
         lattice = Lattice(unit_to_world_matrix=scale(2, 2, 10), shape=(2, 2, 10))
 
-        lattice.transform_points_world_to_orthonormal(jnp.array([0, 0, 0], dtype=jnp.float32),
+        lattice.transform_points_world_to_orthonormal(np.array([0, 0, 0], dtype=np.float32),
                                                       raise_out_of_bounds=True)
 
-        lattice.transform_points_world_to_orthonormal(jnp.array([0, 0, 0], dtype=jnp.float32),
+        lattice.transform_points_world_to_orthonormal(np.array([0, 0, 0], dtype=np.float32),
                                                       raise_out_of_bounds=False)
 
-        lattice.transform_points_world_to_orthonormal(jnp.array([-1.1, -1, -5], dtype=jnp.float32),
+        lattice.transform_points_world_to_orthonormal(np.array([-1.1, -1, -5], dtype=np.float32),
                                                       raise_out_of_bounds=False)
 
         self.assertRaisesRegex(ValueError, '.*', lattice.transform_points_world_to_orthonormal,
-                               point_lattice=jnp.array([-1.1, -1, -5], dtype=jnp.float32),
+                               point_lattice=np.array([-1.1, -1, -5], dtype=np.float32),
                                raise_out_of_bounds=True)
 
     @unittest.skipIf(sys.flags.optimize > 0, 'BearType optimized away.')
@@ -324,7 +324,7 @@ class LatticeTest(unittest.TestCase):
         lattice = Lattice(unit_to_world_matrix=scale(2, 2, 10), shape=(2, 2, 10))
 
         self.assertRaisesRegex(BeartypeException, '.*', lattice.transform_points_world_to_orthonormal,
-                               point_lattice=jnp.array([0, 0, 0], dtype=jnp.float32),
+                               point_lattice=np.array([0, 0, 0], dtype=np.float32),
                                raise_out_of_bounds=None)
 
     ####################################################################################################################
@@ -333,8 +333,8 @@ class LatticeTest(unittest.TestCase):
 
         lattice = Lattice(unit_to_world_matrix=scale(2, 2, 10), shape=(2, 2, 10))
 
-        self.assertTrue(np.allclose(lattice.transform_points_orthonormal_to_unit(jnp.array([1, 1, 9], dtype=jnp.float32)),
-                                    jnp.array([0.5, 0.5, 0.5], dtype=jnp.float32), atol=1e-5))
+        self.assertTrue(np.allclose(lattice.transform_points_orthonormal_to_unit(np.array([1, 1, 9], dtype=np.float32)),
+                                    np.array([0.5, 0.5, 0.5], dtype=np.float32), atol=1e-5))
 
     @unittest.skipIf(sys.flags.optimize > 0, 'BearType optimized away.')
     def test_transform_points_orthonormal_to_unit_bad_point_lattice_raises_exception(self):
@@ -349,30 +349,30 @@ class LatticeTest(unittest.TestCase):
         lattice = Lattice(unit_to_world_matrix=scale(2, 2, 10), shape=(2, 2, 10))
 
         self.assertRaisesRegex(ValueError, '.*', lattice.transform_points_orthonormal_to_unit,
-                               point_lattice=jnp.ones((2,), dtype=jnp.float32))
+                               point_lattice=np.ones((2,), dtype=np.float32))
 
     def test_transform_points_orthonormal_to_unit_bad_point_lattice_type_raises_exception(self):
 
         lattice = Lattice(unit_to_world_matrix=scale(2, 2, 10), shape=(2, 2, 10))
 
         self.assertRaisesRegex(TypeError, '.*', lattice.transform_points_orthonormal_to_unit,
-                               point_lattice=jnp.ones((3,), dtype=jnp.int32))
+                               point_lattice=np.ones((3,), dtype=np.int32))
 
     def test_transform_points_orthonormal_to_unit_bad_point_lattice_point_raises_exception(self):
 
         lattice = Lattice(unit_to_world_matrix=scale(2, 2, 10), shape=(2, 2, 10))
 
-        lattice.transform_points_orthonormal_to_unit(jnp.array([0, 0, 0], dtype=jnp.float32),
+        lattice.transform_points_orthonormal_to_unit(np.array([0, 0, 0], dtype=np.float32),
                                                raise_out_of_bounds=True)
 
-        lattice.transform_points_orthonormal_to_unit(jnp.array([0, 0, 0], dtype=jnp.float32),
+        lattice.transform_points_orthonormal_to_unit(np.array([0, 0, 0], dtype=np.float32),
                                                raise_out_of_bounds=False)
 
-        lattice.transform_points_orthonormal_to_unit(jnp.array([-0.1, 0, 0], dtype=jnp.float32),
+        lattice.transform_points_orthonormal_to_unit(np.array([-0.1, 0, 0], dtype=np.float32),
                                                raise_out_of_bounds=False)
 
         self.assertRaisesRegex(ValueError, '.*', lattice.transform_points_orthonormal_to_unit,
-                               point_lattice=jnp.array([-0.1, 0, 0], dtype=jnp.float32),
+                               point_lattice=np.array([-0.1, 0, 0], dtype=np.float32),
                                raise_out_of_bounds=True)
 
     @unittest.skipIf(sys.flags.optimize > 0, 'BearType optimized away.')
@@ -381,7 +381,7 @@ class LatticeTest(unittest.TestCase):
         lattice = Lattice(unit_to_world_matrix=scale(2, 2, 10), shape=(2, 2, 10))
 
         self.assertRaisesRegex(BeartypeException, '.*', lattice.transform_points_orthonormal_to_unit,
-                               point_lattice=jnp.array([0, 0, 0], dtype=jnp.float32),
+                               point_lattice=np.array([0, 0, 0], dtype=np.float32),
                                raise_out_of_bounds=None)
 
     ####################################################################################################################
@@ -391,8 +391,8 @@ class LatticeTest(unittest.TestCase):
         lattice = Lattice(unit_to_world_matrix=scale(2, 2, 10), shape=(2, 2, 10))
 
         self.assertTrue(np.allclose(lattice.transform_points_orthonormal_to_world(
-            point_lattice=jnp.array([1, 1, 9], dtype=jnp.float32)),
-            jnp.array([1, 1, 5], dtype=jnp.float32), atol=1e-5))
+            point_lattice=np.array([1, 1, 9], dtype=np.float32)),
+            np.array([1, 1, 5], dtype=np.float32), atol=1e-5))
 
     @unittest.skipIf(sys.flags.optimize > 0, 'BearType optimized away.')
     def test_transform_points_orthonormal_to_world_bad_point_lattice_raises_exception(self):
@@ -407,30 +407,30 @@ class LatticeTest(unittest.TestCase):
         lattice = Lattice(unit_to_world_matrix=scale(2, 2, 10), shape=(2, 2, 10))
 
         self.assertRaisesRegex(ValueError, '.*', lattice.transform_points_orthonormal_to_world,
-                               point_lattice=jnp.ones((2,), dtype=jnp.float32))
+                               point_lattice=np.ones((2,), dtype=np.float32))
 
     def test_transform_points_orthonormal_to_world_bad_point_lattice_type_raises_exception(self):
 
         lattice = Lattice(unit_to_world_matrix=scale(2, 2, 10), shape=(2, 2, 10))
 
         self.assertRaisesRegex(TypeError, '.*', lattice.transform_points_orthonormal_to_world,
-                               point_lattice=jnp.ones((3,), dtype=jnp.int32))
+                               point_lattice=np.ones((3,), dtype=np.int32))
 
     def test_transform_points_orthonormal_to_world_bad_point_lattice_point_raises_exception(self):
 
         lattice = Lattice(unit_to_world_matrix=scale(2, 2, 10), shape=(2, 2, 10))
 
-        lattice.transform_points_orthonormal_to_world(jnp.array([0, 0, 0], dtype=jnp.float32),
+        lattice.transform_points_orthonormal_to_world(np.array([0, 0, 0], dtype=np.float32),
                                                       raise_out_of_bounds=True)
 
-        lattice.transform_points_orthonormal_to_world(jnp.array([0, 0, 0], dtype=jnp.float32),
+        lattice.transform_points_orthonormal_to_world(np.array([0, 0, 0], dtype=np.float32),
                                                       raise_out_of_bounds=False)
 
-        lattice.transform_points_orthonormal_to_world(jnp.array([-0.1, 0, 0], dtype=jnp.float32),
+        lattice.transform_points_orthonormal_to_world(np.array([-0.1, 0, 0], dtype=np.float32),
                                                       raise_out_of_bounds=False)
 
         self.assertRaisesRegex(ValueError, '.*', lattice.transform_points_orthonormal_to_world,
-                               point_lattice=jnp.array([-0.1, 0, 0], dtype=jnp.float32),
+                               point_lattice=np.array([-0.1, 0, 0], dtype=np.float32),
                                raise_out_of_bounds=True)
 
     @unittest.skipIf(sys.flags.optimize > 0, 'BearType optimized away.')
@@ -439,7 +439,7 @@ class LatticeTest(unittest.TestCase):
         lattice = Lattice(unit_to_world_matrix=scale(2, 2, 10), shape=(2, 2, 10))
 
         self.assertRaisesRegex(BeartypeException, '.*', lattice.transform_points_orthonormal_to_world,
-                               point_lattice=jnp.array([0, 0, 0], dtype=jnp.float32),
+                               point_lattice=np.array([0, 0, 0], dtype=np.float32),
                                raise_out_of_bounds=None)
 
     ####################################################################################################################
@@ -519,11 +519,11 @@ class LatticeTest(unittest.TestCase):
         lattice = Lattice(unit_to_world_matrix=scale(2, 2, 2), shape=(2, 2, 2))
 
         self.assertTrue(np.allclose(lattice.unit_lattice,
-                                    jnp.array([[[[-0.5, -0.5, -0.5], [-0.5, -0.5,  0.5]],
+                                    np.array([[[[-0.5, -0.5, -0.5], [-0.5, -0.5,  0.5]],
                                                 [[-0.5,  0.5, -0.5], [-0.5,  0.5,  0.5]]],
                                                [[[ 0.5, -0.5, -0.5], [ 0.5, -0.5,  0.5]],
                                                 [[ 0.5,  0.5, -0.5], [ 0.5,  0.5,  0.5]]]],
-                                              dtype=jnp.float32), atol=1e-5))
+                                              dtype=np.float32), atol=1e-5))
 
     ####################################################################################################################
 
@@ -532,8 +532,8 @@ class LatticeTest(unittest.TestCase):
         lattice = Lattice(unit_to_world_matrix=scale(2, 2, 2), shape=(2, 2, 2))
 
         self.assertTrue(np.allclose(lattice.world_lattice,
-                                    jnp.array([[[[-1, -1, -1], [-1, -1,  1]],
+                                    np.array([[[[-1, -1, -1], [-1, -1,  1]],
                                                 [[-1,  1, -1], [-1,  1,  1]]],
                                                [[[ 1, -1, -1], [ 1, -1,  1]],
                                                 [[ 1,  1, -1], [ 1,  1,  1]]]],
-                                              dtype=jnp.float32), atol=1e-5))
+                                              dtype=np.float32), atol=1e-5))
