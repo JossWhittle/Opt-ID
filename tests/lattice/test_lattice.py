@@ -38,7 +38,42 @@ class LatticeTest(unittest.TestCase):
 
     def test_constructor(self):
 
-        Lattice(unit_to_world_matrix=MATRIX_IDENTITY, shape=(1, 1, 1))
+        lattice = Lattice(unit_to_world_matrix=MATRIX_IDENTITY, shape=(1, 1, 1))
+
+        self.assertTrue(np.allclose(lattice.unit_to_orthonormal_matrix,
+                                    np.array([[1.0, 0.0, 0.0, 0.0],
+                                              [0.0, 1.0, 0.0, 0.0],
+                                              [0.0, 0.0, 1.0, 0.0],
+                                              [0.5, 0.5, 0.5, 1.0]],
+                                             dtype=np.float32), atol=1e-5))
+
+        self.assertTrue(np.allclose(lattice.orthonormal_to_unit_matrix,
+                                    np.array([[1.0, 0.0, 0.0, 0.0],
+                                              [0.0, 1.0, 0.0, 0.0],
+                                              [0.0, 0.0, 1.0, 0.0],
+                                              [-0.5, -0.5, -0.5, 1.0]],
+                                             dtype=np.float32), atol=1e-5))
+
+        self.assertTrue(np.allclose(lattice.world_to_unit_matrix,
+                                    np.array([[1.0, 0.0, 0.0, 0.0],
+                                              [0.0, 1.0, 0.0, 0.0],
+                                              [0.0, 0.0, 1.0, 0.0],
+                                              [0.0, 0.0, 0.0, 1.0]],
+                                             dtype=np.float32), atol=1e-5))
+
+        self.assertTrue(np.allclose(lattice.world_to_orthonormal_matrix,
+                                    np.array([[1.0, 0.0, 0.0, 0.0],
+                                              [0.0, 1.0, 0.0, 0.0],
+                                              [0.0, 0.0, 1.0, 0.0],
+                                              [0.5, 0.5, 0.5, 1.0]],
+                                             dtype=np.float32), atol=1e-5))
+
+        self.assertTrue(np.allclose(lattice.orthonormal_to_world_matrix,
+                                    np.array([[1.0, 0.0, 0.0, 0.0],
+                                              [0.0, 1.0, 0.0, 0.0],
+                                              [0.0, 0.0, 1.0, 0.0],
+                                              [-0.5, -0.5, -0.5, 1.0]],
+                                             dtype=np.float32), atol=1e-5))
 
     @unittest.skipIf(sys.flags.optimize > 0, 'BearType optimized away.')
     def test_constructor_bad_shape_raises_exception(self):
@@ -181,6 +216,13 @@ class LatticeTest(unittest.TestCase):
                                                 [[ 0.5,  0.5, -0.5], [ 0.5,  0.5,  0.5]]]],
                                               dtype=np.float32), atol=1e-5))
 
+        self.assertTrue(np.allclose(lattice.jnp_unit_lattice,
+                                    np.array([[[[-0.5, -0.5, -0.5], [-0.5, -0.5, 0.5]],
+                                               [[-0.5, 0.5, -0.5], [-0.5, 0.5, 0.5]]],
+                                              [[[0.5, -0.5, -0.5], [0.5, -0.5, 0.5]],
+                                               [[0.5, 0.5, -0.5], [0.5, 0.5, 0.5]]]],
+                                             dtype=np.float32), atol=1e-5))
+
     ####################################################################################################################
 
     def test_world_lattice(self):
@@ -193,3 +235,10 @@ class LatticeTest(unittest.TestCase):
                                                [[[ 1, -1, -1], [ 1, -1,  1]],
                                                 [[ 1,  1, -1], [ 1,  1,  1]]]],
                                               dtype=np.float32), atol=1e-5))
+
+        self.assertTrue(np.allclose(lattice.jnp_world_lattice,
+                                    np.array([[[[-1, -1, -1], [-1, -1, 1]],
+                                               [[-1, 1, -1], [-1, 1, 1]]],
+                                              [[[1, -1, -1], [1, -1, 1]],
+                                               [[1, 1, -1], [1, 1, 1]]]],
+                                             dtype=np.float32), atol=1e-5))

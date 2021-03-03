@@ -125,7 +125,7 @@ class Lattice:
 
     @property
     @beartype
-    def jnp_world_lattice(self) -> np.ndarray:
+    def jnp_world_lattice(self) -> jnp.ndarray:
         """
         Lattice tensor with the desired shape in world coordinates.
         """

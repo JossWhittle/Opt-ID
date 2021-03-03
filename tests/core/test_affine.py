@@ -53,12 +53,12 @@ class AffineTest(unittest.TestCase):
 
         self.assertTrue(np.allclose(
             affine.transform_vectors(jnp.eye(3), affine.scale(2, 2, 2)),
-            (jnp.eye(3) * 2),
+            (jnp.eye(3) / 2),
             atol=1e-5))
 
         self.assertTrue(np.allclose(
             affine.jnp_transform_vectors(jnp.eye(3), affine.jnp_scale(2, 2, 2)),
-            (jnp.eye(3) * 2),
+            (jnp.eye(3) / 2),
             atol=1e-5))
 
     def test_transform_rescaled_vectors(self):
@@ -128,12 +128,12 @@ class AffineTest(unittest.TestCase):
 
         self.assertTrue(np.allclose(
             affine.transform_vectors(jnp.array([1, 2, 3]), affine.scale(2, 3, 4)),
-            jnp.array([2, 6, 12]),
+            jnp.array([1/2, 2/3, 3/4]),
             atol=1e-5))
 
         self.assertTrue(np.allclose(
             affine.jnp_transform_vectors(jnp.array([1, 2, 3]), affine.jnp_scale(2, 3, 4)),
-            jnp.array([2, 6, 12]),
+            jnp.array([1/2, 2/3, 3/4]),
             atol=1e-5))
 
     def test_transform_points_rotate_x(self):
