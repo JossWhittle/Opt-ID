@@ -56,6 +56,28 @@ class BfieldTest(unittest.TestCase):
               [[ 0.01561037264764309,  -1.6599992214150205e-11, -0.01561037264764309],
                [ 0.015610371716320515, -8.610688551069501e-11,   0.01561037264764309]]]], atol=1e-5))
 
+    def test_radia_evaluate_bfield_on_lattice_raises_bad_lattice_shape(self):
+
+        geometry = Cuboid(shape=(1, 1, 1))
+
+        world_lattice = np.zeros((2,), dtype=np.float32)
+
+        rad.UtiDelAll()
+        self.assertRaisesRegex(ValueError, '.*', bfield.radia_evaluate_bfield_on_lattice,
+                               radia_object=geometry.to_radia((0, 1, 0)), lattice=world_lattice)
+        rad.UtiDelAll()
+
+    def test_radia_evaluate_bfield_on_lattice_raises_bad_lattice_type(self):
+
+        geometry = Cuboid(shape=(1, 1, 1))
+
+        world_lattice = np.zeros((3,), dtype=np.int32)
+
+        rad.UtiDelAll()
+        self.assertRaisesRegex(TypeError, '.*', bfield.radia_evaluate_bfield_on_lattice,
+                               radia_object=geometry.to_radia((0, 1, 0)), lattice=world_lattice)
+        rad.UtiDelAll()
+
     def test_bfield_from_lookup(self):
         """
         Test that a lattice of 3x3 matrices can be applied to a common field vector.
