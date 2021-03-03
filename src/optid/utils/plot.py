@@ -69,21 +69,30 @@ def setup_axes3d(fig, rows: int, cols: int, subplot: int, title: str = '', proj:
 
 
 @beartype
-def plot_geometry(ax, vertices, polyhedra, color, alpha: float, axes3d: bool = False):
+def plot_geometry(ax, vertices, polyhedra, color, alpha: numbers.Real, edgecolor = 'k', axes3d: bool = False):
     if axes3d:
         ax.add_collection3d(Poly3DCollection(
             [[vertices[vertex, [0, 2, 1]] for vertex in face] for faces in polyhedra for face in faces],
-            facecolors=[color], edgecolors=['k'], linewidth=0.5, alpha=alpha))
+            facecolors=[color], edgecolors=[edgecolor], linewidth=0.5, alpha=alpha))
         ax.plot(*vertices[:, [0, 2, 1]].T, ' .', color='k', alpha=0)
     else:
         ax.add_collection(PatchCollection(
             [Polygon([vertices[vertex, [2, 1]] for vertex in face]) for faces in polyhedra for face in faces],
-            facecolors=[color], edgecolors=['k'], linewidth=0.5, alpha=alpha))
+            facecolors=[color], edgecolors=[edgecolor], linewidth=0.5, alpha=alpha))
         ax.plot(*vertices[:, [2, 1]].T, ' .', color='k', alpha=0)
 
 
 @beartype
-def plot_device(device: Device, *args, ax=None, cmap=plt.get_cmap('tab10'), alpha: float = 1, axes3d: bool = False, **kargs):
+def plot_device(
+        device: Device,
+        *args,
+        beams: typ.Optional[typ.Sequence[str]] = None,
+        cmap=plt.get_cmap('tab10'),
+        ax=None,
+        edgecolor = 'k',
+        alpha: numbers.Real = 1,
+        axes3d: bool = False,
+        **kargs):
 
     if ax is None:
         ax = plt.gca()
@@ -91,6 +100,10 @@ def plot_device(device: Device, *args, ax=None, cmap=plt.get_cmap('tab10'), alph
     colors = dict()
     legend = list()
     for beam in device.beams.values():
+
+        if (beams is not None) and (beam.name not in beams):
+            continue
+
         for idx, slot in enumerate(beam.slots):
 
             color_key = f'{slot.slot_type.qualified_name}'
@@ -102,13 +115,20 @@ def plot_device(device: Device, *args, ax=None, cmap=plt.get_cmap('tab10'), alph
 
             geometry = slot.geometry.transform(slot.world_matrix(*args, **kargs))
 
-            plot_geometry(ax, geometry.vertices, geometry.polyhedra, color, alpha, axes3d)
+            plot_geometry(ax=ax, vertices=geometry.vertices, polyhedra=geometry.polyhedra,
+                          color=color, edgecolor=edgecolor, alpha=alpha, axes3d=axes3d)
 
     ax.legend(handles=legend)
 
 
 @beartype
-def plot_device_direction_matrices(device: Device, *args, ax=None, axes3d: bool = False, **kargs):
+def plot_device_direction_matrices(
+        device: Device,
+        *args,
+        beams: typ.Optional[typ.Sequence[str]] = None,
+        ax=None,
+        axes3d: bool = False,
+        **kargs):
 
     if ax is None:
         ax = plt.gca()
@@ -122,6 +142,10 @@ def plot_device_direction_matrices(device: Device, *args, ax=None, axes3d: bool 
             ax.plot(*vertices[:, [2, 1]].T, style, color=color, alpha=1)
 
     for beam in device.beams.values():
+
+        if (beams is not None) and (beam.name not in beams):
+            continue
+
         for idx, slot in enumerate(beam.slots):
 
             matrix = slot.world_matrix(*args, **kargs)
@@ -141,24 +165,3 @@ def plot_device_direction_matrices(device: Device, *args, ax=None, axes3d: bool 
     ax.legend(handles=[mpatches.Patch(color=x_color, label=f'X'),
                        mpatches.Patch(color=z_color, label=f'Z'),
                        mpatches.Patch(color=s_color, label=f'S')])
-
-
-@beartype
-def plot_beam(beam: Beam, *args, ax=None, cmap=plt.get_cmap('tab10'), axes3d: bool = False, **kargs):
-
-    if ax is None:
-        ax = plt.gca()
-
-    colors = dict()
-
-    for idx, slot in enumerate(beam.slots):
-
-        color_key = f'{slot.slot_type.qualified_name}'
-        if color_key in colors:
-            color = colors[color_key]
-        else:
-            color = colors[color_key] = cmap(len(colors))
-
-        geometry = slot.geometry.transform(slot.world_matrix(*args, **kargs))
-
-        plot_geometry(ax, geometry.vertices, geometry.polyhedra, color, axes3d)
