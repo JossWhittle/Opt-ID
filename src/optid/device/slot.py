@@ -17,17 +17,39 @@
 import numbers
 from beartype import beartype
 import typing as typ
+import numpy as np
 import jax.numpy as jnp
+import radia as rad
+
 
 # Opt-ID Imports
-from ..device import \
-    SlotType, Candidate
+from ..core.utils import \
+    np_readonly
+
+from ..core.affine import \
+    transform_rescaled_vectors
+
+from ..core.sim import \
+    bfield_from_lattice
+
+from ..lattice import \
+    Lattice
+
+from .slot_type import \
+    SlotType
+
+from .candidate import \
+    Candidate
+
+from .slot_state import \
+    SlotState
 
 from ..geometry import \
     Geometry
 
 
 TCandidates = typ.Dict[str, Candidate]
+TVector     = typ.Union[np.ndarray, typ.Sequence[numbers.Real]]
 
 
 class Slot:
@@ -35,15 +57,19 @@ class Slot:
     @beartype
     def __init__(self,
             beam,
+            index: int,
             name: str,
             period: str,
             slot_type: SlotType,
-            slot_matrix: jnp.ndarray):
+            slot_matrix: np.ndarray):
         """
         Construct a Slot instance.
 
         :param beam:
             Parent Beam instance this slot is a member of.
+
+        :param index:
+            Integer index for the slot in the beam.
 
         :param name:
             String name for the slot.
@@ -57,6 +83,12 @@ class Slot:
         :param slot_matrix:
             Affine matrix for the placing this slot along its parent beam starting from 0 on the Z axis.
         """
+
+        if index < 0:
+            raise ValueError(f'index must be >= 0 but is : '
+                             f'{index}')
+
+        self._index = index
 
         self._beam = beam
 
@@ -76,14 +108,17 @@ class Slot:
             raise ValueError(f'slot_matrix must be an affine world_matrix with shape (4, 4) but is : '
                              f'{slot_matrix.shape}')
 
-        if slot_matrix.dtype != jnp.float32:
+        if slot_matrix.dtype != np.float32:
             raise TypeError(f'slot_matrix must have dtype (float32) but is : '
                             f'{slot_matrix.dtype}')
 
         self._slot_matrix = slot_matrix
 
+        self._vector = transform_rescaled_vectors(slot_type.magnet.vector,
+                                                  self.world_matrix(gap=0, phase=0, flip=0))
+
     @beartype
-    def world_matrix(self, gap: numbers.Real, phase: numbers.Real) -> jnp.ndarray:
+    def world_matrix(self, gap: numbers.Real, phase: numbers.Real, flip: int = 0) -> np.ndarray:
         """
         Calculate the affine matrix that places this magnet slot into the world in the correct major
         orientation except flip state.
@@ -94,13 +129,83 @@ class Slot:
         :param phase:
             Device phase value to shear the beams by on the S axis.
 
+        :param flip:
+            Flip matrix to use.
+
         :return:
             Affine matrix representing the major position of the slot in world space.
         """
-        return self.slot_type.direction_matrix @ \
+
+        if (flip < 0) or (flip >= self.slot_type.magnet.nflip):
+            raise ValueError(f'flip must be in range [0, {self.slot_type.magnet.nflip}) but is : '
+                             f'{flip}')
+
+        return self.slot_type.magnet.flip_matrices[flip] @ \
+               self.slot_type.direction_matrix @ \
                self.slot_type.anchor_matrix @ \
                self.slot_matrix @ \
                self.beam.world_matrix(gap=gap, phase=phase)
+
+    @beartype
+    def bfield_from_vector(self,
+            lattice: Lattice,
+            vector: TVector,
+            gap: numbers.Real,
+            phase: numbers.Real,
+            flip: int = 0,
+            world_vector: bool = True) -> jnp.ndarray:
+
+        if not isinstance(vector, np.ndarray):
+            vector = np.array(vector, dtype=np.float32)
+
+        if vector.shape != (3,):
+            raise ValueError(f'vector must be shape (3,) but is : '
+                             f'{vector.shape}')
+
+        if vector.dtype != np.float32:
+            raise TypeError(f'vector must have dtype (float32) but is : '
+                            f'{vector.dtype}')
+
+        matrix   = self.world_matrix(gap=gap, phase=phase, flip=flip)
+        geometry = self.geometry.transform(matrix)
+
+        if not world_vector:
+            vector = transform_rescaled_vectors(vector, matrix)
+
+        rad.UtiDelAll()
+        bfield = bfield_from_lattice(geometry.to_radia(vector), lattice.world_lattice)
+        rad.UtiDelAll()
+        return bfield
+
+    @beartype
+    def bfield(self,
+            lattice: Lattice,
+            gap: numbers.Real,
+            phase: numbers.Real,
+            flip: int = 0) -> jnp.ndarray:
+
+        return self.bfield_from_vector(lattice=lattice, gap=gap, phase=phase, flip=flip,
+                                       vector=self.slot_type.magnet.vector, world_vector=False)
+
+    @beartype
+    def bfield_from_state(self,
+            lattice: Lattice,
+            gap: numbers.Real,
+            phase: numbers.Real,
+            slot_state: SlotState) -> jnp.ndarray:
+
+        if slot_state.slot != self.qualified_name:
+            raise ValueError(f'slot_state must be assigned to this slot but is : '
+                             f'slot={self.qualified_name} state={slot_state.slot}')
+
+        if slot_state.candidate not in self.candidates:
+            raise ValueError(f'slot_state must be assigned to a valid candidate for this slot but is : '
+                             f'{slot_state.candidate}')
+
+        candidate = self.candidates[slot_state.candidate]
+
+        return self.bfield_from_vector(lattice=lattice, gap=gap, phase=phase, flip=slot_state.flip,
+                                       vector=candidate.vector, world_vector=False)
 
     @property
     def beam(self):
@@ -113,23 +218,28 @@ class Slot:
 
     @property
     @beartype
+    def index(self) -> int:
+        return self._index
+
+    @property
+    @beartype
     def name(self) -> str:
-        return self._name
+        return str(self._name)
 
     @property
     @beartype
     def qualified_name(self) -> str:
-        return f'{self.beam.qualified_name}::{self.name}::{self.slot_type.name}::{self.slot_type.magnet.name}'
+        return f'{self.beam.qualified_name}::{self.slot_type.qualified_name}::{self.name}'
 
     @property
     @beartype
     def period(self) -> str:
-        return self._period
+        return str(self._period)
 
     @property
     @beartype
-    def slot_matrix(self) -> jnp.ndarray:
-        return self._slot_matrix
+    def slot_matrix(self) -> np.ndarray:
+        return np_readonly(self._slot_matrix)
 
     @property
     @beartype
@@ -143,6 +253,6 @@ class Slot:
 
     @property
     @beartype
-    def vector(self) -> jnp.ndarray:
-        return self.slot_type.magnet.vector
+    def vector(self) -> np.ndarray:
+        return np_readonly(self._vector)
 

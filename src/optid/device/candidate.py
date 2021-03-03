@@ -17,14 +17,14 @@
 import numbers
 from beartype import beartype
 import typing as typ
-import jax.numpy as jnp
+import numpy as np
 import pandas as pd
 import pandera as pa
 
 # Opt-ID Imports
 
 
-TVector = typ.Union[jnp.ndarray, typ.Sequence[numbers.Real]]
+TVector = typ.Union[np.ndarray, typ.Sequence[numbers.Real]]
 
 
 class Candidate:
@@ -48,14 +48,14 @@ class Candidate:
 
         self._name = name
 
-        if not isinstance(vector, jnp.ndarray):
-            vector = jnp.array(vector, dtype=jnp.float32)
+        if not isinstance(vector, np.ndarray):
+            vector = np.array(vector, dtype=np.float32)
 
         if vector.shape != (3,):
             raise ValueError(f'vector must be shape (3,) but is : '
                              f'{vector.shape}')
 
-        if vector.dtype != jnp.float32:
+        if vector.dtype != np.float32:
             raise TypeError(f'vector must have dtype (float32) but is : '
                             f'{vector.dtype}')
 
@@ -111,5 +111,5 @@ class Candidate:
 
     @property
     @beartype
-    def vector(self) -> jnp.ndarray:
+    def vector(self) -> np.ndarray:
         return self._vector

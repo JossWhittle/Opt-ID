@@ -18,16 +18,23 @@ from more_itertools import SequenceView
 import numbers
 from beartype import beartype
 import typing as typ
-import jax.numpy as jnp
+import numpy as np
 
 # Opt-ID Imports
-from ..core.affine import translate
+from ..core.utils import \
+    np_readonly
 
-from ..device import \
-    Slot, SlotType
+from ..core.affine import \
+    translate
 
+from .slot import \
+    Slot
 
-TVector = typ.Union[jnp.ndarray, typ.Sequence[numbers.Real]]
+from .slot_type import \
+    SlotType
+
+TVector        = typ.Union[np.ndarray, typ.Sequence[numbers.Real]]
+TPeriodLengths = typ.Dict[str, float]
 
 
 class Beam:
@@ -36,7 +43,7 @@ class Beam:
     def __init__(self,
             device,
             name: str,
-            beam_matrix: jnp.ndarray,
+            beam_matrix: np.ndarray,
             gap_vector: TVector,
             phase_vector: TVector):
         """
@@ -69,46 +76,48 @@ class Beam:
             raise ValueError(f'beam_matrix must be an affine world_matrix with shape (4, 4) but is : '
                              f'{beam_matrix.shape}')
 
-        if beam_matrix.dtype != jnp.float32:
+        if beam_matrix.dtype != np.float32:
             raise TypeError(f'beam_matrix must have dtype (float32) but is : '
                             f'{beam_matrix.dtype}')
 
         self._beam_matrix = beam_matrix
         
-        if not isinstance(gap_vector, jnp.ndarray):
-            gap_vector = jnp.array(gap_vector, dtype=jnp.float32)
+        if not isinstance(gap_vector, np.ndarray):
+            gap_vector = np.array(gap_vector, dtype=np.float32)
 
         if gap_vector.shape != (3,):
             raise ValueError(f'gap_vector must be shape (3,) but is : '
                              f'{gap_vector.shape}')
 
-        if gap_vector.dtype != jnp.float32:
+        if gap_vector.dtype != np.float32:
             raise TypeError(f'gap_vector must have dtype (float32) but is : '
                             f'{gap_vector.dtype}')
         
         self._gap_vector = gap_vector
 
-        if not isinstance(phase_vector, jnp.ndarray):
-            phase_vector = jnp.array(phase_vector, dtype=jnp.float32)
+        if not isinstance(phase_vector, np.ndarray):
+            phase_vector = np.array(phase_vector, dtype=np.float32)
 
         if phase_vector.shape != (3,):
             raise ValueError(f'phase_vector must be shape (3,) but is : '
                              f'{phase_vector.shape}')
 
-        if phase_vector.dtype != jnp.float32:
+        if phase_vector.dtype != np.float32:
             raise TypeError(f'phase_vector must have dtype (float32) but is : '
                             f'{phase_vector.dtype}')
 
         self._phase_vector = phase_vector
 
-        self._centre_matrix = jnp.eye(4, dtype=jnp.float32)
+        self._centre_matrix = np.eye(4, dtype=np.float32)
         self._smin = 0
         self._smax = 0
         self._spacing = 0
         self._slots = list()
+        self._slots_by_name = dict()
+        self._period_bounds = dict()
 
     @beartype
-    def world_matrix(self, gap: numbers.Real, phase: numbers.Real) -> jnp.ndarray:
+    def world_matrix(self, gap: numbers.Real, phase: numbers.Real) -> np.ndarray:
         """
         Calculate the affine matrix that places this beam into the world.
 
@@ -139,27 +148,51 @@ class Beam:
     def add_slot(self,
             period: str,
             slot_type: SlotType,
-            after_spacing: numbers.Real = 0):
+            after_spacing: numbers.Real = 0,
+            name: typ.Optional[str] = None):
 
         bmin, bmax = slot_type.bounds
+        thickness  = (bmax[2] - bmin[2])
 
         if self.nslots == 0:
-            self._smin = bmin[2]
+            cur_smax = self._smin = bmin[2]
             self._smax = bmax[2]
         else:
-            self._smax += self._spacing + (bmax[2] - bmin[2])
-            self._spacing = 0
+            cur_smax = self._smax
+            self._smax += self._spacing + thickness
+
+        self._spacing = 0
+
+        if period not in self._period_bounds:
+            self._period_bounds[period] = (float(cur_smax), float(self._smax))
+        else:
+
+            if self._slots[-1].period != period:
+                raise ValueError(f'period already defined but previous slot is different : '
+                                 f'previous={self._slots[-1].period} current={period}')
+
+            p0, p1 = self._period_bounds[period]
+            self._period_bounds[period] = (p0, float(self._smax))
 
         slot_matrix = translate(0, 0, (self._smax - bmax[2]))
 
         self._centre_matrix = translate(0, 0, (-self._smin) - ((self._smax - self._smin) / 2.0))
 
-        slot = Slot(beam=self, name=f'{self.nslots:06d}', period=period,
+        name = name if (name is not None) else f'{self.nslots:06d}'
+
+        slot = Slot(index=self.nslots, beam=self, name=name, period=period,
                     slot_type=slot_type, slot_matrix=slot_matrix)
+        self._slots.append(slot)
+
+        if slot.name in self._slots_by_name:
+            raise ValueError(f'slot must have unique name but conflict with another in this beam : '
+                             f'{slot.name}')
+
+        self._slots_by_name[slot.name] = slot
 
         self.add_spacing(spacing=after_spacing)
 
-        self._slots.append(slot)
+        self.device.validate()
         return slot
 
     @beartype
@@ -178,7 +211,7 @@ class Beam:
     @property
     @beartype
     def name(self) -> str:
-        return self._name
+        return str(self._name)
 
     @property
     @beartype
@@ -187,33 +220,43 @@ class Beam:
 
     @property
     @beartype
-    def beam_matrix(self) -> jnp.ndarray:
-        return self._beam_matrix
+    def beam_matrix(self) -> np.ndarray:
+        return np_readonly(self._beam_matrix)
 
     @property
     @beartype
-    def gap_vector(self) -> jnp.ndarray:
-        return self._gap_vector
+    def gap_vector(self) -> np.ndarray:
+        return np_readonly(self._gap_vector)
 
     @property
     @beartype
-    def phase_vector(self) -> jnp.ndarray:
-        return self._phase_vector
+    def phase_vector(self) -> np.ndarray:
+        return np_readonly(self._phase_vector)
 
     @property
     @beartype
     def length(self) -> float:
-        return self._smax - self._smin
+        return float(self._smax - self._smin)
 
     @property
     @beartype
-    def centre_matrix(self) -> jnp.ndarray:
-        return self._centre_matrix
+    def period_lengths(self) -> TPeriodLengths:
+        return { period: (p1 - p0) for period, (p0, p1) in self._period_bounds.items() }
+
+    @property
+    @beartype
+    def centre_matrix(self) -> np.ndarray:
+        return np_readonly(self._centre_matrix)
 
     @property
     @beartype
     def slots(self) -> typ.Sequence[Slot]:
         return SequenceView(self._slots)
+
+    @property
+    @beartype
+    def slots_by_name(self) -> typ.Dict[str, Slot]:
+        return dict(self._slots_by_name)
 
     @property
     @beartype

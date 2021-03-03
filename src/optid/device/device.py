@@ -18,16 +18,31 @@ from more_itertools import SequenceView
 import numbers
 from beartype import beartype
 import typing as typ
+import numpy as np
 import jax.numpy as jnp
 
+
 # Opt-ID Imports
-from ..device import \
-    Beam, Candidate
+from .beam import \
+    Beam
 
+from .candidate import \
+    Candidate
 
-TVector     = typ.Union[jnp.ndarray, typ.Sequence[numbers.Real]]
+from .slot import \
+    Slot
+
+from .genome import \
+    Genome
+
+from .slot_state import \
+    SlotState
+from ..core.utils import np_readonly
+
+TVector     = typ.Union[np.ndarray, typ.Sequence[numbers.Real]]
 TCandidates = typ.Dict[str, typ.Dict[str, Candidate]]
-TSlots      = typ.Dict[str, typ.Dict[str, Candidate]]
+TSlots      = typ.Dict[str, typ.Dict[str, Slot]]
+TPeriodLengths = typ.Dict[str, float]
 
 
 class Device:
@@ -35,7 +50,7 @@ class Device:
     @beartype
     def __init__(self,
             name: str,
-            world_matrix: jnp.ndarray):
+            world_matrix: np.ndarray):
         """
         Construct a Device instance.
 
@@ -55,7 +70,7 @@ class Device:
             raise ValueError(f'world_matrix must be an affine world_matrix with shape (4, 4) but is : '
                              f'{world_matrix.shape}')
 
-        if world_matrix.dtype != jnp.float32:
+        if world_matrix.dtype != np.float32:
             raise TypeError(f'world_matrix must have dtype (float32) but is : '
                             f'{world_matrix.dtype}')
 
@@ -66,7 +81,7 @@ class Device:
     @beartype
     def add_beam(self,
             name: str,
-            beam_matrix: jnp.ndarray,
+            beam_matrix: np.ndarray,
             gap_vector: TVector,
             phase_vector: TVector):
 
@@ -79,6 +94,27 @@ class Device:
         self._beams[name] = beam
         return beam
 
+    def validate(self):
+
+        magnets = dict()
+
+        for beam in self.beams.values():
+            for slot in beam.slots:
+
+                key = slot.slot_type.magnet.name
+                if key not in magnets:
+                    magnets[key] = slot.slot_type.magnet
+                elif magnets[key] is not slot.slot_type.magnet:
+                    raise ValueError(f'multiple magnets with same name refer to different objects : '
+                                     f'{key}, {slot.qualified_name}')
+
+        nslots_by_type = self.nslots_by_type
+        for magnet_name, candidates in self.candidates_by_type.items():
+
+            if nslots_by_type[magnet_name] > len(candidates):
+                raise ValueError(f'device has more slots of type "{magnet_name} than candidates : '
+                                 f'slots={nslots_by_type[magnet_name]} > candidates={len(candidates)}')
+
     @property
     @beartype
     def beams(self) -> dict:
@@ -88,21 +124,29 @@ class Device:
     @beartype
     def slots_by_type(self) -> TSlots:
 
-        magnet_names = set(slot.slot_type.magnet_type.name for beam in self._beams.values() for slot in beam.slots)
+        slots = dict()
+        for beam in self.beams.values():
+            for slot in beam.slots:
 
-        return { magnet_name: {
-                    beam.name: [slot for slot in beam.slots if slot.slot_type.magnet_type.name == magnet_name]
-                    for beam in self._beams.values() }
-                 for magnet_name in magnet_names }
+                magnet_name = slot.slot_type.magnet.name
+                if magnet_name not in slots:
+                    slots[magnet_name] = dict()
+
+                if beam.name not in slots[magnet_name]:
+                    slots[magnet_name][beam.name] = list()
+
+                slots[magnet_name][beam.name].append(slot)
+
+        return slots
 
     @property
     @beartype
     def candidates_by_type(self) -> TCandidates:
 
         candidates = dict()
-        for beam in self._beams.values():
+        for beam in self.beams.values():
             for slot in beam.slots:
-                key = slot.slot_type.magnet_type.name
+                key = slot.slot_type.magnet.name
                 if key not in candidates:
                     candidates[key] = dict(slot.candidates)
 
@@ -110,12 +154,59 @@ class Device:
 
     @property
     @beartype
-    def name(self) -> str:
-        return self._name
+    def period_lengths(self) -> TPeriodLengths:
+
+        period_lengths = dict()
+        for beam in self.beams.values():
+
+            for period, length in beam.period_lengths.items():
+
+                if period not in period_lengths:
+                    period_lengths[period] = (length, 1)
+                else:
+                    cur_length, cur_count = period_lengths[period]
+                    period_lengths[period] = ((cur_length + length), (cur_count + 1))
+
+        return { period: (length / count) for period, (length, count) in period_lengths.items() }
 
     @property
     @beartype
-    def world_matrix(self) -> jnp.ndarray:
-        return self._world_matrix
+    def name(self) -> str:
+        return str(self._name)
 
+    @property
+    @beartype
+    def world_matrix(self) -> np.ndarray:
+        return np_readonly(self._world_matrix)
+
+    @property
+    @beartype
+    def nslots(self) -> int:
+        return sum(beam.nslots for beam in self.beams)
+
+    @property
+    @beartype
+    def nslots_by_beam(self) -> typ.Dict[str, int]:
+        return { beam.name: beam.nslots for beam in self.beams }
+
+    @property
+    @beartype
+    def nslots_by_type(self) -> typ.Dict[str, int]:
+
+        counts = dict()
+        for beam in self.beams.values():
+            for slot in beam.slots:
+
+                magnet_name = slot.slot_type.magnet.name
+                if magnet_name not in counts:
+                    counts[magnet_name] = 0
+
+                counts[magnet_name] += 1
+
+        return counts
+
+    @property
+    @beartype
+    def length(self) -> float:
+        return max(beam.length for beam in self.beams.values())
 

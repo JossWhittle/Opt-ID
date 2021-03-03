@@ -17,21 +17,26 @@
 import numbers
 from beartype import beartype
 import typing as typ
-import jax.numpy as jnp
+import numpy as np
+import pandas as pd
+
 
 # Opt-ID Imports
+from ..core.utils import \
+    np_readonly
+
 from ..geometry import \
     Geometry
 
-from ..device import \
+from .candidate import \
     Candidate
 
 
-TVector        = typ.Union[jnp.ndarray, typ.Sequence[numbers.Real]]
-TCandidatesSeq = typ.Sequence[Candidate]
-TCandidates    = typ.Dict[str, Candidate]
-TFlipMatrices  = typ.Union[jnp.ndarray, typ.Sequence[jnp.ndarray]]
-TMaterial      = typ.Callable[[int], int]
+TVector          = typ.Union[np.ndarray, typ.Sequence[numbers.Real]]
+TCandidatesParam = typ.Union[str, pd.DataFrame, typ.Sequence[Candidate]]
+TCandidates      = typ.Dict[str, Candidate]
+TFlipMatrices    = typ.Union[np.ndarray, typ.Sequence[np.ndarray]]
+TMaterial        = typ.Callable[[int], int]
 
 
 class Magnet:
@@ -42,7 +47,7 @@ class Magnet:
             geometry: Geometry,
             vector: TVector,
             flip_matrices: TFlipMatrices,
-            candidates: TCandidatesSeq,
+            candidates: TCandidatesParam,
             material: typ.Optional[TMaterial] = None):
 
         if len(name) == 0:
@@ -52,31 +57,37 @@ class Magnet:
 
         self._geometry = geometry
 
-        if not isinstance(vector, jnp.ndarray):
-            vector = jnp.array(vector, dtype=jnp.float32)
+        if not isinstance(vector, np.ndarray):
+            vector = np.array(vector, dtype=np.float32)
 
         if vector.shape != (3,):
             raise ValueError(f'vector must be shape (3,) but is : '
                              f'{vector.shape}')
 
-        if vector.dtype != jnp.float32:
+        if vector.dtype != np.float32:
             raise TypeError(f'vector must have dtype (float32) but is : '
                             f'{vector.dtype}')
 
         self._vector = vector
 
-        if not isinstance(flip_matrices, jnp.ndarray):
-            flip_matrices = jnp.array(flip_matrices, dtype=jnp.float32)
+        if not isinstance(flip_matrices, np.ndarray):
+            flip_matrices = np.array(flip_matrices, dtype=np.float32)
 
         if (flip_matrices.ndim != 3) or (flip_matrices.shape[1:] != (4, 4)):
             raise ValueError(f'flip_matrices must be a list of affine matrices with shape (N >= 1, 4, 4) but is : '
                              f'{flip_matrices.shape}')
 
-        if flip_matrices.dtype != jnp.float32:
+        if flip_matrices.dtype != np.float32:
             raise TypeError(f'flip_matrices must have dtype (float32) but is : '
                             f'{flip_matrices.dtype}')
 
         self._flip_matrices = flip_matrices
+
+        if isinstance(candidates, str):
+            candidates = pd.read_csv(candidates)
+
+        if isinstance(candidates, pd.DataFrame):
+            candidates = Candidate.from_dataframe(candidates)
 
         if not isinstance(candidates, list):
             candidates = list(candidates)
@@ -95,7 +106,7 @@ class Magnet:
     @property
     @beartype
     def name(self) -> str:
-        return self._name
+        return str(self._name)
 
     @property
     @beartype
@@ -104,8 +115,8 @@ class Magnet:
 
     @property
     @beartype
-    def vector(self) -> jnp.ndarray:
-        return self._vector
+    def vector(self) -> np.ndarray:
+        return np_readonly(self._vector)
 
     @property
     @beartype
@@ -114,8 +125,13 @@ class Magnet:
 
     @property
     @beartype
-    def flip_matrices(self) -> jnp.ndarray:
-        return self._flip_matrices
+    def flip_matrices(self) -> np.ndarray:
+        return np_readonly(self._flip_matrices)
+
+    @property
+    @beartype
+    def nflip(self) -> int:
+        return len(self._flip_matrices)
 
     @property
     @beartype
