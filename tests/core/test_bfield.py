@@ -90,7 +90,7 @@ class BfieldTest(unittest.TestCase):
              [affine.rotate_z(affine.radians(90))[:3, :3], affine.rotate_z(affine.radians(-90))[:3, :3]]]
         ])
 
-        self.assertTrue(np.allclose(bfield.bfield_from_lookup(lookup, jnp.array([1, 0, 0])),
+        self.assertTrue(np.allclose(bfield.jnp_bfield_from_lookup(lookup, jnp.array([1, 0, 0])),
                                     jnp.array([[[[ 1,  0,  0], [ 1,  0,  0]],
                                                 [[ 0,  0,  1], [ 0,  0, -1]]],
                                                [[[ 0, -1,  0], [ 0,  1,  0]],

@@ -15,6 +15,7 @@
 
 # External Imports
 from beartype import beartype
+import numbers
 import typing as typ
 import numpy as np
 import jax.numpy as jnp
@@ -63,6 +64,12 @@ class Lattice:
             raise ValueError(f'shape must be a 3-tuple of positive integers but is : '
                              f'{shape}')
         self._shape = shape
+
+        lattice = self.world_lattice
+        x_step = 0 if shape[0] == 1 else np.mean(np.linalg.norm(lattice[:-1, 0, 0] - lattice[1:, 0, 0], axis=-1))
+        z_step = 0 if shape[1] == 1 else np.mean(np.linalg.norm(lattice[0, :-1, 0] - lattice[0, 1:, 0], axis=-1))
+        s_step = 0 if shape[2] == 1 else np.mean(np.linalg.norm(lattice[0, 0, :-1] - lattice[0, 0, 1:], axis=-1))
+        self._step = (x_step, z_step, s_step)
 
         # Derive complementary matrices
         self._unit_to_orthonormal_matrix  = unit_to_orthonormal_matrix(*self.shape)
@@ -194,3 +201,8 @@ class Lattice:
         Subdivision shape of the lattice.
         """
         return self._shape
+
+    @property
+    @beartype
+    def step(self) -> typ.Tuple[numbers.Real, numbers.Real, numbers.Real]:
+        return self._step

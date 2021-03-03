@@ -16,6 +16,7 @@
 # External Imports
 from beartype import beartype
 import jax
+import jax.numpy as jnp
 import numpy as np
 import radia as rad
 
@@ -52,7 +53,7 @@ def radia_evaluate_bfield_on_lattice(
 
 
 @jax.jit
-def bfield_from_lookup(lookup, vector):
+def jnp_bfield_from_lookup(lookup, vector):
     """
     Compute the bfield from a magnet with the given field vector using a lookup table of field rotation matrices.
 
@@ -71,3 +72,28 @@ def bfield_from_lookup(lookup, vector):
         the lattice of the lookup table.
     """
     return lookup @ vector
+
+
+@jax.jit
+def jnp_integrate_trajectories(bfield, s_step, energy):
+
+    # Unknown constant... evaluates to 1e-4 for 3 GeV storage ring
+    const = (0.03 / energy) * 1e-2
+
+    # Trapezium rule applied to bfield measurements in X and Z helps compute the second integral of motion
+    trap_bfield = jnp.roll(bfield[..., :2], shift=1, axis=2)
+    trap_bfield = trap_bfield.at[..., 0, :].set(0)  # Set first samples on S axis to 0
+    trap_bfield = (trap_bfield + bfield[..., :2]) * (s_step * 0.5)
+
+    # Accumulate the second integral of motion w.r.t the X and Z axes, along the orbital S axis
+    traj_2nd_integral = jnp.cumsum((trap_bfield * const), axis=2)[..., ::-1] * np.array([-1, 1])
+
+    # Trapezium rule applied to second integral of motion helps compute the first integral of motion
+    trap_traj_2nd_integral = jnp.roll(traj_2nd_integral, shift=1, axis=2)
+    trap_traj_2nd_integral = trap_traj_2nd_integral.at[:, :, 0, :].set(0)  # Set first samples on S axis to 0
+    trap_traj_2nd_integral = (trap_traj_2nd_integral + traj_2nd_integral) * (s_step * 0.5)
+
+    # Accumulate the first integral of motion w.r.t the X and Z axes, along the orbital S axis
+    traj_1st_integral = jnp.cumsum(trap_traj_2nd_integral, axis=2)
+
+    return traj_1st_integral, traj_2nd_integral
