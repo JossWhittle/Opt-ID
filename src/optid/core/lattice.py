@@ -38,7 +38,7 @@ def jnp_unit_limits(n):
     :return:
         Min-max limits along the axis.
     """
-    limit = jnp.clip((n - 1), 0.0, 1.0) * 0.5
+    limit = (jnp.clip((n - 1), 0.0, 1.0) * 0.5).astype(jnp.float32)
     return -limit, limit
 
 
@@ -55,7 +55,7 @@ def unit_limits(n):
     :return:
         Min-max limits along the axis.
     """
-    limit = np.clip((n - 1), 0.0, 1.0) * 0.5
+    limit = (np.clip((n - 1), 0.0, 1.0) * 0.5).astype(np.float32)
     return -limit, limit
 
 
@@ -81,9 +81,9 @@ def jnp_unit_lattice(x, z, s):
     :return:
         Lattice of XZS coordinates uniformly distributed over the unit-cube at origin.
     """
-    return jnp.stack(jnp.meshgrid(jnp.linspace(*jnp_unit_limits(x), x),
-                                  jnp.linspace(*jnp_unit_limits(z), z),
-                                  jnp.linspace(*jnp_unit_limits(s), s),
+    return jnp.stack(jnp.meshgrid(jnp.linspace(*jnp_unit_limits(x), x, dtype=jnp.float32),
+                                  jnp.linspace(*jnp_unit_limits(z), z, dtype=jnp.float32),
+                                  jnp.linspace(*jnp_unit_limits(s), s, dtype=jnp.float32),
                                   indexing='ij'), axis=-1)
 
 
@@ -108,9 +108,9 @@ def unit_lattice(x, z, s):
     :return:
         Lattice of XZS coordinates uniformly distributed over the unit-cube at origin.
     """
-    return np.stack(np.meshgrid(np.linspace(*unit_limits(x), x),
-                                np.linspace(*unit_limits(z), z),
-                                np.linspace(*unit_limits(s), s),
+    return np.stack(np.meshgrid(np.linspace(*unit_limits(x), x, dtype=np.float32),
+                                np.linspace(*unit_limits(z), z, dtype=np.float32),
+                                np.linspace(*unit_limits(s), s, dtype=np.float32),
                                 indexing='ij'), axis=-1)
 
 
@@ -161,25 +161,6 @@ def unit_to_orthonormal_matrix(x, z, s):
                  np.maximum(1, (s - 1)))
 
 
-@jax.jit
-def jnp_any_unit_point_out_of_bounds(point_lattice, eps):
-    """
-    Test that all points in the point lattice are within the bounds of the unit lattice centred at origin spanning
-    -0.5 to +0.5.
-
-    :param point_lattice:
-        Lattice of points in unit space.
-
-    :param eps:
-        Tolerance value for comparison.
-
-    :return:
-        True if any point lays outside the unit cube.
-    """
-    return jnp.any((point_lattice > +(0.5 + eps)) |
-                   (point_lattice < -(0.5 + eps)))
-
-
 def any_unit_point_out_of_bounds(point_lattice, eps):
     """
     Test that all points in the point lattice are within the bounds of the unit lattice centred at origin spanning
@@ -196,35 +177,6 @@ def any_unit_point_out_of_bounds(point_lattice, eps):
     """
     return np.any((point_lattice > +(0.5 + eps)) |
                   (point_lattice < -(0.5 + eps)))
-
-
-@jax.jit
-def jnp_any_orthonormal_point_out_of_bounds(point_lattice, x, z, s, eps):
-    """
-    Test that all points in the point lattice are within the bounds of the orthonormal lattice spanning from
-    [0, x), [0, z), and [0, s).
-
-    :param point_lattice:
-        Lattice of points in orthonormal space.
-
-    :param x:
-        Size of the resulting span on the X-axis.
-
-    :param z:
-        Size of the resulting span on the Z-axis.
-
-    :param s:
-        Size of the resulting span on the S-axis.
-
-    :param eps:
-        Tolerance value for comparison.
-
-    :return:
-        True if any point lays outside the orthonormal bounds.
-    """
-    # TODO does this need to be (x-1), (z-1), (s-1) ?
-    return jnp.any((point_lattice > (jnp.array([x, z, s], dtype=jnp.float32) + eps)) |
-                   (point_lattice < -eps))
 
 
 def any_orthonormal_point_out_of_bounds(point_lattice, x, z, s, eps):
@@ -256,7 +208,7 @@ def any_orthonormal_point_out_of_bounds(point_lattice, x, z, s, eps):
 
 
 @jax.jit
-def orthonormal_interpolate(value_lattice, point_lattice, order=1, mode='nearest', **kargs):
+def jnp_orthonormal_interpolate(value_lattice, point_lattice, order=1, mode='nearest', **kargs):
     """
     Perform an interpolated lookup of the values in the value lattice using the coordinates in the coordinate lattice.
 
