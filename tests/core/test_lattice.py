@@ -38,10 +38,12 @@ class LatticeTest(unittest.TestCase):
 
         with self.subTest(n=1):
             self.assertEqual(lattice.unit_limits(1), (0, 0))
+            self.assertEqual(lattice.jnp_unit_limits(1), (0, 0))
 
         for n in range(2, 5):
             with self.subTest(n=n):
                 self.assertEqual(lattice.unit_limits(n), (-0.5, 0.5))
+                self.assertEqual(lattice.jnp_unit_limits(n), (-0.5, 0.5))
 
     def test_unit_lattice(self):
         """
@@ -56,8 +58,20 @@ class LatticeTest(unittest.TestCase):
                  [[+0.5, +0.5, -0.5], [+0.5, +0.5, +0.5]]]
             ]), atol=1e-5))
 
+            self.assertTrue(np.allclose(lattice.jnp_unit_lattice(2, 2, 2), jnp.array([
+                [[[-0.5, -0.5, -0.5], [-0.5, -0.5, +0.5]],
+                 [[-0.5, +0.5, -0.5], [-0.5, +0.5, +0.5]]],
+                [[[+0.5, -0.5, -0.5], [+0.5, -0.5, +0.5]],
+                 [[+0.5, +0.5, -0.5], [+0.5, +0.5, +0.5]]]
+            ]), atol=1e-5))
+
         with self.subTest(x=1, z=2, s=2):
             self.assertTrue(np.allclose(lattice.unit_lattice(1, 2, 2), jnp.array([
+                [[[0, -0.5, -0.5], [0, -0.5, +0.5]],
+                 [[0, +0.5, -0.5], [0, +0.5, +0.5]]]
+            ]), atol=1e-5))
+
+            self.assertTrue(np.allclose(lattice.jnp_unit_lattice(1, 2, 2), jnp.array([
                 [[[0, -0.5, -0.5], [0, -0.5, +0.5]],
                  [[0, +0.5, -0.5], [0, +0.5, +0.5]]]
             ]), atol=1e-5))
@@ -68,8 +82,20 @@ class LatticeTest(unittest.TestCase):
                 [[[+0.5, 0, -0.5], [+0.5, 0, +0.5]]]
             ]), atol=1e-5))
 
+            self.assertTrue(np.allclose(lattice.jnp_unit_lattice(2, 1, 2), jnp.array([
+                [[[-0.5, 0, -0.5], [-0.5, 0, +0.5]]],
+                [[[+0.5, 0, -0.5], [+0.5, 0, +0.5]]]
+            ]), atol=1e-5))
+
         with self.subTest(x=2, z=2, s=1):
             self.assertTrue(np.allclose(lattice.unit_lattice(2, 2, 1), jnp.array([
+                [[[-0.5, -0.5, 0]],
+                 [[-0.5, +0.5, 0]]],
+                [[[+0.5, -0.5, 0]],
+                 [[+0.5, +0.5, 0]]]
+            ]), atol=1e-5))
+
+            self.assertTrue(np.allclose(lattice.jnp_unit_lattice(2, 2, 1), jnp.array([
                 [[[-0.5, -0.5, 0]],
                  [[-0.5, +0.5, 0]]],
                 [[[+0.5, -0.5, 0]],
@@ -94,20 +120,24 @@ class LatticeTest(unittest.TestCase):
                                                                 lattice.unit_to_orthonormal_matrix(2, 2, 2)),
                                         expected, atol=1e-5))
 
+            self.assertTrue(np.allclose(affine.jnp_transform_points(lattice.jnp_unit_lattice(2, 2, 2),
+                                                                    lattice.jnp_unit_to_orthonormal_matrix(2, 2, 2)),
+                                        expected, atol=1e-5))
+
     def test_orthonormal_interpolate_1d(self):
         """
         Test interpolating lattices of coordinates into a 1d lattice of arbitrary channels.
         """
 
         with self.subTest('values (4,), points (3, 1), result (3,)'):
-            self.assertTrue(np.allclose(lattice.orthonormal_interpolate(
+            self.assertTrue(np.allclose(lattice.jnp_orthonormal_interpolate(
                 value_lattice=jnp.array([0.0, 1.0, 2.0, 3.0]),
                 point_lattice=jnp.array([[0.5], [1.5], [2.5]])),
                 jnp.array([0.5, 1.5, 2.5]),
                 atol=1e-5))
 
         with self.subTest('values (4,), points (3, 2, 1), result (3, 2)'):
-            self.assertTrue(np.allclose(lattice.orthonormal_interpolate(
+            self.assertTrue(np.allclose(lattice.jnp_orthonormal_interpolate(
                 value_lattice=jnp.array([0.0, 1.0, 2.0, 3.0]),
                 point_lattice=jnp.array([[[0.5], [0.5]],
                                          [[1.5], [0.5]],
@@ -118,7 +148,7 @@ class LatticeTest(unittest.TestCase):
                 atol=1e-5))
 
         with self.subTest('values (4, 2), points (3, 1), result (3, 2)'):
-            self.assertTrue(np.allclose(lattice.orthonormal_interpolate(
+            self.assertTrue(np.allclose(lattice.jnp_orthonormal_interpolate(
                 value_lattice=jnp.array([[0.0, 1.0],
                                          [1.0, 2.0],
                                          [2.0, 3.0],
@@ -130,7 +160,7 @@ class LatticeTest(unittest.TestCase):
                 atol=1e-5))
 
         with self.subTest('values (4, 2), points (3, 2, 1), result (3, 2, 2)'):
-            self.assertTrue(np.allclose(lattice.orthonormal_interpolate(
+            self.assertTrue(np.allclose(lattice.jnp_orthonormal_interpolate(
                 value_lattice=jnp.array([[0.0, 1.0],
                                          [1.0, 2.0],
                                          [2.0, 3.0],
@@ -149,7 +179,7 @@ class LatticeTest(unittest.TestCase):
         """
 
         with self.subTest('values (4, 2), points (3, 2), result (3,)'):
-            self.assertTrue(np.allclose(lattice.orthonormal_interpolate(
+            self.assertTrue(np.allclose(lattice.jnp_orthonormal_interpolate(
                 value_lattice=jnp.array([[0.0, 1.0],
                                          [1.0, 2.0],
                                          [2.0, 3.0],
@@ -161,7 +191,7 @@ class LatticeTest(unittest.TestCase):
                 atol=1e-5))
 
         with self.subTest('values (4, 2), points (3, 2, 2), result (3, 2)'):
-            self.assertTrue(np.allclose(lattice.orthonormal_interpolate(
+            self.assertTrue(np.allclose(lattice.jnp_orthonormal_interpolate(
                 value_lattice=jnp.array([[0.0, 1.0],
                                          [1.0, 2.0],
                                          [2.0, 3.0],
