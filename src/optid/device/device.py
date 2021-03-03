@@ -23,6 +23,9 @@ import jax.numpy as jnp
 
 
 # Opt-ID Imports
+from ..core.utils import \
+    np_readonly
+
 from .beam import \
     Beam
 
@@ -32,12 +35,8 @@ from .candidate import \
 from .slot import \
     Slot
 
-from .genome import \
-    Genome
-
 from .slot_state import \
     SlotState
-from ..core.utils import np_readonly
 
 TVector     = typ.Union[np.ndarray, typ.Sequence[numbers.Real]]
 TCandidates = typ.Dict[str, typ.Dict[str, Candidate]]
