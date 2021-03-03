@@ -33,8 +33,9 @@ def jnp_transform_points(lattice, matrix):
     :return:
         A tensor of points in XZS.
     """
-    lattice = jnp.concatenate([lattice, jnp.ones(lattice.shape[:-1] + (1,), dtype=lattice.dtype)], axis=-1)
-    return (lattice @ matrix)[..., :-1]
+    # lattice = jnp.concatenate([lattice, jnp.ones(lattice.shape[:-1] + (1,), dtype=lattice.dtype)], axis=-1)
+    # return (lattice @ matrix)[..., :-1]
+    return (lattice @ matrix[:3, :3]) + matrix[-1, :3]
 
 
 def transform_points(lattice, matrix):
@@ -69,8 +70,9 @@ def jnp_transform_vectors(lattice, matrix):
     :return:
         A tensor of vectors in XZS.
     """
-    lattice = jnp.concatenate([lattice, jnp.zeros(lattice.shape[:-1] + (1,), dtype=lattice.dtype)], axis=-1)
-    return (lattice @ matrix)[..., :-1]
+    # lattice = jnp.concatenate([lattice, jnp.zeros(lattice.shape[:-1] + (1,), dtype=lattice.dtype)], axis=-1)
+    # return (lattice @ matrix)[..., :-1]
+    return lattice @ matrix[:3, :3]
 
 
 def transform_vectors(lattice, matrix):
@@ -86,8 +88,9 @@ def transform_vectors(lattice, matrix):
     :return:
         A tensor of vectors in XZS.
     """
-    lattice = np.concatenate([lattice, np.zeros(lattice.shape[:-1] + (1,), dtype=lattice.dtype)], axis=-1)
-    return (lattice @ matrix)[..., :-1]
+    # lattice = np.concatenate([lattice, np.zeros(lattice.shape[:-1] + (1,), dtype=lattice.dtype)], axis=-1)
+    # return (lattice @ matrix)[..., :-1]
+    return lattice @ matrix[:3, :3]
 
 
 @jax.jit

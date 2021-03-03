@@ -41,6 +41,11 @@ class AffineTest(unittest.TestCase):
             (jnp.eye(3) * 2),
             atol=1e-5))
 
+        self.assertTrue(np.allclose(
+            affine.jnp_transform_points(jnp.eye(3), affine.jnp_scale(2, 2, 2)),
+            (jnp.eye(3) * 2),
+            atol=1e-5))
+
     def test_transform_vectors(self):
         """
         Test transforming a lattice of vectors.
@@ -51,24 +56,39 @@ class AffineTest(unittest.TestCase):
             (jnp.eye(3) * 2),
             atol=1e-5))
 
+        self.assertTrue(np.allclose(
+            affine.jnp_transform_vectors(jnp.eye(3), affine.jnp_scale(2, 2, 2)),
+            (jnp.eye(3) * 2),
+            atol=1e-5))
+
+    def test_transform_rescaled_vectors(self):
+        """
+        Test transforming a lattice of vectors.
+        """
+
+        self.assertTrue(np.allclose(
+            affine.transform_rescaled_vectors(jnp.eye(3), affine.scale(2, 2, 2)),
+            jnp.eye(3),
+            atol=1e-5))
+
+        self.assertTrue(np.allclose(
+            affine.jnp_transform_rescaled_vectors(jnp.eye(3), affine.jnp_scale(2, 2, 2)),
+            jnp.eye(3),
+            atol=1e-5))
+
     def test_transform_points_translate(self):
         """
         Test translating a point moves it correctly.
         """
 
         self.assertTrue(np.allclose(
-            affine.transform_points(jnp.zeros((3,)), affine.translate(1, 0, 0)),
-            jnp.array([1, 0, 0]),
+            affine.transform_points(jnp.array([1, 2, 3]), affine.translate(2, 3, 4)),
+            jnp.array([3, 5, 7]),
             atol=1e-5))
 
         self.assertTrue(np.allclose(
-            affine.transform_points(jnp.zeros((3,)), affine.translate(0, 1, 0)),
-            jnp.array([0, 1, 0]),
-            atol=1e-5))
-
-        self.assertTrue(np.allclose(
-            affine.transform_points(jnp.zeros((3,)), affine.translate(0, 0, 1)),
-            jnp.array([0, 0, 1]),
+            affine.jnp_transform_points(jnp.array([1, 2, 3]), affine.jnp_translate(2, 3, 4)),
+            jnp.array([3, 5, 7]),
             atol=1e-5))
 
     def test_transform_vectors_translate(self):
@@ -77,17 +97,12 @@ class AffineTest(unittest.TestCase):
         """
 
         self.assertTrue(np.allclose(
-            affine.transform_vectors(jnp.array([1, 2, 3]), affine.translate(1, 0, 0)),
+            affine.transform_vectors(jnp.array([1, 2, 3]), affine.translate(2, 3, 4)),
             jnp.array([1, 2, 3]),
             atol=1e-5))
 
         self.assertTrue(np.allclose(
-            affine.transform_vectors(jnp.array([1, 2, 3]), affine.translate(0, 1, 0)),
-            jnp.array([1, 2, 3]),
-            atol=1e-5))
-
-        self.assertTrue(np.allclose(
-            affine.transform_vectors(jnp.array([1, 2, 3]), affine.translate(0, 0, 1)),
+            affine.jnp_transform_vectors(jnp.array([1, 2, 3]), affine.jnp_translate(2, 3, 4)),
             jnp.array([1, 2, 3]),
             atol=1e-5))
 
@@ -101,6 +116,11 @@ class AffineTest(unittest.TestCase):
             jnp.array([2, 6, 12]),
             atol=1e-5))
 
+        self.assertTrue(np.allclose(
+            affine.jnp_transform_points(jnp.array([1, 2, 3]), affine.jnp_scale(2, 3, 4)),
+            jnp.array([2, 6, 12]),
+            atol=1e-5))
+
     def test_transform_vectors_scale(self):
         """
         Test scaling a vector.
@@ -108,6 +128,11 @@ class AffineTest(unittest.TestCase):
 
         self.assertTrue(np.allclose(
             affine.transform_vectors(jnp.array([1, 2, 3]), affine.scale(2, 3, 4)),
+            jnp.array([2, 6, 12]),
+            atol=1e-5))
+
+        self.assertTrue(np.allclose(
+            affine.jnp_transform_vectors(jnp.array([1, 2, 3]), affine.jnp_scale(2, 3, 4)),
             jnp.array([2, 6, 12]),
             atol=1e-5))
 
@@ -121,6 +146,11 @@ class AffineTest(unittest.TestCase):
             jnp.array([0, 0, -1]),
             atol=1e-5))
 
+        self.assertTrue(np.allclose(
+            affine.jnp_transform_points(jnp.array([0, 0, 1]), affine.jnp_rotate_x(affine.jnp_radians(180))),
+            jnp.array([0, 0, -1]),
+            atol=1e-5))
+
     def test_transform_points_rotate_z(self):
         """
         Test rotating a point around z works.
@@ -128,6 +158,11 @@ class AffineTest(unittest.TestCase):
 
         self.assertTrue(np.allclose(
             affine.transform_points(jnp.array([1, 0, 0]), affine.rotate_z(affine.radians(180))),
+            jnp.array([-1, 0, 0]),
+            atol=1e-5))
+
+        self.assertTrue(np.allclose(
+            affine.jnp_transform_points(jnp.array([1, 0, 0]), affine.jnp_rotate_z(affine.jnp_radians(180))),
             jnp.array([-1, 0, 0]),
             atol=1e-5))
 
@@ -141,6 +176,11 @@ class AffineTest(unittest.TestCase):
             jnp.array([0, -1, 0]),
             atol=1e-5))
 
+        self.assertTrue(np.allclose(
+            affine.jnp_transform_points(jnp.array([0, 1, 0]), affine.jnp_rotate_s(affine.jnp_radians(180))),
+            jnp.array([0, -1, 0]),
+            atol=1e-5))
+
     def test_transform_vectors_rotate_x(self):
         """
         Test rotating a vector around x works.
@@ -148,6 +188,11 @@ class AffineTest(unittest.TestCase):
 
         self.assertTrue(np.allclose(
             affine.transform_vectors(jnp.array([0, 0, 1]), affine.rotate_x(affine.radians(180))),
+            jnp.array([0, 0, -1]),
+            atol=1e-5))
+
+        self.assertTrue(np.allclose(
+            affine.jnp_transform_vectors(jnp.array([0, 0, 1]), affine.jnp_rotate_x(affine.jnp_radians(180))),
             jnp.array([0, 0, -1]),
             atol=1e-5))
 
@@ -161,6 +206,11 @@ class AffineTest(unittest.TestCase):
             jnp.array([-1, 0, 0]),
             atol=1e-5))
 
+        self.assertTrue(np.allclose(
+            affine.jnp_transform_vectors(jnp.array([1, 0, 0]), affine.jnp_rotate_z(affine.jnp_radians(180))),
+            jnp.array([-1, 0, 0]),
+            atol=1e-5))
+
     def test_transform_vectors_rotate_s(self):
         """
         Test rotating a vector around s works.
@@ -168,5 +218,10 @@ class AffineTest(unittest.TestCase):
 
         self.assertTrue(np.allclose(
             affine.transform_vectors(jnp.array([0, 1, 0]), affine.rotate_s(affine.radians(180))),
+            jnp.array([0, -1, 0]),
+            atol=1e-5))
+
+        self.assertTrue(np.allclose(
+            affine.jnp_transform_vectors(jnp.array([0, 1, 0]), affine.jnp_rotate_s(affine.jnp_radians(180))),
             jnp.array([0, -1, 0]),
             atol=1e-5))
