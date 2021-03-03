@@ -64,6 +64,13 @@ class Lattice:
                              f'{shape}')
         self._shape = shape
 
+        # Derive complementary matrices
+        self._unit_to_orthonormal_matrix  = unit_to_orthonormal_matrix(*self.shape)
+        self._orthonormal_to_unit_matrix  = np.linalg.inv(self.unit_to_orthonormal_matrix)
+        self._world_to_unit_matrix        = np.linalg.inv(self.unit_to_world_matrix)
+        self._world_to_orthonormal_matrix = self.world_to_unit_matrix @ self.unit_to_orthonormal_matrix
+        self._orthonormal_to_world_matrix = self.orthonormal_to_unit_matrix @ self.unit_to_world_matrix
+
     @beartype
     def __eq__(self, other) -> bool:
         """
@@ -138,7 +145,7 @@ class Lattice:
         """
         Matrix that maps world space coordinates to unit coordinates centred at origin -0.5 to +0.5.
         """
-        return np.linalg.inv(self.unit_to_world_matrix)
+        return np_readonly(self._world_to_unit_matrix)
 
     @property
     @beartype
@@ -146,7 +153,7 @@ class Lattice:
         """
         Matrix that maps world space coordinates to orthonormal space.
         """
-        return self.world_to_unit_matrix @ self.unit_to_orthonormal_matrix
+        return np_readonly(self._world_to_orthonormal_matrix)
 
     @property
     @beartype
@@ -154,7 +161,7 @@ class Lattice:
         """
         Matrix that maps orthonormal space coordinates to unit coordinates centred at origin -0.5 to +0.5.
         """
-        return np.linalg.inv(self.unit_to_orthonormal_matrix)
+        return np_readonly(self._orthonormal_to_unit_matrix)
 
     @property
     @beartype
@@ -162,7 +169,7 @@ class Lattice:
         """
         Matrix that maps orthonormal space coordinates to world space.
         """
-        return self.orthonormal_to_unit_matrix @ self.unit_to_world_matrix
+        return np_readonly(self._orthonormal_to_world_matrix)
 
     @property
     @beartype
@@ -170,7 +177,7 @@ class Lattice:
         """
         Matrix that maps from unit coordinates centred at origin -0.5 to +0.5 to orthonormal space.
         """
-        return unit_to_orthonormal_matrix(*self.shape)
+        return np_readonly(self._unit_to_orthonormal_matrix)
 
     @property
     @beartype

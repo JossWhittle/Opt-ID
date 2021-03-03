@@ -132,7 +132,10 @@ def jnp_unit_to_orthonormal_matrix(x, z, s):
     :return:
         Affine transformation matrix that converts between coordinate spaces.
     """
-    return jnp_translate(0.5, 0.5, 0.5) @ jnp_scale((x - 1), (z - 1), (s - 1))
+    return jnp_translate(0.5, 0.5, 0.5) @ \
+           jnp_scale(jnp.maximum(1, (x - 1)),
+                     jnp.maximum(1, (z - 1)),
+                     jnp.maximum(1, (s - 1)))
 
 
 def unit_to_orthonormal_matrix(x, z, s):
@@ -152,7 +155,10 @@ def unit_to_orthonormal_matrix(x, z, s):
     :return:
         Affine transformation matrix that converts between coordinate spaces.
     """
-    return translate(0.5, 0.5, 0.5) @ scale((x - 1), (z - 1), (s - 1))
+    return translate(0.5, 0.5, 0.5) @ \
+           scale(np.maximum(1, (x - 1)),
+                 np.maximum(1, (z - 1)),
+                 np.maximum(1, (s - 1)))
 
 
 @jax.jit
