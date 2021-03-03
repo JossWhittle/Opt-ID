@@ -17,8 +17,6 @@
 import jax
 
 # Opt-ID Imports
-from .lattice import \
-    orthonormal_interpolate
 
 
 @jax.jit
@@ -41,33 +39,3 @@ def bfield_from_lookup(lookup, vector):
         the lattice of the lookup table.
     """
     return lookup @ vector
-
-
-@jax.jit
-def bfield_from_interpolated_lookup(lookup, shim, vector):
-    """
-    Compute the bfield from a magnet with the given field vector using a lookup table of field rotation matrices.
-
-    :param lookup:
-        Lattice of 3x3 rotation matrices representing field curvature and scale over a spatial lattice, duplicated
-        over a secondary (leading) lattice representing the lookup table at multiple shim offsets.
-
-        Magnet shape and geometry is baked into the lookup table, but the actual magnetization direction can be applied
-        by a simple matmul of the desired field vector against the matrix at each location on the lattice, yielding
-        a lattice of field 3-vectors.
-
-    :param shim:
-        Shim lattice in unit orthonormal coordinates representing the leading dimensions of the lookup table to
-        interpolate over before the field vector is applied.
-
-        (lookup : (10, 5, 5, 5, 3, 3),     shim : (1,)) -> interp lookup : (5, 5, 5, 3, 3) -> bfield : (5, 5, 5, 3)
-        (lookup : (10, 10, 5, 5, 5, 3, 3), shim : (2,)) -> interp lookup : (5, 5, 5, 3, 3) -> bfield : (5, 5, 5, 3)
-
-    :param vector:
-        Field vector for the magnet whose field we want to solve for.
-
-    :return:
-        Lattice of 3-vectors representing the field direction and magnitude at each spatial location represented on
-        the lattice of the lookup table.
-    """
-    return bfield_from_lookup(orthonormal_interpolate(lookup, shim), vector)
