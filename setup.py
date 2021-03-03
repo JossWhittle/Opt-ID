@@ -42,6 +42,7 @@ setup(
     license='Apache License, Version 2.0',
     zip_safe=False,
     install_requires=[
+        'more_itertools',
         'numpy>=1.18.0',
         'nptyping',
         'beartype',
