@@ -29,8 +29,8 @@ from ..core.utils import \
 from ..core.affine import \
     transform_rescaled_vectors
 
-from ..core.sim import \
-    bfield_from_lattice
+from ..core.bfield import \
+    radia_evaluate_bfield_on_lattice
 
 from ..lattice import \
     Lattice
@@ -173,7 +173,7 @@ class Slot:
             vector = transform_rescaled_vectors(vector, matrix)
 
         rad.UtiDelAll()
-        bfield = bfield_from_lattice(geometry.to_radia(vector), lattice.world_lattice)
+        bfield = radia_evaluate_bfield_on_lattice(geometry.to_radia(vector), lattice.world_lattice)
         rad.UtiDelAll()
         return bfield
 

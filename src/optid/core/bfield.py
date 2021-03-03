@@ -14,9 +14,41 @@
 
 
 # External Imports
+from beartype import beartype
 import jax
+import numpy as np
+import radia as rad
 
 # Opt-ID Imports
+
+
+@beartype
+def radia_evaluate_bfield_on_lattice(
+        radia_object: int,
+        lattice: np.ndarray) -> np.ndarray:
+    """
+    Wraps rad.Fld to take JAX tensors as inputs and return them as outputs.
+
+    :param radia_object:
+        Handle to the radia object to simulate the field of.
+
+    :param lattice:
+        Tensor representing 3-space world coordinates to evaluate the field at.
+
+    :return:
+        Tensor of 3-space field vectors at each location in the lattice.
+    """
+
+    if lattice.shape[-1] != 3:
+        raise ValueError(f'lattice must be a mesh of vectors in 3-space with shape (..., 3) but is : '
+                         f'{lattice.shape}')
+
+    if lattice.dtype != np.float32:
+        raise TypeError(f'lattice must have dtype (float32) but is : '
+                        f'{lattice.dtype}')
+
+    return np.array(rad.Fld(radia_object, 'b', lattice.reshape((-1, 3)).tolist()),
+                    dtype=np.float32).reshape(lattice.shape)
 
 
 @jax.jit

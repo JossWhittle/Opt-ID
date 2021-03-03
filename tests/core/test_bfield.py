@@ -17,10 +17,13 @@
 import unittest
 import numpy as np
 import jax.numpy as jnp
+import radia as rad
 
 # Test imports
 import optid
 from optid.core import bfield, affine
+from optid.lattice import Lattice
+from optid.geometry import Cuboid
 
 # Configure debug logging
 optid.utils.logging.attach_console_logger(remove_existing=True)
@@ -30,6 +33,28 @@ class BfieldTest(unittest.TestCase):
     """
     Test bfield arithmetic functions.
     """
+
+    def test_radia_evaluate_bfield_on_lattice(self):
+
+        geometry = Cuboid(shape=(1, 1, 1))
+
+        lattice = Lattice(affine.scale(2, 2, 2), shape=(2, 2, 2))
+
+        rad.UtiDelAll()
+        field = bfield.radia_evaluate_bfield_on_lattice(geometry.to_radia((0, 1, 0)), lattice.world_lattice)
+        rad.UtiDelAll()
+
+        self.assertEqual(field.shape, lattice.shape + (3,))
+
+        self.assertTrue(np.allclose(field,
+            [[[[ 0.01561037264764309,  -3.8137007440930404e-11,  0.01561037264764309],
+               [ 0.01561037264764309,  -1.2789039792460155e-11, -0.01561037264764309]],
+              [[-0.01561037264764309,   8.665831247034461e-11,  -0.01561037264764309],
+               [-0.01561037264764309,  -1.290060593073239e-11,   0.01561037264764309]]],
+             [[[-0.01561037264764309,   3.647449963589677e-12,   0.01561037264764309],
+               [-0.015610371716320515, -1.3042447677413804e-10, -0.01561037264764309]],
+              [[ 0.01561037264764309,  -1.6599992214150205e-11, -0.01561037264764309],
+               [ 0.015610371716320515, -8.610688551069501e-11,   0.01561037264764309]]]], atol=1e-5))
 
     def test_bfield_from_lookup(self):
         """
