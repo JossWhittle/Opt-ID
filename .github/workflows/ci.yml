@@ -68,11 +68,46 @@ jobs:
           echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
           docker push ${{ secrets.DOCKER_USERNAME }}/$DOCKER_REPO_TAG
 
+  test_env:
+    name: Executes Tests on Docker Env Image
+    runs-on: ubuntu-20.04
+
+    needs: build_env
+
+    steps:
+      # Checks-out repository under $(pwd)
+      - uses: actions/checkout@v2
+
+      # Execute tests
+      - name: Pull existing Docker image
+        run: docker pull ${{ secrets.DOCKER_USERNAME }}/${{ needs.build_env.outputs.docker_env_repo_tag }}
+
+      - name: Start container
+        run: |
+          docker run -itd --name env -v $(pwd):/tmp/repo/ -w /tmp/repo/ ${{ secrets.DOCKER_USERNAME }}/${{ needs.build_env.outputs.docker_env_repo_tag }}
+
+      - name: Install repo within container
+        run: |
+          docker exec env pip install -e .
+
+      - name: Execute tests within container
+        run: |
+          docker exec env python -m pytest --cov=src tests/ --cov-report xml:coverage.xml --cov-report term-missing
+
+      - name: Submit coverage to Codecov
+        run: |
+          bash <(curl -s https://codecov.io/bash) -t ${{ secrets.CODECOV_TOKEN }} -f coverage.xml
+
+      - name: Halt container
+        run: docker stop env
+
   build_image:
     name: Build Docker Image
     runs-on: ubuntu-20.04
 
-    needs: build_env
+    needs:
+      - build_env
+      - test_env
 
     outputs:
       docker_repo_tag: ${{ steps.output_docker_repo_tag.outputs.docker_repo_tag }}
@@ -99,36 +134,18 @@ jobs:
         run: |
           docker build --build-arg BASE="${{ secrets.DOCKER_USERNAME }}/${{ needs.build_env.outputs.docker_env_repo_tag }}" --pull --cache-from ${{ secrets.DOCKER_USERNAME }}/$DOCKER_REPO_TAG --tag ${{ secrets.DOCKER_USERNAME }}/$DOCKER_REPO_TAG -f Dockerfile .
 
+      - name: Start container
+        run: |
+          docker run -itd --name env ${{ secrets.DOCKER_USERNAME }}/$DOCKER_REPO_TAG
+
+      - name: Execute tests within container
+        run: |
+          docker exec env python -m pytest --cov=/usr/local/Opt-ID/src /usr/local/Opt-ID/tests/ --cov-report term-missing
+
+      - name: Halt container
+        run: docker stop env
+
       - name: Push Docker image to Dockerhub
         run: |
           echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
           docker push ${{ secrets.DOCKER_USERNAME }}/$DOCKER_REPO_TAG
-
-  test_image:
-    name: Executes Tests on Docker Image
-    runs-on: ubuntu-20.04
-
-    needs: build_image
-
-    steps:
-      # Checks-out repository under $(pwd)
-      - uses: actions/checkout@v2
-
-      # Execute tests
-      - name: Pull existing Docker image
-        run: docker pull ${{ secrets.DOCKER_USERNAME }}/${{ needs.build_image.outputs.docker_repo_tag }}
-
-      - name: Start container
-        run: |
-          docker run -itd --name env -v $(pwd):/tmp/repo/ -w /tmp/repo/ ${{ secrets.DOCKER_USERNAME }}/${{ needs.build_image.outputs.docker_repo_tag }}
-
-      - name: Execute tests within container
-        run: |
-          docker exec env python -m pytest --cov=src tests/ --cov-report xml:coverage.xml --cov-report term-missing
-
-      - name: Submit coverage to Codecov
-        run: |
-          bash <(curl -s https://codecov.io/bash) -t ${{ secrets.CODECOV_TOKEN }} -f coverage.xml
-
-      - name: Halt container
-        run: docker stop env
