@@ -26,23 +26,11 @@ import radia as rad
 from ..core.utils import \
     np_readonly
 
-from ..core.affine import \
-    transform_rescaled_vectors
-
-from ..core.bfield import \
-    radia_evaluate_bfield_on_lattice
-
-from ..lattice import \
-    Lattice
-
 from .slot_type import \
     SlotType
 
 from .candidate import \
     Candidate
-
-from .slot_state import \
-    SlotState
 
 from ..geometry import \
     Geometry
@@ -114,11 +102,8 @@ class Slot:
 
         self._slot_matrix = slot_matrix
 
-        self._vector = transform_rescaled_vectors(slot_type.magnet.vector,
-                                                  self.world_matrix(gap=0, phase=0, flip=0))
-
     @beartype
-    def world_matrix(self, gap: numbers.Real, phase: numbers.Real, flip: int = 0) -> np.ndarray:
+    def world_matrix(self, gap: numbers.Real, phase: numbers.Real) -> np.ndarray:
         """
         Calculate the affine matrix that places this magnet slot into the world in the correct major
         orientation except flip state.
@@ -129,83 +114,14 @@ class Slot:
         :param phase:
             Device phase value to shear the beams by on the S axis.
 
-        :param flip:
-            Flip matrix to use.
-
         :return:
             Affine matrix representing the major position of the slot in world space.
         """
 
-        if (flip < 0) or (flip >= self.slot_type.magnet.nflip):
-            raise ValueError(f'flip must be in range [0, {self.slot_type.magnet.nflip}) but is : '
-                             f'{flip}')
-
-        return self.slot_type.magnet.flip_matrices[flip] @ \
-               self.slot_type.direction_matrix @ \
+        return self.slot_type.direction_matrix @ \
                self.slot_type.anchor_matrix @ \
                self.slot_matrix @ \
                self.beam.world_matrix(gap=gap, phase=phase)
-
-    @beartype
-    def bfield_from_vector(self,
-            lattice: Lattice,
-            vector: TVector,
-            gap: numbers.Real,
-            phase: numbers.Real,
-            flip: int = 0,
-            world_vector: bool = True) -> jnp.ndarray:
-
-        if not isinstance(vector, np.ndarray):
-            vector = np.array(vector, dtype=np.float32)
-
-        if vector.shape != (3,):
-            raise ValueError(f'vector must be shape (3,) but is : '
-                             f'{vector.shape}')
-
-        if vector.dtype != np.float32:
-            raise TypeError(f'vector must have dtype (float32) but is : '
-                            f'{vector.dtype}')
-
-        matrix   = self.world_matrix(gap=gap, phase=phase, flip=flip)
-        geometry = self.geometry.transform(matrix)
-
-        if not world_vector:
-            vector = transform_rescaled_vectors(vector, matrix)
-
-        rad.UtiDelAll()
-        bfield = radia_evaluate_bfield_on_lattice(geometry.to_radia(vector), lattice.world_lattice)
-        rad.UtiDelAll()
-        return bfield
-
-    @beartype
-    def bfield(self,
-            lattice: Lattice,
-            gap: numbers.Real,
-            phase: numbers.Real,
-            flip: int = 0) -> jnp.ndarray:
-
-        return self.bfield_from_vector(lattice=lattice, gap=gap, phase=phase, flip=flip,
-                                       vector=self.slot_type.magnet.vector, world_vector=False)
-
-    @beartype
-    def bfield_from_state(self,
-            lattice: Lattice,
-            gap: numbers.Real,
-            phase: numbers.Real,
-            slot_state: SlotState) -> jnp.ndarray:
-
-        if slot_state.slot != self.qualified_name:
-            raise ValueError(f'slot_state must be assigned to this slot but is : '
-                             f'slot={self.qualified_name} state={slot_state.slot}')
-
-        if slot_state.candidate not in self.candidates:
-            raise ValueError(f'slot_state must be assigned to a valid candidate for this slot but is : '
-                             f'{slot_state.candidate}')
-
-        candidate = self.candidates[slot_state.candidate]
-
-        return self.bfield_from_vector(lattice=lattice, gap=gap, phase=phase, flip=slot_state.flip,
-                                       vector=candidate.vector, world_vector=False)
 
     @property
     def beam(self):
@@ -243,16 +159,6 @@ class Slot:
 
     @property
     @beartype
-    def candidates(self) -> TCandidates:
-        return self.slot_type.magnet.candidates
-
-    @property
-    @beartype
     def geometry(self) -> Geometry:
-        return self.slot_type.magnet.geometry
-
-    @property
-    @beartype
-    def vector(self) -> np.ndarray:
-        return np_readonly(self._vector)
+        return self.slot_type.geometry
 

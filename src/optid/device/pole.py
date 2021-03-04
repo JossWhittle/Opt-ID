@@ -14,15 +14,9 @@
 
 
 # Opt-ID Imports
-from .candidate import Candidate
-from .slot_state import SlotState
-from .element import Element
-from .magnet import Magnet
-from .pole import Pole
-from .slot_type import SlotType
-from .slot import Slot
-from .magnet_slot import MagnetSlot
-from .beam import Beam
-from .device import Device
-from .apple_device import APPLEDevice
-from .hybrid_device import HybridDevice
+from .element import \
+    Element
+
+
+class Pole(Element):
+    pass

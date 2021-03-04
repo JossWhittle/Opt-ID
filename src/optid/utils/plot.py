@@ -32,7 +32,7 @@ from ..core.affine import \
     transform_points, transform_rescaled_vectors
 
 from ..device import \
-    Device, Beam
+    Device, MagnetSlot
 
 
 TLimit = typ.Optional[typ.Tuple[numbers.Real, numbers.Real, int]]
@@ -111,7 +111,11 @@ def plot_device(
                 color = colors[color_key]
             else:
                 color = colors[color_key] = cmap(len(colors))
-                legend += [mpatches.Patch(color=color, label=f'{slot.slot_type.qualified_name} = {slot.vector}')]
+
+                label = f'{slot.slot_type.qualified_name} = {slot.vector}' \
+                    if isinstance(slot, MagnetSlot) else slot.slot_type.qualified_name
+
+                legend += [mpatches.Patch(color=color, label=label)]
 
             geometry = slot.geometry.transform(slot.world_matrix(*args, **kargs))
 
@@ -147,6 +151,9 @@ def plot_device_direction_matrices(
             continue
 
         for idx, slot in enumerate(beam.slots):
+
+            if not isinstance(slot, MagnetSlot):
+                continue
 
             matrix = slot.world_matrix(*args, **kargs)
             origin = transform_points(VECTOR_ZERO, matrix)

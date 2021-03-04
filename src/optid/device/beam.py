@@ -33,8 +33,20 @@ from .slot import \
 from .slot_type import \
     SlotType
 
+from .magnet_slot import \
+    MagnetSlot
+
+from .pole_slot import \
+    PoleSlot
+
+from .magnet import \
+    Magnet
+
+from .pole import \
+    Pole
+
 TVector        = typ.Union[np.ndarray, typ.Sequence[numbers.Real]]
-TPeriodLengths = typ.Dict[str, float]
+TPeriodLengths = typ.Dict[str, numbers.Real]
 
 
 class Beam:
@@ -180,8 +192,16 @@ class Beam:
 
         name = name if (name is not None) else f'{self.nslots:06d}'
 
-        slot = Slot(index=self.nslots, beam=self, name=name, period=period,
-                    slot_type=slot_type, slot_matrix=slot_matrix)
+        if isinstance(slot_type.element, Magnet):
+            slot = MagnetSlot(index=self.nslots, beam=self, name=name, period=period,
+                              slot_type=slot_type, slot_matrix=slot_matrix)
+        elif isinstance(slot_type.element, Pole):
+            slot = PoleSlot(index=self.nslots, beam=self, name=name, period=period,
+                            slot_type=slot_type, slot_matrix=slot_matrix)
+        else:
+            raise TypeError(f'slot_type.element must be type Magnet or Pole but is : '
+                            f'{type(slot_type.element)}')
+
         self._slots.append(slot)
 
         if slot.name in self._slots_by_name:
@@ -235,7 +255,7 @@ class Beam:
 
     @property
     @beartype
-    def length(self) -> float:
+    def length(self) -> numbers.Real:
         return float(self._smax - self._smin)
 
     @property

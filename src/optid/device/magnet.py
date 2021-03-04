@@ -31,6 +31,9 @@ from ..geometry import \
 from .candidate import \
     Candidate
 
+from .element import \
+    Element
+
 
 TVector          = typ.Union[np.ndarray, typ.Sequence[numbers.Real]]
 TCandidatesParam = typ.Union[str, pd.DataFrame, typ.Sequence[Candidate]]
@@ -39,7 +42,7 @@ TFlipMatrices    = typ.Union[np.ndarray, typ.Sequence[np.ndarray]]
 TMaterial        = typ.Callable[[int], int]
 
 
-class Magnet:
+class Magnet(Element):
 
     @beartype
     def __init__(self,
@@ -50,12 +53,7 @@ class Magnet:
             candidates: TCandidatesParam,
             material: typ.Optional[TMaterial] = None):
 
-        if len(name) == 0:
-            raise ValueError(f'name must be a non-empty string')
-
-        self._name = name
-
-        self._geometry = geometry
+        super().__init__(name=name, geometry=geometry, material=material)
 
         if not isinstance(vector, np.ndarray):
             vector = np.array(vector, dtype=np.float32)
@@ -101,27 +99,10 @@ class Magnet:
 
         self._candidates = { candidate.name: candidate for candidate in candidates }
 
-        self._material = material if (material is not None) else (lambda obj: obj)
-
-    @property
-    @beartype
-    def name(self) -> str:
-        return str(self._name)
-
-    @property
-    @beartype
-    def geometry(self) -> Geometry:
-        return self._geometry
-
     @property
     @beartype
     def vector(self) -> np.ndarray:
         return np_readonly(self._vector)
-
-    @property
-    @beartype
-    def material(self) -> TMaterial:
-        return self._material
 
     @property
     @beartype

@@ -27,12 +27,16 @@ from ..core.utils import \
 from ..core.affine import \
     translate
 
-from .magnet import \
-    Magnet
+from .element import \
+    Element
+
+from optid.geometry import \
+    Geometry
 
 
 TAnchor = typ.Union[np.ndarray, typ.Sequence[numbers.Real]]
 TBounds = typ.Tuple[np.ndarray, np.ndarray]
+TMaterial = typ.Callable[[int], int]
 
 
 class SlotType:
@@ -40,7 +44,7 @@ class SlotType:
     @beartype
     def __init__(self,
                  name: str,
-                 magnet: Magnet,
+                 element: Element,
                  anchor: TAnchor,
                  direction_matrix: np.ndarray):
 
@@ -49,7 +53,7 @@ class SlotType:
 
         self._name = name
 
-        self._magnet = magnet
+        self._element = element
 
         if not isinstance(anchor, np.ndarray):
             anchor = np.array(anchor, dtype=np.float32)
@@ -74,12 +78,12 @@ class SlotType:
 
         self._direction_matrix = direction_matrix
 
-        bmin, bmax = magnet.geometry.transform(direction_matrix).bounds
+        bmin, bmax = element.geometry.transform(direction_matrix).bounds
         anchor_matrix = translate(*(-((bmin * (1.0 - anchor)) + (bmax * anchor))))
 
         self._anchor_matrix = anchor_matrix
 
-        self._bounds = magnet.geometry.transform(direction_matrix @ anchor_matrix).bounds
+        self._bounds = element.geometry.transform(direction_matrix @ anchor_matrix).bounds
 
     @property
     @beartype
@@ -89,12 +93,22 @@ class SlotType:
     @property
     @beartype
     def qualified_name(self) -> str:
-        return f'{self.name}::{self.magnet.name}'
+        return f'{self.name}::{self.element.name}'
 
     @property
     @beartype
-    def magnet(self) -> Magnet:
-        return self._magnet
+    def geometry(self) -> Geometry:
+        return self.element.geometry
+
+    @property
+    @beartype
+    def material(self) -> TMaterial:
+        return self.element.material
+
+    @property
+    @beartype
+    def element(self) -> Element:
+        return self._element
 
     @property
     @beartype
