@@ -61,7 +61,7 @@ jobs:
 
       - name: Build Docker image
         run: |
-          docker build --pull --cache-from ${{ secrets.DOCKER_USERNAME }}/$DOCKER_REPO_TAG --tag ${{ secrets.DOCKER_USERNAME }}/$DOCKER_REPO_TAG - < env.Dockerfile
+          docker build --pull --cache-from ${{ secrets.DOCKER_USERNAME }}/$DOCKER_REPO_TAG --tag ${{ secrets.DOCKER_USERNAME }}/$DOCKER_REPO_TAG -f env.Dockerfile .
 
       - name: Push Docker image to Dockerhub
         run: |
@@ -97,7 +97,7 @@ jobs:
 
       - name: Build Docker image
         run: |
-          docker build --build-arg BASE="${{ secrets.DOCKER_USERNAME }}/${{ needs.build_env.outputs.docker_env_repo_tag }}" --pull --cache-from ${{ secrets.DOCKER_USERNAME }}/$DOCKER_REPO_TAG --tag ${{ secrets.DOCKER_USERNAME }}/$DOCKER_REPO_TAG - < Dockerfile
+          docker build --build-arg BASE="${{ secrets.DOCKER_USERNAME }}/${{ needs.build_env.outputs.docker_env_repo_tag }}" --pull --cache-from ${{ secrets.DOCKER_USERNAME }}/$DOCKER_REPO_TAG --tag ${{ secrets.DOCKER_USERNAME }}/$DOCKER_REPO_TAG -f Dockerfile .
 
       - name: Push Docker image to Dockerhub
         run: |
