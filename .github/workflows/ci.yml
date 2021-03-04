@@ -47,7 +47,7 @@ jobs:
         if: endsWith(github.ref, '/master')
         run: echo "DOCKER_REPO_TAG=opt-id:env" >> $GITHUB_ENV
       - name: Set env to branch
-        if: !endsWith(github.ref, '/master')
+        if: (!endsWith(github.ref, '/master'))
         run: echo "DOCKER_REPO_TAG=opt-id:env-${GITHUB_REF##*/}" >> $GITHUB_ENV
       - id: output_docker_env_repo_tag
         run: echo "::set-output name=docker_env_repo_tag::$DOCKER_REPO_TAG"
@@ -84,7 +84,7 @@ jobs:
         if: endsWith(github.ref, '/master')
         run: echo "DOCKER_REPO_TAG=opt-id:latest" >> $GITHUB_ENV
       - name: Set env to branch
-        if: !endsWith(github.ref, '/master')
+        if: (!endsWith(github.ref, '/master'))
         run: echo "DOCKER_REPO_TAG=opt-id:${GITHUB_REF##*/}" >> $GITHUB_ENV
       - id: output_docker_repo_tag
         run: echo "::set-output name=docker_repo_tag::$DOCKER_REPO_TAG"
