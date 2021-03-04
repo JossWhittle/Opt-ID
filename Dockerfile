@@ -12,7 +12,7 @@
 # either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 
-FROM ${BASE}
+FROM $BASE
 
 ADD . /usr/local/Opt-ID
 WORKDIR /usr/local/Opt-ID
