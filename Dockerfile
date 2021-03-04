@@ -15,7 +15,7 @@
 ARG BASE
 FROM $BASE
 
-ADD . /usr/local/Opt-ID
+COPY ./ /usr/local/Opt-ID
 WORKDIR /usr/local/Opt-ID
 RUN pip3 install -e . && \
     rm -rf /tmp/* && \
