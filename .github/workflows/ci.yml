@@ -52,21 +52,24 @@ jobs:
       - id: output_docker_env_repo_tag
         run: echo "::set-output name=docker_env_repo_tag::$DOCKER_REPO_TAG"
 
+      - name: Set image name
+        run: echo "DOCKER_ENV_REPO_NAME=${{ secrets.DOCKER_USERNAME }}/$DOCKER_REPO_TAG" >> $GITHUB_ENV
+
       # Checks-out repository under $(pwd)
       - uses: actions/checkout@v2
 
       # Build Docker image, push image to Dockerhub on success
       - name: Pull existing Docker image
-        run: docker pull ${{ secrets.DOCKER_USERNAME }}/$DOCKER_REPO_TAG || true
+        run: docker pull $DOCKER_ENV_REPO_NAME || true
 
       - name: Build Docker image
         run: |
-          docker build --pull --cache-from ${{ secrets.DOCKER_USERNAME }}/$DOCKER_REPO_TAG --tag ${{ secrets.DOCKER_USERNAME }}/$DOCKER_REPO_TAG -f env.Dockerfile .
+          docker build --pull --cache-from $DOCKER_ENV_REPO_NAME --tag $DOCKER_ENV_REPO_NAME -f env.Dockerfile .
 
       - name: Push Docker image to Dockerhub
         run: |
           echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
-          docker push ${{ secrets.DOCKER_USERNAME }}/$DOCKER_REPO_TAG
+          docker push $DOCKER_ENV_REPO_NAME
 
   test_env:
     name: Executes Tests on Docker Env Image
@@ -75,16 +78,21 @@ jobs:
     needs: build_env
 
     steps:
+
+      - name: Set image name
+        run: |
+          echo "DOCKER_ENV_REPO_NAME=${{ secrets.DOCKER_USERNAME }}/${{ needs.build_env.outputs.docker_env_repo_tag }}" >> $GITHUB_ENV
+
       # Checks-out repository under $(pwd)
       - uses: actions/checkout@v2
 
       # Execute tests
       - name: Pull existing Docker image
-        run: docker pull ${{ secrets.DOCKER_USERNAME }}/${{ needs.build_env.outputs.docker_env_repo_tag }}
+        run: docker pull $DOCKER_ENV_REPO_NAME
 
       - name: Start container
         run: |
-          docker run -itd --name env -v $(pwd):/tmp/repo/ -w /tmp/repo/ ${{ secrets.DOCKER_USERNAME }}/${{ needs.build_env.outputs.docker_env_repo_tag }}
+          docker run -itd --name env -v $(pwd):/tmp/repo/ -w /tmp/repo/ $DOCKER_ENV_REPO_NAME
 
       - name: Install repo within container
         run: |
@@ -123,20 +131,25 @@ jobs:
       - id: output_docker_repo_tag
         run: echo "::set-output name=docker_repo_tag::$DOCKER_REPO_TAG"
 
+      - name: Set image names
+        run: |
+          echo "DOCKER_ENV_REPO_NAME=${{ secrets.DOCKER_USERNAME }}/${{ needs.build_env.outputs.docker_env_repo_tag }}" >> $GITHUB_ENV
+          echo "DOCKER_REPO_NAME=${{ secrets.DOCKER_USERNAME }}/$DOCKER_REPO_TAG" >> $GITHUB_ENV
+
       # Checks-out repository under $(pwd)
       - uses: actions/checkout@v2
 
       # Build Docker image, push image to Dockerhub on success
       - name: Pull existing Docker image
-        run: docker pull ${{ secrets.DOCKER_USERNAME }}/$DOCKER_REPO_TAG || true
+        run: docker pull $DOCKER_REPO_NAME || true
 
       - name: Build Docker image
         run: |
-          docker build --build-arg BASE="${{ secrets.DOCKER_USERNAME }}/${{ needs.build_env.outputs.docker_env_repo_tag }}" --pull --cache-from ${{ secrets.DOCKER_USERNAME }}/$DOCKER_REPO_TAG --tag ${{ secrets.DOCKER_USERNAME }}/$DOCKER_REPO_TAG -f Dockerfile .
+          docker build --build-arg BASE=$DOCKER_ENV_REPO_NAME --pull --cache-from $DOCKER_REPO_NAME --tag $DOCKER_REPO_NAME -f Dockerfile .
 
       - name: Start container
         run: |
-          docker run -itd --name env ${{ secrets.DOCKER_USERNAME }}/$DOCKER_REPO_TAG
+          docker run -itd --name env $DOCKER_REPO_NAME
 
       - name: Execute tests within container
         run: |
@@ -148,4 +161,4 @@ jobs:
       - name: Push Docker image to Dockerhub
         run: |
           echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
-          docker push ${{ secrets.DOCKER_USERNAME }}/$DOCKER_REPO_TAG
+          docker push $DOCKER_REPO_NAME
