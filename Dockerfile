@@ -15,12 +15,8 @@
 ARG BASE
 FROM $BASE
 
-COPY ./ /usr/local/Opt-ID
+COPY ./* /usr/local/Opt-ID
 WORKDIR /usr/local/Opt-ID
-
-RUN ls -la /usr/local/Opt-ID
-
-RUN pwd
 
 RUN ls -la .
 
