@@ -17,6 +17,13 @@ FROM $BASE
 
 COPY ./ /usr/local/Opt-ID
 WORKDIR /usr/local/Opt-ID
+
+RUN ls -la /usr/local/Opt-ID
+
+RUN pwd
+
+RUN ls -la .
+
 RUN pip3 install -e . && \
     rm -rf /tmp/* && \
     find /usr/lib/python3.*/ -name 'tests' -exec rm -rf '{}' +
