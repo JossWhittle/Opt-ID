@@ -60,9 +60,8 @@ jobs:
         run: docker pull ${{ secrets.DOCKER_USERNAME }}/$DOCKER_REPO_TAG || true
 
       - name: Build Docker image
-        run: >
-          docker build --pull --cache-from ${{ secrets.DOCKER_USERNAME }}/$DOCKER_REPO_TAG
-                              --tag ${{ secrets.DOCKER_USERNAME }}/$DOCKER_REPO_TAG - < env.Dockerfile
+        run: |
+          docker build --pull --cache-from ${{ secrets.DOCKER_USERNAME }}/$DOCKER_REPO_TAG --tag ${{ secrets.DOCKER_USERNAME }}/$DOCKER_REPO_TAG - < env.Dockerfile
 
       - name: Push Docker image to Dockerhub
         run: |
@@ -97,10 +96,8 @@ jobs:
         run: docker pull ${{ secrets.DOCKER_USERNAME }}/$DOCKER_REPO_TAG || true
 
       - name: Build Docker image
-        run: >
-          docker build --pull --build-arg BASE=${{ secrets.DOCKER_USERNAME }}/${{ needs.build_env.outputs.docker_env_repo_tag }}
-                              --cache-from ${{ secrets.DOCKER_USERNAME }}/$DOCKER_REPO_TAG
-                              --tag ${{ secrets.DOCKER_USERNAME }}/$DOCKER_REPO_TAG - < Dockerfile
+        run: |
+          docker build --pull --build-arg BASE=${{ secrets.DOCKER_USERNAME }}/${{ needs.build_env.outputs.docker_env_repo_tag }} --cache-from ${{ secrets.DOCKER_USERNAME }}/$DOCKER_REPO_TAG --tag ${{ secrets.DOCKER_USERNAME }}/$DOCKER_REPO_TAG - < Dockerfile
 
       - name: Push Docker image to Dockerhub
         run: |
@@ -122,9 +119,8 @@ jobs:
         run: docker pull ${{ secrets.DOCKER_USERNAME }}/${{ needs.build_image.outputs.docker_repo_tag }}
 
       - name: Start container
-        run: >
-          docker run -itd --name env -v $(pwd):/tmp/repo/ -w /tmp/repo/
-                     ${{ secrets.DOCKER_USERNAME }}/${{ needs.build_image.outputs.docker_repo_tag }}
+        run: |
+          docker run -itd --name env -v $(pwd):/tmp/repo/ -w /tmp/repo/ ${{ secrets.DOCKER_USERNAME }}/${{ needs.build_image.outputs.docker_repo_tag }}
 
       - name: Execute tests within container
         run: |
