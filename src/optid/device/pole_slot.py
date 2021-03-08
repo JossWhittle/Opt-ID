@@ -67,3 +67,8 @@ class PoleSlot(Slot):
 
         super().__init__(beam=beam, index=index, name=name, period=period,
                          slot_type=slot_type, slot_matrix=slot_matrix)
+
+    @property
+    @beartype
+    def pole(self) -> Pole:
+        return self.slot_type.element

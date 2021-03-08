@@ -47,8 +47,8 @@ from .magnet import \
 from .candidate import \
     Candidate
 
-from .slot_state import \
-    SlotState
+from .state import \
+    State
 
 
 TCandidates = typ.Dict[str, Candidate]
@@ -114,11 +114,7 @@ class MagnetSlot(Slot):
             Affine matrix representing the major position of the slot in world space.
         """
 
-        if (flip < 0) or (flip >= self.magnet.nflip):
-            raise ValueError(f'flip must be in range [0, {self.magnet.nflip}) but is : '
-                             f'{flip}')
-
-        return self.magnet.flip_matrices[flip] @ \
+        return self.magnet.flip_matrix(flip) @ \
                super().world_matrix(gap=gap, phase=phase)
 
     @beartype
@@ -164,10 +160,10 @@ class MagnetSlot(Slot):
 
     @beartype
     def bfield_from_state(self,
-            lattice: Lattice,
-            gap: numbers.Real,
-            phase: numbers.Real,
-            slot_state: SlotState) -> jnp.ndarray:
+                          lattice: Lattice,
+                          gap: numbers.Real,
+                          phase: numbers.Real,
+                          slot_state: State) -> jnp.ndarray:
 
         if slot_state.slot != self.qualified_name:
             raise ValueError(f'slot_state must be assigned to this slot but is : '

@@ -15,7 +15,7 @@
 
 # Opt-ID Imports
 from .candidate import Candidate
-from .slot_state import SlotState
+from .state import State
 from .element import Element
 from .magnet import Magnet
 from .pole import Pole

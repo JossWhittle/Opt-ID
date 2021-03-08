@@ -40,88 +40,96 @@ class HybridDevice(Device):
 
     @beartype
     def __init__(self,
-            name: str,
-            nperiods: int,
-            hh_magnet: Magnet,
-            he_magnet: Magnet,
-            ht_magnet: Magnet,
-            pp_pole: Pole,
-            pt_pole: Pole,
-            interstice: numbers.Real = 0.0625,
-            symmetric: bool = True,
-            world_matrix: np.ndarray = MATRIX_IDENTITY):
+                 name: str,
+                 nperiod: int,
+                 hh: Magnet,
+                 he: Magnet,
+                 ht: Magnet,
+                 pp: Pole,
+                 pt: Pole,
+                 interstice: numbers.Real = 0.0625,
+                 symmetric: bool = True,
+                 world_matrix: np.ndarray = MATRIX_IDENTITY):
 
         super().__init__(name=name, world_matrix=world_matrix)
 
-        if hh_magnet.name != 'HH':
-            raise ValueError(f'hh_magnet.name must be HH but is : '
-                             f'{hh_magnet.name}')
+        if hh.name != 'HH':
+            raise ValueError(f'hh.name must be HH but is : '
+                             f'{hh.name}')
 
-        if he_magnet.name != 'HE':
-            raise ValueError(f'he_magnet.name must be HE but is : '
-                             f'{he_magnet.name}')
+        if he.name != 'HE':
+            raise ValueError(f'he.name must be HE but is : '
+                             f'{he.name}')
 
-        if ht_magnet.name != 'HT':
-            raise ValueError(f'ht_magnet.name must be HT but is : '
-                             f'{ht_magnet.name}')
+        if ht.name != 'HT':
+            raise ValueError(f'ht.name must be HT but is : '
+                             f'{ht.name}')
 
-        if pp_pole.name != 'PP':
-            raise ValueError(f'pp_pole.name must be PP but is : '
-                             f'{pp_pole.name}')
+        if pp.name != 'PP':
+            raise ValueError(f'pp.name must be PP but is : '
+                             f'{pp.name}')
 
-        if pt_pole.name != 'PT':
-            raise ValueError(f'pt_pole.name must be PT but is : '
-                             f'{pt_pole.name}')
+        if pt.name != 'PT':
+            raise ValueError(f'pt.name must be PT but is : '
+                             f'{pt.name}')
 
-        hh_top_fwd = SlotType(name='+S', element=hh_magnet, anchor=(0.5, 0, 0.5), direction_matrix=MATRIX_IDENTITY)
-        hh_top_bwd = SlotType(name='-S', element=hh_magnet, anchor=(0.5, 0, 0.5), direction_matrix=MATRIX_ROTX_180)
-        he_top_fwd = SlotType(name='+S', element=he_magnet, anchor=(0.5, 0, 0.5), direction_matrix=MATRIX_IDENTITY)
-        he_top_bwd = SlotType(name='-S', element=he_magnet, anchor=(0.5, 0, 0.5), direction_matrix=MATRIX_ROTX_180)
-        ht_top_fwd = SlotType(name='+S', element=ht_magnet, anchor=(0.5, 0, 0.5), direction_matrix=MATRIX_IDENTITY)
-        ht_top_bwd = SlotType(name='-S', element=ht_magnet, anchor=(0.5, 0, 0.5), direction_matrix=MATRIX_ROTX_180)
-        pp_top     = SlotType(name='PP', element=pp_pole,   anchor=(0.5, 0, 0.5), direction_matrix=MATRIX_IDENTITY)
-        pt_top     = SlotType(name='PT', element=pt_pole,   anchor=(0.5, 0, 0.5), direction_matrix=MATRIX_IDENTITY)
+        if nperiod < 0:
+            raise ValueError(f'nperiod must be >= 0 but is : '
+                             f'{nperiod}')
 
-        hh_btm_fwd = SlotType(name='+S', element=hh_magnet, anchor=(0.5, 1, 0.5), direction_matrix=MATRIX_IDENTITY)
-        hh_btm_bwd = SlotType(name='-S', element=hh_magnet, anchor=(0.5, 1, 0.5), direction_matrix=MATRIX_ROTX_180)
-        he_btm_fwd = SlotType(name='+S', element=he_magnet, anchor=(0.5, 1, 0.5), direction_matrix=MATRIX_IDENTITY)
-        he_btm_bwd = SlotType(name='-S', element=he_magnet, anchor=(0.5, 1, 0.5), direction_matrix=MATRIX_ROTX_180)
-        ht_btm_fwd = SlotType(name='+S', element=ht_magnet, anchor=(0.5, 1, 0.5), direction_matrix=MATRIX_IDENTITY)
-        ht_btm_bwd = SlotType(name='-S', element=ht_magnet, anchor=(0.5, 1, 0.5), direction_matrix=MATRIX_ROTX_180)
-        pp_btm     = SlotType(name='PP', element=pp_pole,   anchor=(0.5, 1, 0.5), direction_matrix=MATRIX_IDENTITY)
-        pt_btm     = SlotType(name='PT', element=pt_pole,   anchor=(0.5, 1, 0.5), direction_matrix=MATRIX_IDENTITY)
+        if interstice < 0:
+            raise ValueError(f'interstice must be >= 0 but is : '
+                             f'{interstice}')
+
+        hh_top_f = SlotType(name='+S', element=hh, anchor=(0.5, 0, 0.5), direction_matrix=MATRIX_IDENTITY)
+        hh_top_b = SlotType(name='-S', element=hh, anchor=(0.5, 0, 0.5), direction_matrix=MATRIX_ROTX_180)
+        he_top_f = SlotType(name='+S', element=he, anchor=(0.5, 0, 0.5), direction_matrix=MATRIX_IDENTITY)
+        he_top_b = SlotType(name='-S', element=he, anchor=(0.5, 0, 0.5), direction_matrix=MATRIX_ROTX_180)
+        ht_top_f = SlotType(name='+S', element=ht, anchor=(0.5, 0, 0.5), direction_matrix=MATRIX_IDENTITY)
+        ht_top_b = SlotType(name='-S', element=ht, anchor=(0.5, 0, 0.5), direction_matrix=MATRIX_ROTX_180)
+        pp_top   = SlotType(name='PP', element=pp, anchor=(0.5, 0, 0.5), direction_matrix=MATRIX_IDENTITY)
+        pt_top   = SlotType(name='PT', element=pt, anchor=(0.5, 0, 0.5), direction_matrix=MATRIX_IDENTITY)
+
+        hh_btm_f = SlotType(name='+S', element=hh, anchor=(0.5, 1, 0.5), direction_matrix=MATRIX_IDENTITY)
+        hh_btm_b = SlotType(name='-S', element=hh, anchor=(0.5, 1, 0.5), direction_matrix=MATRIX_ROTX_180)
+        he_btm_f = SlotType(name='+S', element=he, anchor=(0.5, 1, 0.5), direction_matrix=MATRIX_IDENTITY)
+        he_btm_b = SlotType(name='-S', element=he, anchor=(0.5, 1, 0.5), direction_matrix=MATRIX_ROTX_180)
+        ht_btm_f = SlotType(name='+S', element=ht, anchor=(0.5, 1, 0.5), direction_matrix=MATRIX_IDENTITY)
+        ht_btm_b = SlotType(name='-S', element=ht, anchor=(0.5, 1, 0.5), direction_matrix=MATRIX_ROTX_180)
+        pp_btm   = SlotType(name='PP', element=pp, anchor=(0.5, 1, 0.5), direction_matrix=MATRIX_IDENTITY)
+        pt_btm   = SlotType(name='PT', element=pt, anchor=(0.5, 1, 0.5), direction_matrix=MATRIX_IDENTITY)
 
         self.add_beam(name='TOP', beam_matrix=MATRIX_IDENTITY, gap_vector=(0,  0.5, 0), phase_vector=(0, 0, 0))
         self.add_beam(name='BTM', beam_matrix=MATRIX_IDENTITY, gap_vector=(0, -0.5, 0), phase_vector=(0, 0, 0))
 
         period = 'START'
-        self.add_slots(slot_types={ 'TOP': ht_top_fwd, 'BTM': ht_btm_bwd }, period=period, after_spacing=interstice)
-        self.add_slots(slot_types={ 'TOP': pt_top,     'BTM': pt_btm     }, period=period, after_spacing=interstice)
-        self.add_slots(slot_types={ 'TOP': he_top_bwd, 'BTM': he_btm_fwd }, period=period, after_spacing=interstice)
+        self.add_slots(slot_types={ 'TOP': ht_top_f, 'BTM': ht_btm_b }, period=period, after_spacing=interstice)
+        self.add_slots(slot_types={ 'TOP': pt_top,   'BTM': pt_btm   }, period=period, after_spacing=interstice)
+        self.add_slots(slot_types={ 'TOP': he_top_b, 'BTM': he_btm_f }, period=period, after_spacing=interstice)
 
-        for index in range(nperiods):
+        for index in range(nperiod):
             period = f'{index:04d}'
-            self.add_slots(slot_types={ 'TOP': pp_top,     'BTM': pp_btm     }, period=period, after_spacing=interstice)
-            self.add_slots(slot_types={ 'TOP': hh_top_fwd, 'BTM': hh_btm_bwd }, period=period, after_spacing=interstice)
-            self.add_slots(slot_types={ 'TOP': pp_top,     'BTM': pp_btm     }, period=period, after_spacing=interstice)
-            self.add_slots(slot_types={ 'TOP': hh_top_bwd, 'BTM': hh_btm_fwd }, period=period, after_spacing=interstice)
+            self.add_slots(slot_types={ 'TOP': pp_top,   'BTM': pp_btm   }, period=period, after_spacing=interstice)
+            self.add_slots(slot_types={ 'TOP': hh_top_f, 'BTM': hh_btm_b }, period=period, after_spacing=interstice)
+            self.add_slots(slot_types={ 'TOP': pp_top,   'BTM': pp_btm   }, period=period, after_spacing=interstice)
+            self.add_slots(slot_types={ 'TOP': hh_top_b, 'BTM': hh_btm_f }, period=period, after_spacing=interstice)
 
         if symmetric:
             period = 'SYM'
-            self.add_slots(slot_types={ 'TOP': pp_top, 'BTM': pp_btm }, period=period, after_spacing=interstice)
+            self.add_slots(slot_types={ 'TOP': pp_top,   'BTM': pp_btm   }, period=period, after_spacing=interstice)
 
             period = 'END'
-            self.add_slots(slot_types={ 'TOP': he_top_fwd, 'BTM': he_btm_bwd }, period=period, after_spacing=interstice)
-            self.add_slots(slot_types={ 'TOP': pt_top,     'BTM': pt_btm     }, period=period, after_spacing=interstice)
-            self.add_slots(slot_types={ 'TOP': ht_top_bwd, 'BTM': ht_btm_fwd }, period=period)
+            self.add_slots(slot_types={ 'TOP': he_top_f, 'BTM': he_btm_b }, period=period, after_spacing=interstice)
+            self.add_slots(slot_types={ 'TOP': pt_top,   'BTM': pt_btm   }, period=period, after_spacing=interstice)
+            self.add_slots(slot_types={ 'TOP': ht_top_b, 'BTM': ht_btm_f }, period=period)
 
         else:
             period = 'ANTISYM'
-            self.add_slots(slot_types={ 'TOP': pp_top,     'BTM': pp_btm     }, period=period, after_spacing=interstice)
-            self.add_slots(slot_types={ 'TOP': hh_top_fwd, 'BTM': hh_btm_bwd }, period=period, after_spacing=interstice)
-            self.add_slots(slot_types={ 'TOP': pp_top,     'BTM': pp_btm     }, period=period, after_spacing=interstice)
+            self.add_slots(slot_types={ 'TOP': pp_top,   'BTM': pp_btm   }, period=period, after_spacing=interstice)
+            self.add_slots(slot_types={ 'TOP': hh_top_f, 'BTM': hh_btm_b }, period=period, after_spacing=interstice)
+            self.add_slots(slot_types={ 'TOP': pp_top,   'BTM': pp_btm   }, period=period, after_spacing=interstice)
 
             period = 'END'
-            self.add_slots(slot_types={ 'TOP': he_top_bwd, 'BTM': he_btm_fwd }, period=period, after_spacing=interstice)
-            self.add_slots(slot_types={ 'TOP': pt_top,     'BTM': pt_btm     }, period=period, after_spacing=interstice)
-            self.add_slots(slot_types={ 'TOP': ht_top_fwd, 'BTM': ht_btm_bwd }, period=period)
+            self.add_slots(slot_types={ 'TOP': he_top_b, 'BTM': he_btm_f }, period=period, after_spacing=interstice)
+            self.add_slots(slot_types={ 'TOP': pt_top,   'BTM': pt_btm   }, period=period, after_spacing=interstice)
+            self.add_slots(slot_types={ 'TOP': ht_top_f, 'BTM': ht_btm_b }, period=period)

@@ -22,7 +22,7 @@ import jax.numpy as jnp
 # Opt-ID Imports
 
 
-class SlotState:
+class State:
 
     @beartype
     def __init__(self,
@@ -30,7 +30,7 @@ class SlotState:
             candidate: str,
             flip: int):
         """
-        Construct a SlotState instance.
+        Construct a State instance.
 
         :param slot:
             String name for the slot if this state is assigned to one.
@@ -43,7 +43,7 @@ class SlotState:
         """
 
         if (slot is not None) and (len(slot) == 0):
-            raise ValueError(f'candidate must be a non-empty string')
+            raise ValueError(f'slot must be a non-empty string')
 
         self._slot = slot
 
