@@ -28,10 +28,8 @@ from ..core.utils import \
     np_readonly
 
 from ..core.affine import \
-    transform_points
+    transform_points, is_scale_preserving
 
-from ..lattice import \
-    Lattice
 
 TVertices  = typ.Union[np.ndarray, typ.Sequence[typ.Sequence[numbers.Real]]]
 TPolyhedra = typ.Sequence[typ.Sequence[typ.Sequence[int]]]
@@ -143,6 +141,9 @@ class Geometry:
         if matrix.dtype != np.float32:
             raise TypeError(f'matrix must have dtype (float32) but is : '
                             f'{matrix.dtype}')
+
+        if not is_scale_preserving(matrix):
+            raise ValueError(f'direction_matrix must be an affine rotation matrix that preserves scale')
 
         return Geometry(vertices=transform_points(self.vertices, matrix),
                         polyhedra=self.polyhedra)

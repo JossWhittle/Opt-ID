@@ -22,6 +22,12 @@ import pandas as pd
 
 
 # Opt-ID Imports
+from ..constants import \
+    MATRIX_IDENTITY
+
+from ..core.affine import \
+    is_scale_preserving
+
 from ..core.utils import \
     np_readonly
 
@@ -38,7 +44,7 @@ from .element import \
 TVector          = typ.Union[np.ndarray, typ.Sequence[numbers.Real]]
 TCandidatesParam = typ.Union[str, pd.DataFrame, typ.Sequence[Candidate]]
 TCandidates      = typ.Dict[str, Candidate]
-TFlipMatrices    = typ.Union[np.ndarray, typ.Sequence[np.ndarray]]
+TFlipMatrices    = typ.Optional[typ.Union[np.ndarray, typ.Sequence[np.ndarray]]]
 TMaterial        = typ.Callable[[int], int]
 
 
@@ -49,9 +55,10 @@ class Magnet(Element):
             name: str,
             geometry: Geometry,
             vector: TVector,
-            flip_matrices: TFlipMatrices,
             candidates: TCandidatesParam,
-            material: typ.Optional[TMaterial] = None):
+            flip_matrices: TFlipMatrices = None,
+            material: typ.Optional[TMaterial] = None,
+            rescale_vector: bool = True):
 
         super().__init__(name=name, geometry=geometry, material=material)
 
@@ -66,10 +73,17 @@ class Magnet(Element):
             raise TypeError(f'vector must have dtype (float32) but is : '
                             f'{vector.dtype}')
 
+        if np.allclose(np.linalg.norm(vector), 0, atol=1e-5):
+            raise ValueError(f'vector must have positive length')
+
         self._vector = vector
 
-        if not isinstance(flip_matrices, np.ndarray):
-            flip_matrices = np.array(flip_matrices, dtype=np.float32)
+        flip_matrices = [] if (flip_matrices is None) else [matrix for matrix in flip_matrices]
+
+        if not all(map(is_scale_preserving, flip_matrices)):
+            raise ValueError(f'flip_matrices must all be scale preserving affine matrices')
+
+        flip_matrices = np.array([MATRIX_IDENTITY] + flip_matrices, dtype=np.float32)
 
         if (flip_matrices.ndim != 3) or (flip_matrices.shape[1:] != (4, 4)):
             raise ValueError(f'flip_matrices must be a list of affine matrices with shape (N >= 1, 4, 4) but is : '
@@ -99,15 +113,25 @@ class Magnet(Element):
 
         self._candidates = { candidate.name: candidate for candidate in candidates }
 
+        if rescale_vector:
+            mean_candidate = np.mean([np.linalg.norm(candidate.vector)
+                                      for candidate in self.candidates.values()])
+
+            self._vector = (self._vector / np.linalg.norm(self._vector)) * mean_candidate
+
     @property
     @beartype
     def vector(self) -> np.ndarray:
         return np_readonly(self._vector)
 
-    @property
     @beartype
-    def flip_matrices(self) -> np.ndarray:
-        return np_readonly(self._flip_matrices)
+    def flip_matrix(self, flip: int) -> np.ndarray:
+
+        if (flip < 0) or (flip >= self.nflip):
+            raise ValueError(f'flip must be in range [0, {self.nflip}) but is : '
+                             f'{flip}')
+
+        return np_readonly(self._flip_matrices[flip])
 
     @property
     @beartype

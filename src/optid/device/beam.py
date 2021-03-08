@@ -21,11 +21,14 @@ import typing as typ
 import numpy as np
 
 # Opt-ID Imports
+from ..constants import \
+    MATRIX_IDENTITY
+
 from ..core.utils import \
     np_readonly
 
 from ..core.affine import \
-    translate
+    translate, is_scale_preserving
 
 from .slot import \
     Slot
@@ -45,8 +48,17 @@ from .magnet import \
 from .pole import \
     Pole
 
+from .candidate import \
+    Candidate
+
+
 TVector        = typ.Union[np.ndarray, typ.Sequence[numbers.Real]]
 TPeriodLengths = typ.Dict[str, numbers.Real]
+TSlots         = typ.Dict[str, typ.List[Slot]]
+TMagnetSlots   = typ.Dict[str, typ.List[MagnetSlot]]
+TPoleSlots     = typ.Dict[str, typ.List[PoleSlot]]
+TCandidates    = typ.Dict[str, Candidate]
+TMagnets       = typ.Dict[str, Magnet]
 
 
 class Beam:
@@ -55,9 +67,9 @@ class Beam:
     def __init__(self,
             device,
             name: str,
-            beam_matrix: np.ndarray,
             gap_vector: TVector,
-            phase_vector: TVector):
+            phase_vector: TVector,
+            beam_matrix: np.ndarray = MATRIX_IDENTITY):
         """
         Construct a Beam instance.
 
@@ -92,6 +104,9 @@ class Beam:
             raise TypeError(f'beam_matrix must have dtype (float32) but is : '
                             f'{beam_matrix.dtype}')
 
+        if not is_scale_preserving(beam_matrix):
+            raise ValueError(f'beam_matrix must be an affine world_matrix that preserves scale')
+
         self._beam_matrix = beam_matrix
         
         if not isinstance(gap_vector, np.ndarray):
@@ -120,10 +135,8 @@ class Beam:
 
         self._phase_vector = phase_vector
 
-        self._centre_matrix = np.eye(4, dtype=np.float32)
-        self._smin = 0
-        self._smax = 0
-        self._spacing = 0
+        self._centre_matrix = MATRIX_IDENTITY
+        self._smin, self._smax, self._spacing = 0, 0, 0
         self._slots = list()
         self._slots_by_name = dict()
         self._period_bounds = dict()
@@ -178,7 +191,6 @@ class Beam:
         if period not in self._period_bounds:
             self._period_bounds[period] = (float(cur_smax), float(self._smax))
         else:
-
             if self._slots[-1].period != period:
                 raise ValueError(f'period already defined but previous slot is different : '
                                  f'previous={self._slots[-1].period} current={period}')
@@ -195,6 +207,7 @@ class Beam:
         if isinstance(slot_type.element, Magnet):
             slot = MagnetSlot(index=self.nslots, beam=self, name=name, period=period,
                               slot_type=slot_type, slot_matrix=slot_matrix)
+
         elif isinstance(slot_type.element, Pole):
             slot = PoleSlot(index=self.nslots, beam=self, name=name, period=period,
                             slot_type=slot_type, slot_matrix=slot_matrix)
@@ -223,6 +236,72 @@ class Beam:
                              f'{spacing}')
 
         self._spacing += spacing
+
+    @property
+    @beartype
+    def slots_by_type(self) -> TSlots:
+
+        slots = dict()
+        for slot in self.slots:
+
+            element_name = slot.slot_type.element.name
+            if element_name not in slots:
+                slots[element_name] = list()
+
+            slots[element_name].append(slot)
+
+        return slots
+
+    @property
+    @beartype
+    def magnet_slots_by_type(self) -> TMagnetSlots:
+
+        slots = dict()
+        for slot in self.slots:
+
+            if not isinstance(slot, MagnetSlot):
+                continue
+
+            element_name = slot.magnet.name
+            if element_name not in slots:
+                slots[element_name] = list()
+
+            slots[element_name].append(slot)
+
+        return slots
+
+    @property
+    @beartype
+    def pole_slots_by_type(self) -> TPoleSlots:
+
+        slots = dict()
+        for slot in self.slots:
+
+            if not isinstance(slot, PoleSlot):
+                continue
+
+            element_name = slot.pole.name
+            if element_name not in slots:
+                slots[element_name] = list()
+
+            slots[element_name].append(slot)
+
+        return slots
+
+    @property
+    @beartype
+    def magnets_by_type(self) -> TMagnets:
+
+        magnets = dict()
+        for slot in self.slots:
+
+            if not isinstance(slot, MagnetSlot):
+                continue
+
+            if slot.magnet.name not in magnets:
+                magnets[slot.magnet.name] = slot.magnet
+
+        return magnets
 
     @property
     def device(self):

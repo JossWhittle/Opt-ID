@@ -23,6 +23,9 @@ import radia as rad
 
 
 # Opt-ID Imports
+from ..core.affine import \
+    is_scale_preserving
+
 from ..core.utils import \
     np_readonly
 
@@ -99,6 +102,9 @@ class Slot:
         if slot_matrix.dtype != np.float32:
             raise TypeError(f'slot_matrix must have dtype (float32) but is : '
                             f'{slot_matrix.dtype}')
+
+        if not is_scale_preserving(slot_matrix):
+            raise ValueError(f'slot_matrix must be an affine world_matrix that preserves scale')
 
         self._slot_matrix = slot_matrix
 

@@ -354,3 +354,30 @@ def translate(x, z, s):
                      [0, 0, 1, 0],
                      [x, z, s, 1]],
                     dtype=np.float32)
+
+
+@jax.jit
+def jnp_is_scale_preserving(matrix):
+    """
+    Test if a matrix transformation preserves scale.
+
+    :param matrix:
+        Affine 4x4 matrix.
+
+    :return:
+        True if the distance between any two points remains the same after transformation.
+    """
+    return jnp.allclose(jnp.linalg.norm(matrix[:3, :3], axis=0), 1.0, atol=1e-5)
+
+
+def is_scale_preserving(matrix):
+    """
+    Test if a matrix transformation preserves scale.
+
+    :param matrix:
+        Affine 4x4 matrix.
+
+    :return:
+        True if the distance between any two points remains the same after transformation.
+    """
+    return np.allclose(np.linalg.norm(matrix[:3, :3], axis=0), 1.0, atol=1e-5)

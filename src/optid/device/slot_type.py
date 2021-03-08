@@ -25,7 +25,7 @@ from ..core.utils import \
     np_readonly
 
 from ..core.affine import \
-    translate
+    translate, is_scale_preserving
 
 from .element import \
     Element
@@ -76,11 +76,13 @@ class SlotType:
             raise TypeError(f'direction_matrix must have dtype (float32) but is : '
                             f'{direction_matrix.dtype}')
 
+        if not is_scale_preserving(direction_matrix):
+            raise ValueError(f'direction_matrix must be an affine rotation matrix that preserves scale')
+
         self._direction_matrix = direction_matrix
 
         bmin, bmax = element.geometry.transform(direction_matrix).bounds
         anchor_matrix = translate(*(-((bmin * (1.0 - anchor)) + (bmax * anchor))))
-
         self._anchor_matrix = anchor_matrix
 
         self._bounds = element.geometry.transform(direction_matrix @ anchor_matrix).bounds

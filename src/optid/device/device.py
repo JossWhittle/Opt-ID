@@ -18,9 +18,14 @@ import numbers
 from beartype import beartype
 import typing as typ
 import numpy as np
+import pandas as pd
+import pandera as pa
 
 
 # Opt-ID Imports
+from ..core.affine import \
+    is_scale_preserving
+
 from ..core.utils import \
     np_readonly
 
@@ -38,6 +43,12 @@ from .slot_type import \
 
 from .magnet_slot import \
     MagnetSlot
+
+from .state import \
+    State
+
+from .genome import \
+    Genome
 
 TVector     = typ.Union[np.ndarray, typ.Sequence[numbers.Real]]
 TCandidates = typ.Dict[str, typ.Dict[str, Candidate]]
@@ -73,6 +84,9 @@ class Device:
         if world_matrix.dtype != np.float32:
             raise TypeError(f'world_matrix must have dtype (float32) but is : '
                             f'{world_matrix.dtype}')
+
+        if not is_scale_preserving(world_matrix):
+            raise ValueError(f'world_matrix must be an affine world_matrix that preserves scale')
 
         self._world_matrix = world_matrix
 
@@ -132,11 +146,71 @@ class Device:
                                      f'{key}, {slot.qualified_name}')
 
         nslots_by_type = self.nslots_by_type
-        for element_name, candidates in self.candidates_by_type.items():
+        for element_name, magnet in self.magnets_by_type.items():
 
-            if nslots_by_type[element_name] > len(candidates):
+            if nslots_by_type[element_name] > len(magnet.candidates):
                 raise ValueError(f'device has more slots of type "{element_name} than candidates : '
-                                 f'slots={nslots_by_type[element_name]} > candidates={len(candidates)}')
+                                 f'slots={nslots_by_type[element_name]} > candidates={len(magnet.candidates)}')
+
+    # @beartype
+    # def genome_from_dataframe(self,
+    #         df: pd.DataFrame,
+    #         slot: str = 'slot',
+    #         candidate: str = 'candidate',
+    #         flip: str = 'flip'):
+    #
+    #     schema = pa.DataFrameSchema({
+    #         slot:      pa.Column(pa.String, pa.Check((lambda col: (len(col.unique()) == len(col))),
+    #                              error='slot names must be unique or null'), nullable=True, coerce=True),
+    #         candidate: pa.Column(pa.String, pa.Check((lambda col: (len(col.unique()) == len(col))),
+    #                              error='candidate names must be unique'), coerce=True),
+    #         flip:      pa.Column(pa.Int, pa.Check((lambda col: col >= 0),
+    #                              error='flip states must be >= 0'), coerce=True),
+    #     })
+    #
+    #     df = schema.validate(df)
+    #
+    #     df_nslots      = len(df[~df['slot'].isnull()])
+    #     df_ncandidates = len(df)
+    #
+    #     if df_nslots != self.nslots:
+    #         raise ValueError(f'dataframe must have the same number of slots as this device : '
+    #                          f'df={df_nslots} != device={self.nslots}')
+    #
+    #     if df_ncandidates != self.ncandidates:
+    #         raise ValueError(f'dataframe must have the same number of candidates as this device : '
+    #                          f'df={df_ncandidates} != device={self.ncandidates}')
+    #
+    #     states = dict()
+    #     for beam in self.beams.values():
+    #
+    #         states[beam.name] = list()
+    #         for slot in beam.slots:
+    #
+    #             if not isinstance(slot, MagnetSlot):
+    #                 continue
+    #
+    #             df_slot = df[(df['slot'] == slot.qualified_name)]
+    #
+    #             if len(df_slot) != 1:
+    #                 raise ValueError(f'dataframe is missing a slot named in this device : '
+    #                                  f'{slot.qualified_name}')
+    #
+    #             df_slot = df_slot.iloc[0]
+    #
+    #             flip = df_slot['flip']
+    #
+    #             if flip < 0 or flip >= slot.magnet.nflip:
+    #                 raise ValueError(f'flip state for slot is outside the value range in the device : '
+    #                                  f'df={flip} device=[0, {slot.magnet.nflip})')
+    #
+    #             states[beam.name].append(State(slot=df_slot['slot'], candidate=df_slot['candidate'], flip=flip))
+    #
+    #     unused = list()
+    #     for :
+    #         unused.append(State(slot=None, candidate=df_slot['candidate'], flip=flip))
+    #
+    #     return Genome(states=states)
 
     @property
     @beartype
@@ -149,35 +223,57 @@ class Device:
 
         slots = dict()
         for beam in self.beams.values():
-            for slot in beam.slots:
+            for element_name, element_slots in beam.slots_by_type.items():
 
-                element_name = slot.slot_type.element.name
                 if element_name not in slots:
                     slots[element_name] = dict()
 
-                if beam.name not in slots[element_name]:
-                    slots[element_name][beam.name] = list()
-
-                slots[element_name][beam.name].append(slot)
+                slots[element_name][beam.name] = element_slots
 
         return slots
 
     @property
     @beartype
-    def candidates_by_type(self) -> TCandidates:
+    def magnet_slots_by_type(self) -> TSlots:
 
-        candidates = dict()
+        slots = dict()
         for beam in self.beams.values():
-            for slot in beam.slots:
+            for element_name, element_slots in beam.magnet_slots_by_type.items():
 
-                if not isinstance(slot, MagnetSlot):
-                    continue
+                if element_name not in slots:
+                    slots[element_name] = dict()
 
-                key = slot.slot_type.element.name
-                if key not in candidates:
-                    candidates[key] = dict(slot.candidates)
+                slots[element_name][beam.name] = element_slots
 
-        return candidates
+        return slots
+
+    @property
+    @beartype
+    def pole_slots_by_type(self) -> TSlots:
+
+        slots = dict()
+        for beam in self.beams.values():
+            for element_name, element_slots in beam.pole_slots_by_type.items():
+
+                if element_name not in slots:
+                    slots[element_name] = dict()
+
+                slots[element_name][beam.name] = element_slots
+
+        return slots
+
+    @property
+    @beartype
+    def magnets_by_type(self) -> TCandidates:
+
+        magnets = dict()
+        for beam in self.beams.values():
+            for magnet in beam.magnets_by_type.values():
+
+                if magnet.name not in magnets:
+                    magnets[magnet.name] = magnet
+
+        return magnets
 
     @property
     @beartype
@@ -185,16 +281,15 @@ class Device:
 
         period_lengths = dict()
         for beam in self.beams.values():
-
             for period, length in beam.period_lengths.items():
 
                 if period not in period_lengths:
-                    period_lengths[period] = (length, 1)
-                else:
-                    cur_length, cur_count = period_lengths[period]
-                    period_lengths[period] = ((cur_length + length), (cur_count + 1))
+                    period_lengths[period] = list()
 
-        return { period: (length / count) for period, (length, count) in period_lengths.items() }
+                period_lengths[period].append(length)
+
+        return { period: np.mean(period_lengths)
+                 for period, period_lengths in period_lengths.items() }
 
     @property
     @beartype
@@ -231,6 +326,16 @@ class Device:
                 counts[magnet_name] += 1
 
         return counts
+
+    @property
+    @beartype
+    def ncandidates(self) -> int:
+        return sum(self.ncandidates_by_type.values())
+
+    @property
+    @beartype
+    def ncandidates_by_type(self) -> typ.Dict[str, int]:
+        return { key: len(candidates) for key, candidates in self.candidates_by_type.items() }
 
     @property
     @beartype
