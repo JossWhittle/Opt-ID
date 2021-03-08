@@ -66,9 +66,9 @@ class Lattice:
         self._shape = shape
 
         lattice = self.world_lattice
-        x_step = 0 if shape[0] == 1 else np.mean(np.linalg.norm(lattice[:-1, 0, 0] - lattice[1:, 0, 0], axis=-1))
-        z_step = 0 if shape[1] == 1 else np.mean(np.linalg.norm(lattice[0, :-1, 0] - lattice[0, 1:, 0], axis=-1))
-        s_step = 0 if shape[2] == 1 else np.mean(np.linalg.norm(lattice[0, 0, :-1] - lattice[0, 0, 1:], axis=-1))
+        x_step = 0 if shape[0] == 1 else np.mean(np.linalg.norm(lattice[0, 0, 0] - lattice[1, 0, 0], axis=-1))
+        z_step = 0 if shape[1] == 1 else np.mean(np.linalg.norm(lattice[0, 0, 0] - lattice[0, 1, 0], axis=-1))
+        s_step = 0 if shape[2] == 1 else np.mean(np.linalg.norm(lattice[0, 0, 0] - lattice[0, 0, 1], axis=-1))
         self._step = (x_step, z_step, s_step)
 
         # Derive complementary matrices

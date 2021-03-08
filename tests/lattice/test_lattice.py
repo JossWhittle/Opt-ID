@@ -38,6 +38,10 @@ class LatticeTest(unittest.TestCase):
 
     def test_constructor(self):
 
+        lattice = Lattice(unit_to_world_matrix=MATRIX_IDENTITY, shape=(1, 2, 3))
+
+        self.assertTrue(np.allclose(lattice.step, (0.0, 1.0, 0.5), atol=1e-5))
+
         lattice = Lattice(unit_to_world_matrix=MATRIX_IDENTITY, shape=(1, 1, 1))
 
         self.assertTrue(np.allclose(lattice.unit_to_orthonormal_matrix,
