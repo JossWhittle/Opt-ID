@@ -202,8 +202,7 @@ def any_orthonormal_point_out_of_bounds(point_lattice, x, z, s, eps):
     :return:
         True if any point lays outside the orthonormal bounds.
     """
-    # TODO does this need to be (x-1), (z-1), (s-1) ?
-    return np.any((point_lattice > (np.array([x, z, s], dtype=np.float32) + eps)) |
+    return np.any((point_lattice > (np.array([(x-1), (z-1), (s-1)], dtype=np.float32) + eps)) |
                   (point_lattice < -eps))
 
 
