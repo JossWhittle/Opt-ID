@@ -95,3 +95,20 @@ class BfieldTest(unittest.TestCase):
                                                 [[ 0,  0,  1], [ 0,  0, -1]]],
                                                [[[ 0, -1,  0], [ 0,  1,  0]],
                                                 [[ 0,  0,  1], [ 0,  0, -1]]]]), atol=1e-5))
+
+    def test_integrate_trajectories(self):
+
+        geometry = Cuboid(shape=(1, 1, 1)).transform(affine.translate(0, -2, 0))
+
+        lattice = Lattice(affine.scale(2, 2, 10), shape=(3, 3, 10))
+
+        rad.UtiDelAll()
+        field = bfield.radia_evaluate_bfield_on_lattice(geometry.to_radia((0, 1, 0)), lattice.world_lattice)
+        rad.UtiDelAll()
+
+        self.assertEqual(field.shape, lattice.shape + (3,))
+
+        traj_1st, traj_2nd = bfield.jnp_integrate_trajectories(field, lattice.step[2], 3.0)
+
+        self.assertEqual(traj_1st.shape, lattice.shape + (2,))
+        self.assertEqual(traj_2nd.shape, lattice.shape + (2,))
