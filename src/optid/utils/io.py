@@ -36,7 +36,7 @@ class JAXPickler(pickle.Pickler):
         Construct a JAX aware Pickler instance.
 
         :param file:
-            File-like handle with read mode.
+            File-like handle with write mode.
 
         :param args:
             All other positional parameters are forwarded to pickle.Pickler.__init__.
@@ -102,10 +102,11 @@ class JAXPickler(pickle.Pickler):
         Attempt to encode a JAX device tensor to an encoded tuple.
 
         :param obj:
-            JAX DeviceArray.
+            JAX DeviceArray or ShardedDeviceArray.
 
         :return:
             Tuple of (str, data) where data is a tuple (device_name, numpy_values) for JAX DeviceArray's.
+            Tuple of (str, data) where data is a tuple ((device_name, ...), (numpy_values, ...)) for JAX ShardedDeviceArray's.
         """
 
         if isinstance(obj, ShardedDeviceArray):
@@ -224,9 +225,10 @@ class JAXUnpickler(pickle.Unpickler):
 
         :param obj:
             Tuple of (str, data) where data is a tuple (device_name, numpy_values) for JAX DeviceArray's.
+            Tuple of (str, data) where data is a tuple ((device_name, ...), (numpy_values, ...)) for JAX ShardedDeviceArray's.
 
         :return:
-            The recovered JAX DeviceArray.
+            The recovered JAX DeviceArray or ShardedDeviceArray.
         """
 
         # Attempt to unpack the object as a tuple representing the jax tensor
