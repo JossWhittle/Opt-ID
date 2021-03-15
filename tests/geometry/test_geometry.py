@@ -22,7 +22,7 @@ import numpy as np
 # Test imports
 import optid
 from optid.geometry import Geometry
-from optid.core.affine import scale
+from optid.core.affine import translate
 
 # Configure debug logging
 optid.utils.logging.attach_console_logger(remove_existing=True)
@@ -249,9 +249,9 @@ class GeometryTest(unittest.TestCase):
 
         geometry = Geometry(vertices=vertices, polyhedra=polyhedra)
 
-        transformed_geometry = geometry.transform(scale(2, 2, 2))
+        transformed_geometry = geometry.transform(translate(2, 2, 2))
 
-        self.assertTrue(np.allclose(transformed_geometry.vertices, (vertices * 2.0), atol=1e-5))
+        self.assertTrue(np.allclose(transformed_geometry.vertices, (vertices + 2.0), atol=1e-5))
         self.assertEqual(transformed_geometry.polyhedra, geometry.polyhedra)
         self.assertIs(transformed_geometry.polyhedra, geometry.polyhedra)
 
