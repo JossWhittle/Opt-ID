@@ -32,8 +32,8 @@ from ..core.utils import \
 from .beam import \
     Beam
 
-from .candidate import \
-    Candidate
+from optid.device import \
+    Magnet
 
 from .slot import \
     Slot
@@ -41,15 +41,9 @@ from .slot import \
 from .slot_type import \
     SlotType
 
-from .magnet_slot import \
-    MagnetSlot
-
-from .state import \
-    State
-
 
 TVector     = typ.Union[np.ndarray, typ.Sequence[numbers.Real]]
-TCandidates = typ.Dict[str, typ.Dict[str, Candidate]]
+TMagnets    = typ.Dict[str, Magnet]
 TSlots      = typ.Dict[str, typ.Dict[str, Slot]]
 TPeriodLengths = typ.Dict[str, numbers.Real]
 
@@ -262,7 +256,7 @@ class Device:
 
     @property
     @beartype
-    def magnets_by_type(self) -> TCandidates:
+    def magnets_by_type(self) -> TMagnets:
 
         magnets = dict()
         for beam in self.beams.values():
@@ -333,7 +327,7 @@ class Device:
     @property
     @beartype
     def ncandidates_by_type(self) -> typ.Dict[str, int]:
-        return { key: len(candidates) for key, candidates in self.candidates_by_type.items() }
+        return { key: len(magnet.candidates) for key, magnet in self.magnets_by_type.items() }
 
     @property
     @beartype
