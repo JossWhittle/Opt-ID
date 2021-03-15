@@ -46,7 +46,7 @@ class IOTest(unittest.TestCase):
         with BytesIO() as fp:
             pickler = JAXPickler(fp)
 
-            self.assertTrue(all(str(device) in pickler.devices for device in jax.devices()))
+            self.assertTrue(all(str(device) in pickler.devices for device in jax.local_devices()))
             self.assertIsNone(pickler.device_map)
             self.assertTrue(pickler.raise_on_missing_device)
 
@@ -79,6 +79,17 @@ class IOTest(unittest.TestCase):
             self.assertRaisesRegex(PicklingError, '.*', JAXPickler,
                                    file=fp, device_map={ 'BAD_DEVICE_NAME': '???' })
 
+    def test_pickler_persistent_id(self):
+        """
+        Test that attempting to persistent id an object which is not a JAX DeviceArray or ShardedDeviceArray
+        returns None.
+        """
+
+        with BytesIO() as fp:
+            pickler = JAXPickler(fp)
+
+            self.assertIsNone(pickler.persistent_id('NOT_A_JAX_TENSOR'))
+
     ####################################################################################################################
 
     def test_unpickler_constructor(self):
@@ -89,7 +100,7 @@ class IOTest(unittest.TestCase):
         with BytesIO() as fp:
             unpickler = JAXUnpickler(fp)
 
-            self.assertTrue(all(str(device) in unpickler.devices for device in jax.devices()))
+            self.assertTrue(all(str(device) in unpickler.devices for device in jax.local_devices()))
             self.assertIsNone(unpickler.device_map)
             self.assertTrue(unpickler.raise_on_missing_device)
 
@@ -122,6 +133,21 @@ class IOTest(unittest.TestCase):
             self.assertRaisesRegex(UnpicklingError, '.*', JAXUnpickler,
                                    file=fp, device_map={ '???': 'BAD_DEVICE_NAME' })
 
+    def test_unpickler_persistent_load(self):
+        """
+        Test that attempting to persistent load an object which is not a JAX DeviceArray or ShardedDeviceArray
+        raises an exception.
+        """
+
+        with BytesIO() as fp:
+            unpickler = JAXUnpickler(fp)
+
+            self.assertRaisesRegex(UnpicklingError, '.*', unpickler.persistent_load,
+                                   'NOT_AN_ENCODED_JAX_TENSOR')
+
+            self.assertRaisesRegex(UnpicklingError, '.*', unpickler.persistent_load,
+                                   ('NOT_AN_ENCODED_JAX_TENSOR', None))
+
     ####################################################################################################################
 
     def test_pickle_unpickle_non_jax_class(self):
@@ -149,6 +175,8 @@ class IOTest(unittest.TestCase):
             obs_data = unpickler.load()
 
         self.assertEqual(exp_data, obs_data)
+
+    ####################################################################################################################
 
     def test_pickle_unpickle_jax_device_array(self):
         """
@@ -183,25 +211,6 @@ class IOTest(unittest.TestCase):
             self.assertEqual(exp.shape, obs.shape)
             self.assertEqual(str(exp.device_buffer.device()), str(obs.device_buffer.device()))
             self.assertTrue(np.allclose(exp, obs, atol=1e-5))
-
-    def test_pickle_jax_sharded_device_array_raises_exception(self):
-        """
-        Test that JAX ShardedDeviceArray's raise an exception when we try to pickle them.
-        """
-
-        exp_data = [
-            jax.device_put_replicated(jnp.ones((1, 2, 3), dtype=jnp.float32), jax.devices()),
-            jax.device_put_replicated(jnp.ones((4, 5, 6), dtype=jnp.int8), jax.devices())
-        ]
-
-        with BytesIO() as fp:
-
-            # Construct a JAX aware pickler instance
-            pickler = JAXPickler(fp)
-
-            # Dump the expected data to the byte buffer
-            self.assertRaisesRegex(PicklingError, '.*', pickler.dump,
-                                   exp_data)
 
     def test_pickle_unpickle_jax_device_array_with_empty_device_map(self):
         """
@@ -242,7 +251,7 @@ class IOTest(unittest.TestCase):
         Test that JAX DeviceArray's can be pickled and unpickled correctly with a valid device map.
         """
 
-        device = jax.devices()[0]
+        device = jax.local_devices()[0]
 
         exp_data = [
             jax.device_put(jnp.ones((1, 2, 3), dtype=jnp.float32), device),
@@ -278,7 +287,7 @@ class IOTest(unittest.TestCase):
         Test that JAX DeviceArray's raise exception when unpickled with a bad device map.
         """
 
-        device = jax.devices()[0]
+        device = jax.local_devices()[0]
 
         exp_data = [
             jax.device_put(jnp.ones((1, 2, 3), dtype=jnp.float32), device),
@@ -302,3 +311,136 @@ class IOTest(unittest.TestCase):
             # Read the observed data from the byte buffer
             self.assertRaisesRegex(UnpicklingError, '.*', unpickler.load)
 
+    ####################################################################################################################
+
+    def test_pickle_unpickle_jax_sharded_device_array(self):
+        """
+        Test that JAX ShardedDeviceArray's can be pickled and unpickled correctly.
+        """
+
+        exp_data = [
+            jax.device_put_replicated(jnp.ones((1, 2, 3), dtype=jnp.float32), jax.local_devices()),
+            jax.device_put_replicated(jnp.ones((4, 5, 6), dtype=jnp.int8), jax.local_devices())
+        ]
+
+        with BytesIO() as fp:
+
+            # Construct a JAX aware pickler instance
+            pickler = JAXPickler(fp)
+
+            # Dump the expected data to the byte buffer
+            pickler.dump(exp_data)
+
+            # Rewind to the beginning of the byte buffer
+            fp.seek(0)
+
+            # Construct a JAX aware unpickler instance
+            unpickler = JAXUnpickler(fp)
+
+            # Read the observed data from the byte buffer
+            obs_data = unpickler.load()
+
+        self.assertEqual(len(exp_data), len(obs_data))
+
+        for exp, obs in zip(exp_data, obs_data):
+            self.assertEqual(exp.shape, obs.shape)
+            self.assertEqual([str(buffer.device()) for buffer in exp.device_buffers],
+                             [str(buffer.device()) for buffer in obs.device_buffers])
+            self.assertTrue(np.allclose(exp, obs, atol=1e-5))
+
+    def test_pickle_unpickle_jax_sharded_device_array_with_empty_device_map(self):
+        """
+        Test that JAX ShardedDeviceArray's can be pickled and unpickled correctly.
+        """
+
+        exp_data = [
+            jax.device_put_replicated(jnp.ones((1, 2, 3), dtype=jnp.float32), jax.local_devices()),
+            jax.device_put_replicated(jnp.ones((4, 5, 6), dtype=jnp.int8), jax.local_devices())
+        ]
+
+        with BytesIO() as fp:
+
+            # Construct a JAX aware pickler instance
+            pickler = JAXPickler(fp, device_map=dict())
+
+            # Dump the expected data to the byte buffer
+            pickler.dump(exp_data)
+
+            # Rewind to the beginning of the byte buffer
+            fp.seek(0)
+
+            # Construct a JAX aware unpickler instance
+            unpickler = JAXUnpickler(fp, device_map=dict())
+
+            # Read the observed data from the byte buffer
+            obs_data = unpickler.load()
+
+        self.assertEqual(len(exp_data), len(obs_data))
+
+        for exp, obs in zip(exp_data, obs_data):
+            self.assertEqual(exp.shape, obs.shape)
+            self.assertEqual([str(buffer.device()) for buffer in exp.device_buffers],
+                             [str(buffer.device()) for buffer in obs.device_buffers])
+            self.assertTrue(np.allclose(exp, obs, atol=1e-5))
+
+    def test_pickle_unpickle_jax_sharded_device_array_with_device_map(self):
+        """
+        Test that JAX ShardedDeviceArray's can be pickled and unpickled correctly with a valid device map.
+        """
+
+        exp_data = [
+            jax.device_put_replicated(jnp.ones((1, 2, 3), dtype=jnp.float32), jax.local_devices()),
+            jax.device_put_replicated(jnp.ones((4, 5, 6), dtype=jnp.int8), jax.local_devices())
+        ]
+
+        with BytesIO() as fp:
+
+            # Construct a JAX aware pickler instance
+            pickler = JAXPickler(fp, device_map={ str(jax.local_devices()[0]): 'MY_DEVICE_NAME' })
+
+            # Dump the expected data to the byte buffer
+            pickler.dump(exp_data)
+
+            # Rewind to the beginning of the byte buffer
+            fp.seek(0)
+
+            # Construct a JAX aware unpickler instance
+            unpickler = JAXUnpickler(fp, device_map={ 'MY_DEVICE_NAME': str(jax.local_devices()[0]) })
+
+            # Read the observed data from the byte buffer
+            obs_data = unpickler.load()
+
+        self.assertEqual(len(exp_data), len(obs_data))
+
+        for exp, obs in zip(exp_data, obs_data):
+            self.assertEqual(exp.shape, obs.shape)
+            self.assertEqual([str(buffer.device()) for buffer in exp.device_buffers],
+                             [str(buffer.device()) for buffer in obs.device_buffers])
+            self.assertTrue(np.allclose(exp, obs, atol=1e-5))
+
+    def test_unpickle_jax_sharded_device_array_with_bad_device_map_raises_exception(self):
+        """
+        Test that JAX ShardedDeviceArray's raise exception when unpickled with a bad device map.
+        """
+
+        exp_data = [
+            jax.device_put_replicated(jnp.ones((1, 2, 3), dtype=jnp.float32), jax.local_devices()),
+            jax.device_put_replicated(jnp.ones((4, 5, 6), dtype=jnp.int8), jax.local_devices())
+        ]
+
+        with BytesIO() as fp:
+
+            # Construct a JAX aware pickler instance
+            pickler = JAXPickler(fp, device_map={ str(jax.local_devices()[0]): 'MY_DEVICE_NAME' })
+
+            # Dump the expected data to the byte buffer
+            pickler.dump(exp_data)
+
+            # Rewind to the beginning of the byte buffer
+            fp.seek(0)
+
+            # Construct a JAX aware unpickler instance
+            unpickler = JAXUnpickler(fp)
+
+            # Read the observed data from the byte buffer
+            self.assertRaisesRegex(UnpicklingError, '.*', unpickler.load)

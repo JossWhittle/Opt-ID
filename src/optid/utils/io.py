@@ -73,7 +73,7 @@ class JAXPickler(pickle.Pickler):
         :return:
             Dict of str -> Device representing the local runtime configuration.
         """
-        return { str(device): device for device in jax.devices() }
+        return { str(device): device for device in jax.local_devices() }
 
     @property
     @beartype
@@ -110,8 +110,18 @@ class JAXPickler(pickle.Pickler):
 
         if isinstance(obj, ShardedDeviceArray):
 
-            # TODO implement sharded device array pickling
-            raise pickle.PicklingError(f'JAXPickler currently does not support ShardedDeviceArray')
+            # Get the device names for the sharded tensor
+            device_names = tuple(map((lambda buffer: str(buffer.device())), obj.device_buffers))
+
+            # Remap the device names if they have entries in the device name map
+            if self.device_map is not None:
+                device_names = tuple(map((lambda name: self.device_map.get(name, name)), device_names))
+
+            # Convert the data in the jax tensor to a tuple of numpy tensor shards for pickling
+            values = tuple(np.array(shard) for shard in obj)
+
+            # Return a tuple to be pickled as normal
+            return 'jax.interpreters.pxla.ShardedDeviceArray', (device_names, values)
 
         if isinstance(obj, DeviceArray):
 
@@ -184,7 +194,7 @@ class JAXUnpickler(pickle.Unpickler):
         :return:
             Dict of str -> Device representing the local runtime configuration.
         """
-        return { str(device): device for device in jax.devices() }
+        return { str(device): device for device in jax.local_devices() }
 
     @property
     @beartype
@@ -221,12 +231,35 @@ class JAXUnpickler(pickle.Unpickler):
 
         # Attempt to unpack the object as a tuple representing the jax tensor
         # If unpacking the tuple fails then this object will be unpickled as normal
-        tag, data = obj
+        try:
+            tag, data = obj
+
+        except Exception as ex:
+
+            # This load function only supports JAX DeviceArray and ShardedDeviceArray instances encoded as tuples
+            raise pickle.UnpicklingError('unsupported persistent object')
 
         if tag == 'jax.interpreters.pxla.ShardedDeviceArray':
 
-            # TODO implement sharded device array unpickling
-            raise pickle.UnpicklingError(f'JAXUnpickler currently does not support ShardedDeviceArray')
+            # Attempt to unpack the ShardedDeviceArray data
+            device_names, values = data
+
+            # Remap the encoded name of the device this tensor should be placed on
+            # If the name is not in the device map then leave it as is
+            if self.device_map is not None:
+                device_names = tuple(map((lambda name: self.device_map.get(name, name)), device_names))
+
+            if self.raise_on_missing_device:
+                for device_name in device_names:
+                    if device_name not in self.devices:
+                        raise pickle.UnpicklingError(f'device name {device_name} is not recognized in '
+                                                     f'{list(self.devices.keys())}')
+
+            # Use the encoded device names to get jax device objects or default to None if not defined
+            devices = tuple(map((lambda name: self.devices.get(name, None)), device_names))
+
+            # Recover the JAX tensor
+            return jax.device_put_sharded(values, devices=devices)
 
         elif tag == 'jax.interpreters.xla.DeviceArray':
 
