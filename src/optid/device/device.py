@@ -47,8 +47,6 @@ from .magnet_slot import \
 from .state import \
     State
 
-from .genome import \
-    Genome
 
 TVector     = typ.Union[np.ndarray, typ.Sequence[numbers.Real]]
 TCandidates = typ.Dict[str, typ.Dict[str, Candidate]]
