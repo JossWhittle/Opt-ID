@@ -22,23 +22,12 @@ import pandas as pd
 
 
 # Opt-ID Imports
-from ..constants import \
-    MATRIX_IDENTITY
-
-from ..core.affine import \
-    is_scale_preserving
-
-from ..core.utils import \
-    np_readonly
-
-from ..geometry import \
-    Geometry
-
-from .candidate import \
-    Candidate
-
-from .element import \
-    Element
+from ..constants import MATRIX_IDENTITY
+from ..core.affine import is_scale_preserving
+from ..core.utils import np_readonly
+from ..geometry import Geometry
+from .candidate import Candidate
+from .element import Element
 
 
 TVector          = typ.Union[np.ndarray, typ.Sequence[numbers.Real]]

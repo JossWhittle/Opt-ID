@@ -18,25 +18,16 @@ import numbers
 from beartype import beartype
 import typing as typ
 import numpy as np
-import jax.numpy as jnp
-import radia as rad
 
 
 # Opt-ID Imports
-from ..core.affine import \
-    is_scale_preserving
-
-from ..core.utils import \
-    np_readonly
-
-from .slot_type import \
-    SlotType
-
-from .candidate import \
-    Candidate
-
-from ..geometry import \
-    Geometry
+from ..constants import VECTOR_ZERO
+from ..core.affine import is_scale_preserving, translate
+from ..core.utils import np_readonly
+from .pose import Pose
+from .slot_type import SlotType
+from .candidate import Candidate
+from ..geometry import Geometry
 
 
 TCandidates = typ.Dict[str, Candidate]

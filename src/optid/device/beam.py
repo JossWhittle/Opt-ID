@@ -14,42 +14,24 @@
 
 
 # External Imports
+from beartype import beartype
 from more_itertools import SequenceView
 import numbers
-from beartype import beartype
 import typing as typ
 import numpy as np
 
 # Opt-ID Imports
-from ..constants import \
-    MATRIX_IDENTITY
-
-from ..core.utils import \
-    np_readonly
-
-from ..core.affine import \
-    translate, is_scale_preserving
-
-from .slot import \
-    Slot
-
-from .slot_type import \
-    SlotType
-
-from .magnet_slot import \
-    MagnetSlot
-
-from .pole_slot import \
-    PoleSlot
-
-from .magnet import \
-    Magnet
-
-from .pole import \
-    Pole
-
-from .candidate import \
-    Candidate
+from ..constants import MATRIX_IDENTITY
+from ..core.utils import np_readonly
+from ..core.affine import translate, is_scale_preserving
+from .pose import Pose
+from .slot import Slot
+from .slot_type import SlotType
+from .magnet_slot import MagnetSlot
+from .pole_slot import PoleSlot
+from .magnet import Magnet
+from .pole import Pole
+from .candidate import Candidate
 
 
 TVector        = typ.Union[np.ndarray, typ.Sequence[numbers.Real]]

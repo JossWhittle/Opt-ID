@@ -18,33 +18,19 @@ import numbers
 from beartype import beartype
 import typing as typ
 import numpy as np
-import pandas as pd
-import pandera as pa
-
 
 # Opt-ID Imports
-from ..core.affine import \
-    is_scale_preserving
-
-from ..core.utils import \
-    np_readonly
-
-from .beam import \
-    Beam
-
-from optid.device import \
-    Magnet
-
-from .slot import \
-    Slot
-
-from .slot_type import \
-    SlotType
+from ..core.affine import is_scale_preserving
+from ..core.utils import np_readonly
+from .beam import Beam
+from .magnet import Magnet
+from .slot import Slot
+from .slot_type import SlotType
 
 
 TVector     = typ.Union[np.ndarray, typ.Sequence[numbers.Real]]
 TMagnets    = typ.Dict[str, Magnet]
-TSlots      = typ.Dict[str, typ.Dict[str, Slot]]
+TSlots      = typ.Dict[str, typ.Dict[str, typ.List[Slot]]]
 TPeriodLengths = typ.Dict[str, numbers.Real]
 
 
@@ -143,66 +129,6 @@ class Device:
             if nslots_by_type[element_name] > len(magnet.candidates):
                 raise ValueError(f'device has more slots of type "{element_name} than candidates : '
                                  f'slots={nslots_by_type[element_name]} > candidates={len(magnet.candidates)}')
-
-    # @beartype
-    # def genome_from_dataframe(self,
-    #         df: pd.DataFrame,
-    #         slot: str = 'slot',
-    #         candidate: str = 'candidate',
-    #         flip: str = 'flip'):
-    #
-    #     schema = pa.DataFrameSchema({
-    #         slot:      pa.Column(pa.String, pa.Check((lambda col: (len(col.unique()) == len(col))),
-    #                              error='slot names must be unique or null'), nullable=True, coerce=True),
-    #         candidate: pa.Column(pa.String, pa.Check((lambda col: (len(col.unique()) == len(col))),
-    #                              error='candidate names must be unique'), coerce=True),
-    #         flip:      pa.Column(pa.Int, pa.Check((lambda col: col >= 0),
-    #                              error='flip states must be >= 0'), coerce=True),
-    #     })
-    #
-    #     df = schema.validate(df)
-    #
-    #     df_nslots      = len(df[~df['slot'].isnull()])
-    #     df_ncandidates = len(df)
-    #
-    #     if df_nslots != self.nslots:
-    #         raise ValueError(f'dataframe must have the same number of slots as this device : '
-    #                          f'df={df_nslots} != device={self.nslots}')
-    #
-    #     if df_ncandidates != self.ncandidates:
-    #         raise ValueError(f'dataframe must have the same number of candidates as this device : '
-    #                          f'df={df_ncandidates} != device={self.ncandidates}')
-    #
-    #     states = dict()
-    #     for beam in self.beams.values():
-    #
-    #         states[beam.name] = list()
-    #         for slot in beam.slots:
-    #
-    #             if not isinstance(slot, MagnetSlot):
-    #                 continue
-    #
-    #             df_slot = df[(df['slot'] == slot.qualified_name)]
-    #
-    #             if len(df_slot) != 1:
-    #                 raise ValueError(f'dataframe is missing a slot named in this device : '
-    #                                  f'{slot.qualified_name}')
-    #
-    #             df_slot = df_slot.iloc[0]
-    #
-    #             flip = df_slot['flip']
-    #
-    #             if flip < 0 or flip >= slot.magnet.nflip:
-    #                 raise ValueError(f'flip state for slot is outside the value range in the device : '
-    #                                  f'df={flip} device=[0, {slot.magnet.nflip})')
-    #
-    #             states[beam.name].append(State(slot=df_slot['slot'], candidate=df_slot['candidate'], flip=flip))
-    #
-    #     unused = list()
-    #     for :
-    #         unused.append(State(slot=None, candidate=df_slot['candidate'], flip=flip))
-    #
-    #     return Genome(states=states)
 
     @property
     @beartype

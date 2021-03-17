@@ -20,38 +20,30 @@ import numpy as np
 
 
 # Opt-ID Imports
-from ..core.affine import \
-    translate
+from ..constants import MATRIX_IDENTITY, MATRIX_ROTS_270_ROTZ_180, MATRIX_ROTS_180, MATRIX_ROTS_270, \
+                        MATRIX_ROTZ_180, MATRIX_ROTX_180, MATRIX_ROTS_270_ROTX_180, MATRIX_ROTS_90
 
-from .magnet import \
-    Magnet
-
-from .slot_type import \
-    SlotType
-
-from .device import \
-    Device
-
-from ..constants import \
-    MATRIX_IDENTITY, MATRIX_ROTS_270_ROTZ_180, MATRIX_ROTS_180, MATRIX_ROTS_270, \
-    MATRIX_ROTZ_180, MATRIX_ROTX_180, MATRIX_ROTS_270_ROTX_180, MATRIX_ROTS_90
+from ..core.affine import translate
+from .magnet import Magnet
+from .slot_type import SlotType
+from .device import Device
 
 
 class APPLEDevice(Device):
 
     @beartype
     def __init__(self,
-                 name: str,
-                 nperiods: int,
-                 hh: Magnet,
-                 he: Magnet,
-                 vv: Magnet,
-                 ve: Magnet,
-                 beam_gap: numbers.Real = 0.0625,
-                 interstice: numbers.Real = 0.0625,
-                 terminal: numbers.Real = 0.0625,
-                 symmetric: bool = True,
-                 world_matrix: np.ndarray = MATRIX_IDENTITY):
+            name: str,
+            nperiods: int,
+            hh: Magnet,
+            he: Magnet,
+            vv: Magnet,
+            ve: Magnet,
+            beam_gap: numbers.Real = 0.0625,
+            interstice: numbers.Real = 0.0625,
+            terminal: numbers.Real = 0.0625,
+            symmetric: bool = True,
+            world_matrix: np.ndarray = MATRIX_IDENTITY):
 
         super().__init__(name=name, world_matrix=world_matrix)
 

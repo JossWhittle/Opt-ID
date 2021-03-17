@@ -14,32 +14,26 @@
 
 
 # External Imports
-import numbers
 from beartype import beartype
 import numpy as np
 
 
 # Opt-ID Imports
-from .slot import \
-    Slot
-
-from .slot_type import \
-    SlotType
-
-from .pole import \
-    Pole
+from .slot import Slot
+from .slot_type import SlotType
+from .pole import Pole
 
 
 class PoleSlot(Slot):
 
     @beartype
     def __init__(self,
-                 beam,
-                 index: int,
-                 name: str,
-                 period: str,
-                 slot_type: SlotType,
-                 slot_matrix: np.ndarray):
+            beam,
+            index: int,
+            name: str,
+            period: str,
+            slot_type: SlotType,
+            slot_matrix: np.ndarray):
         """
         Construct a Slot instance.
 

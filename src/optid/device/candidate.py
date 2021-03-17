@@ -14,14 +14,12 @@
 
 
 # External Imports
-import numbers
 from beartype import beartype
+import numbers
 import typing as typ
 import numpy as np
 import pandas as pd
 import pandera as pa
-
-# Opt-ID Imports
 
 
 TVector = typ.Union[np.ndarray, typ.Sequence[numbers.Real]]

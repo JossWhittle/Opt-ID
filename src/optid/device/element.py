@@ -18,15 +18,9 @@ import numbers
 from beartype import beartype
 import typing as typ
 import numpy as np
-import pandas as pd
-
 
 # Opt-ID Imports
-from ..core.utils import \
-    np_readonly
-
-from ..geometry import \
-    Geometry
+from ..geometry import Geometry
 
 
 TVector   = typ.Union[np.ndarray, typ.Sequence[numbers.Real]]

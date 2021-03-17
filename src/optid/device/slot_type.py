@@ -18,20 +18,12 @@ import numbers
 from beartype import beartype
 import typing as typ
 import numpy as np
-import jax.numpy as jnp
 
 # Opt-ID Imports
-from ..core.utils import \
-    np_readonly
-
-from ..core.affine import \
-    translate, is_scale_preserving
-
-from .element import \
-    Element
-
-from optid.geometry import \
-    Geometry
+from ..core.utils import np_readonly
+from ..core.affine import translate, is_scale_preserving
+from .element import Element
+from ..geometry import Geometry
 
 
 TAnchor = typ.Union[np.ndarray, typ.Sequence[numbers.Real]]
@@ -43,10 +35,10 @@ class SlotType:
 
     @beartype
     def __init__(self,
-                 name: str,
-                 element: Element,
-                 anchor: TAnchor,
-                 direction_matrix: np.ndarray):
+            name: str,
+            element: Element,
+            anchor: TAnchor,
+            direction_matrix: np.ndarray):
 
         if len(name) == 0:
             raise ValueError(f'name must be a non-empty string')

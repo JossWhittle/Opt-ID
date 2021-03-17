@@ -14,8 +14,7 @@
 
 
 # Opt-ID Imports
-from .element import \
-    Element
+from .element import Element
 
 
 class Pole(Element):

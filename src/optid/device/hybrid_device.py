@@ -14,42 +14,33 @@
 
 
 # External Imports
-import numbers
 from beartype import beartype
+import numbers
 import numpy as np
 
 
 # Opt-ID Imports
-from .magnet import \
-    Magnet
-
-from .pole import \
-    Pole
-
-from .slot_type import \
-    SlotType
-
-from .device import \
-    Device
-
-from ..constants import \
-    MATRIX_IDENTITY, MATRIX_ROTX_180
+from ..constants import MATRIX_IDENTITY, MATRIX_ROTX_180
+from .magnet import Magnet
+from .pole import Pole
+from .slot_type import SlotType
+from .device import Device
 
 
 class HybridDevice(Device):
 
     @beartype
     def __init__(self,
-                 name: str,
-                 nperiod: int,
-                 hh: Magnet,
-                 he: Magnet,
-                 ht: Magnet,
-                 pp: Pole,
-                 pt: Pole,
-                 interstice: numbers.Real = 0.0625,
-                 symmetric: bool = True,
-                 world_matrix: np.ndarray = MATRIX_IDENTITY):
+            name: str,
+            nperiod: int,
+            hh: Magnet,
+            he: Magnet,
+            ht: Magnet,
+            pp: Pole,
+            pt: Pole,
+            interstice: numbers.Real = 0.0625,
+            symmetric: bool = True,
+            world_matrix: np.ndarray = MATRIX_IDENTITY):
 
         super().__init__(name=name, world_matrix=world_matrix)
 

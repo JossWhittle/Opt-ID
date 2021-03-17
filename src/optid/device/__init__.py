@@ -20,6 +20,7 @@ from .element import Element
 from .magnet import Magnet
 from .pole import Pole
 from .slot_type import SlotType
+from .pose import Pose
 from .slot import Slot
 from .magnet_slot import MagnetSlot
 from .beam import Beam

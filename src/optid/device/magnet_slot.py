@@ -14,41 +14,25 @@
 
 
 # External Imports
-import numbers
 from beartype import beartype
+import numbers
 import typing as typ
 import numpy as np
-import jax.numpy as jnp
 import radia as rad
 
 
 # Opt-ID Imports
-from ..core.utils import \
-    np_readonly
-
-from ..core.affine import \
-    transform_rescaled_vectors
-
-from ..core.bfield import \
-    radia_evaluate_bfield_on_lattice
-
-from ..lattice import \
-    Lattice
-
-from .slot import \
-    Slot
-
-from .slot_type import \
-    SlotType
-
-from .magnet import \
-    Magnet
-
-from .candidate import \
-    Candidate
-
-from .state import \
-    State
+from ..constants import VECTOR_ZERO
+from ..core.affine import transform_rescaled_vectors
+from ..core.bfield import radia_evaluate_bfield_on_lattice
+from ..lattice import Lattice
+from ..bfield import Bfield
+from .pose import Pose
+from .slot import Slot
+from .slot_type import SlotType
+from .magnet import Magnet
+from .candidate import Candidate
+from .state import State
 
 
 TCandidates = typ.Dict[str, Candidate]

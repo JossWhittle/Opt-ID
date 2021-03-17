@@ -14,12 +14,18 @@
 
 
 # External Imports
-import numbers
 from beartype import beartype
+import numbers
 import typing as typ
-import jax.numpy as jnp
+import numpy as np
+
 
 # Opt-ID Imports
+from ..constants import VECTOR_ZERO
+from ..core.utils import np_readonly
+
+
+TVector = typ.Union[np.ndarray, typ.Sequence[numbers.Real]]
 
 
 class State:
