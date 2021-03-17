@@ -19,9 +19,7 @@ import jax.numpy as jnp
 import numpy as np
 
 # Opt-ID Imports
-from .affine import \
-    translate, scale, \
-    jnp_translate, jnp_scale
+from .affine import translate, scale, jnp_translate, jnp_scale
 
 
 @jax.jit

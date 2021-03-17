@@ -18,12 +18,10 @@ from beartype import beartype
 import numbers
 import typing as typ
 import numpy as np
-import jax.numpy as jnp
 import tetgen
 
 # Opt-ID Imports
-from ..geometry import \
-    Geometry
+from ..geometry import Geometry
 
 
 TVertices = typ.Union[np.ndarray, typ.Sequence[typ.Sequence[numbers.Real]]]

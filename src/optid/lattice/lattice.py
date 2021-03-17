@@ -21,16 +21,9 @@ import numpy as np
 import jax.numpy as jnp
 
 # Opt-ID Imports
-from ..core.utils import \
-    np_readonly
-
-from ..core.affine import \
-    transform_points, \
-    jnp_transform_points
-
-from ..core.lattice import \
-    unit_lattice, jnp_unit_lattice, \
-    unit_to_orthonormal_matrix
+from ..core.utils import np_readonly
+from ..core.affine import transform_points, jnp_transform_points
+from ..core.lattice import unit_lattice, jnp_unit_lattice, unit_to_orthonormal_matrix
 
 
 class Lattice:

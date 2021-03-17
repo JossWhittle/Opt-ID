@@ -25,14 +25,11 @@ from matplotlib.patches import Polygon
 from matplotlib.collections import PatchCollection
 
 # Opt-ID Imports
-from ..constants import \
-    VECTOR_X, VECTOR_Z, VECTOR_S, VECTOR_ZERO
+from ..constants import VECTOR_X, VECTOR_Z, VECTOR_S, VECTOR_ZERO
 
-from ..core.affine import \
-    transform_points, transform_rescaled_vectors
+from ..core.affine import transform_points, transform_rescaled_vectors
 
-from ..device import \
-    Device, MagnetSlot
+from ..device import Device, MagnetSlot
 
 
 TLimit = typ.Optional[typ.Tuple[numbers.Real, numbers.Real, int]]

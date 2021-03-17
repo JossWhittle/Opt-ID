@@ -20,8 +20,6 @@ import jax.numpy as jnp
 import numpy as np
 import radia as rad
 
-# Opt-ID Imports
-
 
 @beartype
 def radia_evaluate_bfield_on_lattice(

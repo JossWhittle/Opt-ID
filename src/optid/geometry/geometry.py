@@ -14,7 +14,6 @@
 
 
 # External Imports
-from more_itertools import SequenceView
 from beartype import beartype
 import numbers
 import typing as typ
@@ -23,12 +22,8 @@ import jax.numpy as jnp
 import radia as rad
 
 # Opt-ID Imports
-
-from ..core.utils import \
-    np_readonly
-
-from ..core.affine import \
-    transform_points, is_scale_preserving
+from ..core.utils import np_readonly
+from ..core.affine import transform_points, is_scale_preserving
 
 
 TVertices  = typ.Union[np.ndarray, typ.Sequence[typ.Sequence[numbers.Real]]]

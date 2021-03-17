@@ -18,11 +18,9 @@ from beartype import beartype
 import numbers
 import typing as typ
 import numpy as np
-import jax.numpy as jnp
 
 # Opt-ID Imports
-from ..geometry import \
-    ExtrudedPolygon
+from ..geometry import ExtrudedPolygon
 
 
 TShape = typ.Union[np.ndarray, typ.Sequence[numbers.Real]]

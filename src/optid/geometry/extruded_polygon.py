@@ -18,12 +18,10 @@ from beartype import beartype
 import numbers
 import typing as typ
 import numpy as np
-import jax.numpy as jnp
 from sect.triangulation import constrained_delaunay_triangles
 
 # Opt-ID Imports
-from ..geometry import \
-    TetrahedralMesh
+from ..geometry import TetrahedralMesh
 
 
 TPolygon = typ.Union[np.ndarray, typ.Sequence[typ.Sequence[numbers.Real]]]
