@@ -124,30 +124,19 @@ class Beam:
         self._period_bounds = dict()
 
     @beartype
-    def world_matrix(self, gap: numbers.Real, phase: numbers.Real) -> np.ndarray:
+    def world_matrix(self, pose: Pose) -> np.ndarray:
         """
         Calculate the affine matrix that places this beam into the world.
 
-        :param gap:
-            Device gap value to separate the beams on the Z axis.
-
-        :param phase:
-            Device phase value to shear the beams by on the S axis.
+        :param pose:
+            Device Pose instance specifying gap and phase.
 
         :return:
             Affine matrix representing the major position of the beam in world space.
         """
 
-        if gap < 0:
-            raise ValueError(f'gap must be > 0 but is : '
-                             f'{gap}')
-
-        if phase < 0:
-            raise ValueError(f'phase must be > 0 but is : '
-                             f'{phase}')
-
         return self.centre_matrix @ \
-               translate(*((self.gap_vector * gap) + (self.phase_vector * phase))) @ \
+               translate(*((self.gap_vector * pose.gap) + (self.phase_vector * pose.phase))) @ \
                self.beam_matrix @ \
                self.device.world_matrix
 

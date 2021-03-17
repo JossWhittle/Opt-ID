@@ -34,7 +34,8 @@ class State:
     def __init__(self,
             slot: typ.Optional[str],
             candidate: str,
-            flip: int):
+            shim: TVector = VECTOR_ZERO,
+            flip: int = 0):
         """
         Construct a State instance.
 
@@ -43,6 +44,9 @@ class State:
 
         :param candidate:
             String name for the candidate.
+
+        :param shim:
+            Shimming amount in XZS in the magnet aligned reference frame.
 
         :param flip:
             Integer flip state for the selection.
@@ -57,6 +61,19 @@ class State:
             raise ValueError(f'candidate must be a non-empty string')
 
         self._candidate = candidate
+
+        if not isinstance(shim, np.ndarray):
+            shim = np.array(shim, dtype=np.float32)
+
+        if shim.shape != (3,):
+            raise ValueError(f'shim must be shape (3,) but is : '
+                             f'{shim.shape}')
+
+        if shim.dtype != np.float32:
+            raise TypeError(f'shim must have dtype (float32) but is : '
+                            f'{shim.dtype}')
+
+        self._shim = shim
 
         if flip < 0:
             raise ValueError(f'flip must be >= 0 but is : '
@@ -73,6 +90,11 @@ class State:
     @beartype
     def candidate(self) -> str:
         return str(self._candidate)
+
+    @property
+    @beartype
+    def shim(self) -> np.ndarray:
+        return np_readonly(self._shim)
 
     @property
     @beartype

@@ -100,25 +100,39 @@ class Slot:
         self._slot_matrix = slot_matrix
 
     @beartype
-    def world_matrix(self, gap: numbers.Real, phase: numbers.Real) -> np.ndarray:
+    def world_matrix(self,
+            pose: Pose,
+            shim: TVector = VECTOR_ZERO) -> np.ndarray:
         """
         Calculate the affine matrix that places this magnet slot into the world in the correct major
         orientation except flip state.
 
-        :param gap:
-            Device gap value to separate the beams on the Z axis.
+        :param pose:
+            Device Pose instance specifying gap and phase.
 
-        :param phase:
-            Device phase value to shear the beams by on the S axis.
+        :param shim:
+            Shimming amount in XZS in the magnet aligned reference frame.
 
         :return:
             Affine matrix representing the major position of the slot in world space.
         """
 
+        if not isinstance(shim, np.ndarray):
+            shim = np.array(shim, dtype=np.float32)
+
+        if shim.shape != (3,):
+            raise ValueError(f'shim must be shape (3,) but is : '
+                             f'{shim.shape}')
+
+        if shim.dtype != np.float32:
+            raise TypeError(f'shim must have dtype (float32) but is : '
+                            f'{shim.dtype}')
+
         return self.slot_type.direction_matrix @ \
                self.slot_type.anchor_matrix @ \
+               translate(*shim) @ \
                self.slot_matrix @ \
-               self.beam.world_matrix(gap=gap, phase=phase)
+               self.beam.world_matrix(pose=pose)
 
     @property
     def beam(self):
