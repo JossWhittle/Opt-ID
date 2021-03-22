@@ -20,6 +20,9 @@ import jax.numpy as jnp
 import numpy as np
 import radia as rad
 
+# Opt-ID Imports
+from .lattice import jnp_orthonormal_interpolate
+from .affine import jnp_transform_points, jnp_transform_rescaled_vectors
 
 @beartype
 def radia_evaluate_bfield_on_lattice(
@@ -48,6 +51,16 @@ def radia_evaluate_bfield_on_lattice(
 
     return np.array(rad.Fld(radia_object, 'b', lattice.reshape((-1, 3)).tolist()),
                     dtype=np.float32).reshape(lattice.shape)
+
+
+@jax.jit
+def jnp_interpolate_bfield(value_lattice, point_lattice, world_to_orthonormal_matrix):
+
+    ortho_value_lattice = jnp_transform_rescaled_vectors(value_lattice, world_to_orthonormal_matrix)
+    ortho_point_lattice = jnp_transform_points(point_lattice, world_to_orthonormal_matrix)
+    ortho_interp_value_lattice = jnp_orthonormal_interpolate(ortho_value_lattice, ortho_point_lattice)
+
+    return jnp_transform_rescaled_vectors(ortho_interp_value_lattice, jnp.linalg.inv(world_to_orthonormal_matrix))
 
 
 @jax.jit

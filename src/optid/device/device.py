@@ -22,10 +22,14 @@ import numpy as np
 # Opt-ID Imports
 from ..core.affine import is_scale_preserving
 from ..core.utils import np_readonly
+from ..bfield import Bfield
+from ..lattice import Lattice
 from .beam import Beam
 from .magnet import Magnet
 from .slot import Slot
 from .slot_type import SlotType
+from .pose import Pose
+from .genome import Genome
 
 
 TVector     = typ.Union[np.ndarray, typ.Sequence[numbers.Real]]
@@ -129,6 +133,31 @@ class Device:
             if nslots_by_type[element_name] > len(magnet.candidates):
                 raise ValueError(f'device has more slots of type "{element_name} than candidates : '
                                  f'slots={nslots_by_type[element_name]} > candidates={len(magnet.candidates)}')
+
+    @beartype
+    def bfield(self,
+            lattice: Lattice,
+            pose: Pose) -> Bfield:
+
+        device_field = None
+        for beam in self.beams.values():
+            beam_field   = beam.bfield(lattice=lattice, pose=pose).field
+            device_field = beam_field if (device_field is None) else (device_field + beam_field)
+
+        return Bfield(lattice=lattice, field=device_field)
+
+    @beartype
+    def bfield_from_genome(self,
+            lattice: Lattice,
+            pose: Pose,
+            genome: Genome) -> Bfield:
+
+        device_field = None
+        for beam in self.beams.values():
+            beam_field   = beam.bfield_from_genome(lattice=lattice, pose=pose, genome=genome).field
+            device_field = beam_field if (device_field is None) else (device_field + beam_field)
+
+        return Bfield(lattice=lattice, field=device_field)
 
     @property
     @beartype

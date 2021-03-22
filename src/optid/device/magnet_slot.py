@@ -17,6 +17,7 @@
 from beartype import beartype
 import numbers
 import typing as typ
+import jax
 import numpy as np
 import radia as rad
 
@@ -129,9 +130,9 @@ class MagnetSlot(Slot):
             vector = transform_rescaled_vectors(vector, matrix)
 
         rad.UtiDelAll()
-        bfield = radia_evaluate_bfield_on_lattice(geometry.to_radia(vector), lattice.world_lattice)
+        bfield = jax.device_put(radia_evaluate_bfield_on_lattice(geometry.to_radia(vector), lattice.world_lattice))
         rad.UtiDelAll()
-        return Bfield(lattice=lattice, values=bfield)
+        return Bfield(lattice=lattice, field=bfield)
 
     @beartype
     def bfield(self,

@@ -16,18 +16,41 @@
 # External Imports
 from beartype import beartype
 import typing as typ
-import numpy as np
-from itertools import product
+
+# Opt-ID Imports
+from .state import State
 
 
-@beartype
-def np_readonly(array: np.ndarray):
-    view = array.view()
-    view.flags.writeable = False
-    return view
+TStates = typ.Dict[str, State]
+TUnused = typ.List[State]
 
 
-def yield_gridsearch(params: typ.Dict[typ.Any, typ.Sequence[typ.Any]]):
-    keys, values = zip(*params.items())
-    for bundle in product(*values):
-        yield dict(zip(keys, bundle))
+class Genome:
+
+    @beartype
+    def __init__(self,
+                 slots: TStates,
+                 pool: TUnused):
+
+        self._slots = slots
+        self._pool = pool
+
+    @property
+    @beartype
+    def slots(self) -> TStates:
+        return self._slots
+
+    @property
+    @beartype
+    def nslot(self) -> int:
+        return len(self._slots)
+
+    @property
+    @beartype
+    def pool(self) -> TUnused:
+        return self._pool
+
+    @property
+    @beartype
+    def npool(self) -> int:
+        return len(self._pool)

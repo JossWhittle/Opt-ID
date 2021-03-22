@@ -14,6 +14,7 @@
 
 
 # External Imports
+from types import MappingProxyType
 from beartype import beartype
 from more_itertools import SequenceView
 import numbers
@@ -24,6 +25,8 @@ import numpy as np
 from ..constants import MATRIX_IDENTITY
 from ..core.utils import np_readonly
 from ..core.affine import translate, is_scale_preserving
+from ..bfield import Bfield
+from ..lattice import Lattice
 from .pose import Pose
 from .slot import Slot
 from .slot_type import SlotType
@@ -32,6 +35,7 @@ from .pole_slot import PoleSlot
 from .magnet import Magnet
 from .pole import Pole
 from .candidate import Candidate
+from .genome import Genome
 
 
 TVector        = typ.Union[np.ndarray, typ.Sequence[numbers.Real]]
@@ -208,6 +212,45 @@ class Beam:
 
         self._spacing += spacing
 
+    @beartype
+    def bfield(self,
+            lattice: Lattice,
+            pose: Pose) -> Bfield:
+
+        beam_field = None
+        for slot in self.slots:
+
+            if not isinstance(slot, MagnetSlot):
+                continue
+
+            slot_field = slot.bfield(lattice=lattice, pose=pose).field
+            beam_field = slot_field if (beam_field is None) else (beam_field + slot_field)
+
+        return Bfield(lattice=lattice, field=beam_field)
+
+    @beartype
+    def bfield_from_genome(self,
+            lattice: Lattice,
+            pose: Pose,
+            genome: Genome) -> Bfield:
+
+        beam_field = None
+        for slot in self.slots:
+
+            if not isinstance(slot, MagnetSlot):
+                continue
+
+            if slot.qualified_name not in genome.slots:
+                raise ValueError(f'slot.qualified_name is not found in genome.slots : '
+                                 f'{slot.qualified_name}')
+
+            state = genome.slots[slot.qualified_name]
+
+            slot_field = slot.bfield_from_state(lattice=lattice, pose=pose, state=state).field
+            beam_field = slot_field if (beam_field is None) else (beam_field + slot_field)
+
+        return Bfield(lattice=lattice, field=beam_field)
+
     @property
     @beartype
     def slots_by_type(self) -> TSlots:
@@ -325,8 +368,8 @@ class Beam:
 
     @property
     @beartype
-    def slots_by_name(self) -> typ.Dict[str, Slot]:
-        return dict(self._slots_by_name)
+    def slots_by_name(self) -> MappingProxyType[str, Slot]:
+        return MappingProxyType(self._slots_by_name)
 
     @property
     @beartype

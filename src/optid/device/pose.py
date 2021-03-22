@@ -46,6 +46,9 @@ class Pose:
 
         self._phase = phase
 
+    def __repr__(self):
+        return f'Pose(gap={self.gap}, phase={self.phase})'
+
     @property
     @beartype
     def gap(self) -> numbers.Real:
