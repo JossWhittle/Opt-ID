@@ -34,7 +34,7 @@ class APPLEDevice(Device):
     @beartype
     def __init__(self,
             name: str,
-            nperiods: int,
+            nperiod: int,
             hh: Magnet,
             he: Magnet,
             vv: Magnet,
@@ -112,7 +112,7 @@ class APPLEDevice(Device):
         self.add_slots(slot_types={ 'Q1': q1_ve_d, 'Q2': q2_ve_d, 'Q3': q3_ve_d, 'Q4': q4_ve_d }, period=period, after_spacing=interstice)
         self.add_slots(slot_types={ 'Q1': q1_he_b, 'Q2': q2_he_b, 'Q3': q3_he_f, 'Q4': q4_he_f }, period=period, after_spacing=interstice)
     
-        for index in range(nperiods):
+        for index in range(nperiod):
             period = f'{index:04d}'
             self.add_slots(slot_types={ 'Q1': q1_vv_u, 'Q2': q2_vv_u, 'Q3': q3_vv_u, 'Q4': q4_vv_u }, period=period, after_spacing=interstice)
             self.add_slots(slot_types={ 'Q1': q1_hh_f, 'Q2': q2_hh_f, 'Q3': q3_hh_b, 'Q4': q4_hh_b }, period=period, after_spacing=interstice)
