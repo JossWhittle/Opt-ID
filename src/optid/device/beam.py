@@ -368,7 +368,7 @@ class Beam:
 
     @property
     @beartype
-    def slots_by_name(self) -> MappingProxyType[str, Slot]:
+    def slots_by_name(self) -> typ.Mapping[str, Slot]:
         return MappingProxyType(self._slots_by_name)
 
     @property
