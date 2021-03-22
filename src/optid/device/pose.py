@@ -49,6 +49,14 @@ class Pose:
     def __repr__(self):
         return f'Pose(gap={self.gap}, phase={self.phase})'
 
+    def __eq__(self, other):
+        if isinstance(other, Pose):
+            return (self.gap == other.gap) and (self.phase == other.phase)
+        return False
+
+    def __hash__(self):
+        return hash((self.gap, self.phase))
+
     @property
     @beartype
     def gap(self) -> numbers.Real:

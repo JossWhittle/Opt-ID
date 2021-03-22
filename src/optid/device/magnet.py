@@ -132,4 +132,7 @@ class Magnet(Element):
     def candidates(self) -> TCandidates:
         return dict(self._candidates)
 
-
+    @property
+    @beartype
+    def ncandidate(self) -> int:
+        return len(self._candidates)

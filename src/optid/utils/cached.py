@@ -13,8 +13,16 @@
 # language governing permissions and limitations under the License.
 
 
-# Opt-ID Imports
-from . import logging
-from . import cached
-from . import plot
-from . import io
+# External Imports
+from functools import cached_property, lru_cache
+
+
+class Memoized:
+
+    def invalidate_cache(self):
+
+        for key, value in self.__class__.__dict__.items():
+            if isinstance(value, cached_property):
+                self.__dict__.pop(key, None)
+            elif hasattr(value, 'cache_clear'):
+                value.cache_clear()

@@ -14,12 +14,15 @@
 
 
 # External Imports
-import numbers
+from types import MappingProxyType
+from more_itertools import SequenceView
 from beartype import beartype
+import numbers
 import typing as typ
 import numpy as np
 
 # Opt-ID Imports
+from ..utils.cached import Memoized, cached_property
 from ..core.affine import is_scale_preserving
 from ..core.utils import np_readonly
 from ..bfield import Bfield
@@ -32,13 +35,13 @@ from .pose import Pose
 from .genome import Genome
 
 
-TVector     = typ.Union[np.ndarray, typ.Sequence[numbers.Real]]
-TMagnets    = typ.Dict[str, Magnet]
-TSlots      = typ.Dict[str, typ.Dict[str, typ.List[Slot]]]
-TPeriodLengths = typ.Dict[str, numbers.Real]
+TVector        = typ.Union[np.ndarray, typ.Sequence[numbers.Real]]
+TMagnets       = typ.Mapping[str, Magnet]
+TSlots         = typ.Mapping[str, typ.Mapping[str, typ.Sequence[Slot]]]
+TPeriodLengths = typ.Mapping[str, numbers.Real]
 
 
-class Device:
+class Device(Memoized):
 
     @beartype
     def __init__(self,
@@ -88,6 +91,10 @@ class Device:
         beam = Beam(device=self, name=name, beam_matrix=beam_matrix, gap_vector=gap_vector, phase_vector=phase_vector)
 
         self._beams[name] = beam
+
+        # Handle memoized cached parameters
+        self.invalidate_cache()
+
         return beam
 
     @beartype
@@ -113,6 +120,9 @@ class Device:
             beam.add_slot(period=period, slot_type=slot_type,
                           after_spacing=after_spacing, name=name)
 
+        # Handle memoized cached parameters
+        self.invalidate_cache()
+
     def validate(self):
 
         elements = dict()
@@ -127,7 +137,7 @@ class Device:
                     raise ValueError(f'multiple magnets with same name refer to different objects : '
                                      f'{key}, {slot.qualified_name}')
 
-        nslots_by_type = self.nslots_by_type
+        nslots_by_type = self.nslot_by_type
         for element_name, magnet in self.magnets_by_type.items():
 
             if nslots_by_type[element_name] > len(magnet.candidates):
@@ -159,12 +169,12 @@ class Device:
 
         return Bfield(lattice=lattice, field=device_field)
 
-    @property
+    @cached_property
     @beartype
-    def beams(self) -> dict:
-        return dict(self._beams)
+    def beams(self) -> typ.Mapping[str, Beam]:
+        return MappingProxyType(self._beams)
 
-    @property
+    @cached_property
     @beartype
     def slots_by_type(self) -> TSlots:
 
@@ -177,9 +187,11 @@ class Device:
 
                 slots[element_name][beam.name] = element_slots
 
-        return slots
+        return MappingProxyType({ element_name: MappingProxyType({ beam_name: SequenceView(element_slots)
+                                  for beam_name, element_slots in beams.items() })
+                                  for element_name, beams in slots.items() })
 
-    @property
+    @cached_property
     @beartype
     def magnet_slots_by_type(self) -> TSlots:
 
@@ -192,9 +204,11 @@ class Device:
 
                 slots[element_name][beam.name] = element_slots
 
-        return slots
+        return MappingProxyType({ element_name: MappingProxyType({ beam_name: SequenceView(element_slots)
+                                  for beam_name, element_slots in beams.items() })
+                                  for element_name, beams in slots.items() })
 
-    @property
+    @cached_property
     @beartype
     def pole_slots_by_type(self) -> TSlots:
 
@@ -207,9 +221,11 @@ class Device:
 
                 slots[element_name][beam.name] = element_slots
 
-        return slots
+        return MappingProxyType({ element_name: MappingProxyType({ beam_name: SequenceView(element_slots)
+                                  for beam_name, element_slots in beams.items() })
+                                  for element_name, beams in slots.items() })
 
-    @property
+    @cached_property
     @beartype
     def magnets_by_type(self) -> TMagnets:
 
@@ -220,9 +236,9 @@ class Device:
                 if magnet.name not in magnets:
                     magnets[magnet.name] = magnet
 
-        return magnets
+        return MappingProxyType(magnets)
 
-    @property
+    @cached_property
     @beartype
     def period_lengths(self) -> TPeriodLengths:
 
@@ -235,32 +251,33 @@ class Device:
 
                 period_lengths[period].append(length)
 
-        return { period: np.mean(period_lengths)
-                 for period, period_lengths in period_lengths.items() }
+        return MappingProxyType({ period: np.mean(period_lengths)
+                                  for period, period_lengths in period_lengths.items() })
 
     @property
     @beartype
     def name(self) -> str:
         return str(self._name)
 
-    @property
+    @cached_property
     @beartype
     def world_matrix(self) -> np.ndarray:
         return np_readonly(self._world_matrix)
 
-    @property
+    @cached_property
     @beartype
-    def nslots(self) -> int:
-        return sum(beam.nslots for beam in self.beams.values())
+    def nslot(self) -> int:
+        return sum(beam.nslot for beam in self.beams.values())
 
-    @property
+    @cached_property
     @beartype
-    def nslots_by_beam(self) -> typ.Dict[str, int]:
-        return { beam.name: beam.nslots for beam in self.beams.values() }
+    def nslot_by_beam(self) -> typ.Mapping[str, int]:
+        return MappingProxyType({ beam.name: beam.nslot
+                                  for beam in self.beams.values() })
 
-    @property
+    @cached_property
     @beartype
-    def nslots_by_type(self) -> typ.Dict[str, int]:
+    def nslot_by_type(self) -> typ.Mapping[str, int]:
 
         counts = dict()
         for beam in self.beams.values():
@@ -272,19 +289,20 @@ class Device:
 
                 counts[magnet_name] += 1
 
-        return counts
+        return MappingProxyType(counts)
 
-    @property
+    @cached_property
     @beartype
-    def ncandidates(self) -> int:
-        return sum(self.ncandidates_by_type.values())
+    def ncandidate(self) -> int:
+        return sum(self.ncandidate_by_type.values())
 
-    @property
+    @cached_property
     @beartype
-    def ncandidates_by_type(self) -> typ.Dict[str, int]:
-        return { key: len(magnet.candidates) for key, magnet in self.magnets_by_type.items() }
+    def ncandidate_by_type(self) -> typ.Mapping[str, int]:
+        return MappingProxyType({ magnet.name: magnet.ncandidate
+                                  for magnet in self.magnets_by_type.values() })
 
-    @property
+    @cached_property
     @beartype
     def length(self) -> numbers.Real:
         return max(beam.length for beam in self.beams.values())

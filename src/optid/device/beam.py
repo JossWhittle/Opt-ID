@@ -22,6 +22,7 @@ import typing as typ
 import numpy as np
 
 # Opt-ID Imports
+from ..utils.cached import Memoized, cached_property, lru_cache
 from ..constants import MATRIX_IDENTITY
 from ..core.utils import np_readonly
 from ..core.affine import translate, is_scale_preserving
@@ -37,17 +38,16 @@ from .pole import Pole
 from .candidate import Candidate
 from .genome import Genome
 
-
 TVector        = typ.Union[np.ndarray, typ.Sequence[numbers.Real]]
-TPeriodLengths = typ.Dict[str, numbers.Real]
-TSlots         = typ.Dict[str, typ.List[Slot]]
-TMagnetSlots   = typ.Dict[str, typ.List[MagnetSlot]]
-TPoleSlots     = typ.Dict[str, typ.List[PoleSlot]]
-TCandidates    = typ.Dict[str, Candidate]
-TMagnets       = typ.Dict[str, Magnet]
+TPeriodLengths = typ.Mapping[str, numbers.Real]
+TSlots         = typ.Mapping[str, typ.Sequence[Slot]]
+TMagnetSlots   = typ.Mapping[str, typ.Sequence[MagnetSlot]]
+TPoleSlots     = typ.Mapping[str, typ.Sequence[PoleSlot]]
+TCandidates    = typ.Mapping[str, Candidate]
+TMagnets       = typ.Mapping[str, Magnet]
 
 
-class Beam:
+class Beam(Memoized):
 
     @beartype
     def __init__(self,
@@ -127,6 +127,7 @@ class Beam:
         self._slots_by_name = dict()
         self._period_bounds = dict()
 
+    @lru_cache
     @beartype
     def world_matrix(self, pose: Pose) -> np.ndarray:
         """
@@ -154,7 +155,7 @@ class Beam:
         bmin, bmax = slot_type.bounds
         thickness  = (bmax[2] - bmin[2])
 
-        if self.nslots == 0:
+        if self.nslot == 0:
             cur_smax = self._smin = bmin[2]
             self._smax = bmax[2]
         else:
@@ -177,14 +178,14 @@ class Beam:
 
         self._centre_matrix = translate(0, 0, (-self._smin) - ((self._smax - self._smin) / 2.0))
 
-        name = name if (name is not None) else f'{self.nslots:06d}'
+        name = name if (name is not None) else f'{self.nslot:06d}'
 
         if isinstance(slot_type.element, Magnet):
-            slot = MagnetSlot(index=self.nslots, beam=self, name=name, period=period,
+            slot = MagnetSlot(index=self.nslot, beam=self, name=name, period=period,
                               slot_type=slot_type, slot_matrix=slot_matrix)
 
         elif isinstance(slot_type.element, Pole):
-            slot = PoleSlot(index=self.nslots, beam=self, name=name, period=period,
+            slot = PoleSlot(index=self.nslot, beam=self, name=name, period=period,
                             slot_type=slot_type, slot_matrix=slot_matrix)
         else:
             raise TypeError(f'slot_type.element must be type Magnet or Pole but is : '
@@ -200,7 +201,12 @@ class Beam:
 
         self.add_spacing(spacing=after_spacing)
 
+        # Validate the whole device is still valid
         self.device.validate()
+
+        # Handle memoized cached parameters
+        self.invalidate_cache()
+        self.device.invalidate_cache()
         return slot
 
     @beartype
@@ -251,7 +257,7 @@ class Beam:
 
         return Bfield(lattice=lattice, field=beam_field)
 
-    @property
+    @cached_property
     @beartype
     def slots_by_type(self) -> TSlots:
 
@@ -264,9 +270,10 @@ class Beam:
 
             slots[element_name].append(slot)
 
-        return slots
+        return MappingProxyType({ name: SequenceView(seq)
+                                  for name, seq in slots.items() })
 
-    @property
+    @cached_property
     @beartype
     def magnet_slots_by_type(self) -> TMagnetSlots:
 
@@ -282,9 +289,10 @@ class Beam:
 
             slots[element_name].append(slot)
 
-        return slots
+        return MappingProxyType({ name: SequenceView(seq)
+                                  for name, seq in slots.items() })
 
-    @property
+    @cached_property
     @beartype
     def pole_slots_by_type(self) -> TPoleSlots:
 
@@ -300,9 +308,10 @@ class Beam:
 
             slots[element_name].append(slot)
 
-        return slots
+        return MappingProxyType({ name: SequenceView(seq)
+                                  for name, seq in slots.items() })
 
-    @property
+    @cached_property
     @beartype
     def magnets_by_type(self) -> TMagnets:
 
@@ -315,7 +324,7 @@ class Beam:
             if slot.magnet.name not in magnets:
                 magnets[slot.magnet.name] = slot.magnet
 
-        return magnets
+        return MappingProxyType(magnets)
 
     @property
     def device(self):
@@ -331,47 +340,48 @@ class Beam:
     def qualified_name(self) -> str:
         return f'{self.device.name}::{self.name}'
 
-    @property
+    @cached_property
     @beartype
     def beam_matrix(self) -> np.ndarray:
         return np_readonly(self._beam_matrix)
 
-    @property
+    @cached_property
     @beartype
     def gap_vector(self) -> np.ndarray:
         return np_readonly(self._gap_vector)
 
-    @property
+    @cached_property
     @beartype
     def phase_vector(self) -> np.ndarray:
         return np_readonly(self._phase_vector)
 
-    @property
+    @cached_property
     @beartype
     def length(self) -> numbers.Real:
         return float(self._smax - self._smin)
 
-    @property
+    @cached_property
     @beartype
     def period_lengths(self) -> TPeriodLengths:
-        return { period: (p1 - p0) for period, (p0, p1) in self._period_bounds.items() }
+        return MappingProxyType({ period: (p1 - p0)
+                                  for period, (p0, p1) in self._period_bounds.items() })
 
-    @property
+    @cached_property
     @beartype
     def centre_matrix(self) -> np.ndarray:
         return np_readonly(self._centre_matrix)
 
-    @property
+    @cached_property
     @beartype
     def slots(self) -> typ.Sequence[Slot]:
         return SequenceView(self._slots)
 
-    @property
+    @cached_property
     @beartype
     def slots_by_name(self) -> typ.Mapping[str, Slot]:
         return MappingProxyType(self._slots_by_name)
 
-    @property
+    @cached_property
     @beartype
-    def nslots(self) -> int:
+    def nslot(self) -> int:
         return len(self._slots)
