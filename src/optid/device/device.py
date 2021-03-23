@@ -22,7 +22,7 @@ import typing as typ
 import numpy as np
 
 # Opt-ID Imports
-from ..utils.cached import Memoized, cached_property
+from ..utils.cached import Memoized, cached_property, invalidates_cached_properties
 from ..core.affine import is_scale_preserving
 from ..core.utils import np_readonly
 from ..bfield import Bfield
@@ -77,6 +77,7 @@ class Device(Memoized):
 
         self._beams = dict()
 
+    @invalidates_cached_properties
     @beartype
     def add_beam(self,
             name: str,
@@ -92,11 +93,9 @@ class Device(Memoized):
 
         self._beams[name] = beam
 
-        # Handle memoized cached parameters
-        self.invalidate_cache()
-
         return beam
 
+    @invalidates_cached_properties
     @beartype
     def add_slots(
             self,
@@ -119,9 +118,6 @@ class Device(Memoized):
 
             beam.add_slot(period=period, slot_type=slot_type,
                           after_spacing=after_spacing, name=name)
-
-        # Handle memoized cached parameters
-        self.invalidate_cache()
 
     def validate(self):
 

@@ -14,15 +14,24 @@
 
 
 # External Imports
-from functools import cached_property, lru_cache
+from beartype import beartype
+import typing as typ
+from functools import cached_property
+
+
+def invalidates_cached_properties(func):
+    @beartype
+    def wrap(self: Memoized, *args, **kargs) -> typ.Any:
+        result = func(self, *args, **kargs)
+        self.invalidate_cached_properties()
+        return result
+    return wrap
 
 
 class Memoized:
 
-    def invalidate_cache(self):
+    def invalidate_cached_properties(self):
 
         for key, value in self.__class__.__dict__.items():
             if isinstance(value, cached_property):
                 self.__dict__.pop(key, None)
-            elif hasattr(value, 'cache_clear'):
-                value.cache_clear()

@@ -22,7 +22,7 @@ import typing as typ
 import numpy as np
 
 # Opt-ID Imports
-from ..utils.cached import Memoized, cached_property
+from ..utils.cached import Memoized, cached_property, invalidates_cached_properties
 from ..constants import MATRIX_IDENTITY
 from ..core.utils import np_readonly
 from ..core.affine import translate, is_scale_preserving
@@ -127,6 +127,11 @@ class Beam(Memoized):
         self._slots_by_name = dict()
         self._period_bounds = dict()
 
+    def invalidate_cached_properties(self):
+        # Handle memoized cached parameters
+        super().invalidate_cached_properties()
+        self.device.invalidate_cached_properties()
+
     @beartype
     def world_matrix(self, pose: Pose) -> np.ndarray:
         """
@@ -144,6 +149,7 @@ class Beam(Memoized):
                self.beam_matrix @ \
                self.device.world_matrix
 
+    @invalidates_cached_properties
     @beartype
     def add_slot(self,
             period: str,
@@ -203,9 +209,6 @@ class Beam(Memoized):
         # Validate the whole device is still valid
         self.device.validate()
 
-        # Handle memoized cached parameters
-        self.invalidate_cache()
-        self.device.invalidate_cache()
         return slot
 
     @beartype
