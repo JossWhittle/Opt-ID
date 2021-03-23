@@ -22,7 +22,7 @@ import typing as typ
 import numpy as np
 
 # Opt-ID Imports
-from ..utils.cached import Memoized, cached_property, lru_cache
+from ..utils.cached import Memoized, cached_property
 from ..constants import MATRIX_IDENTITY
 from ..core.utils import np_readonly
 from ..core.affine import translate, is_scale_preserving
@@ -127,7 +127,6 @@ class Beam(Memoized):
         self._slots_by_name = dict()
         self._period_bounds = dict()
 
-    @lru_cache
     @beartype
     def world_matrix(self, pose: Pose) -> np.ndarray:
         """

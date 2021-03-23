@@ -21,6 +21,7 @@ import numpy as np
 
 # Opt-ID Imports
 from ..geometry import ExtrudedPolygon
+from ..material import Material, DefaultMaterial
 
 
 TShape = typ.Union[np.ndarray, typ.Sequence[numbers.Real]]
@@ -37,6 +38,7 @@ class SquareCutCuboid(ExtrudedPolygon):
             shape: TShape,
             cuts: TCuts = 0,
             subdiv: numbers.Real = 0,
+            material: Material = DefaultMaterial(),
             **tetgen_kargs):
         """
         Construct a SquareCutCuboid instance.
@@ -137,4 +139,4 @@ class SquareCutCuboid(ExtrudedPolygon):
             *([[ x, -(z - brz)], [ (x - brx), -(z - brz)], [ (x - brx), -z]] if br else [[ x, -z]])],
             dtype=np.float32)
 
-        super().__init__(polygon=polygon, thickness=s, subdiv=subdiv, **tetgen_kargs)
+        super().__init__(polygon=polygon, thickness=s, subdiv=subdiv, material=material, **tetgen_kargs)

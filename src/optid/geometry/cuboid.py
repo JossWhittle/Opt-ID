@@ -21,7 +21,7 @@ import numpy as np
 
 # Opt-ID Imports
 from ..geometry import ExtrudedPolygon
-
+from ..material import Material, DefaultMaterial
 
 TShape = typ.Union[np.ndarray, typ.Sequence[numbers.Real]]
 
@@ -32,6 +32,7 @@ class Cuboid(ExtrudedPolygon):
     def __init__(self,
             shape: TShape,
             subdiv: numbers.Real = 0,
+            material: Material = DefaultMaterial(),
             **tetgen_kargs):
         """
         Construct a Cuboid instance.
@@ -68,4 +69,4 @@ class Cuboid(ExtrudedPolygon):
         polygon = np.array(
             [[-x, -z], [-x, z], [x, z], [x, -z]], dtype=np.float32)
 
-        super().__init__(polygon=polygon, thickness=s, subdiv=subdiv, **tetgen_kargs)
+        super().__init__(polygon=polygon, thickness=s, subdiv=subdiv, material=material, **tetgen_kargs)

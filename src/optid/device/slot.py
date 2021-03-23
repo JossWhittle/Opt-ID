@@ -134,6 +134,28 @@ class Slot:
                self.slot_matrix @ \
                self.beam.world_matrix(pose=pose)
 
+    @beartype
+    def to_radia(self,
+            vector: TVector,
+            pose: Pose,
+            shim: TVector = VECTOR_ZERO) -> int:
+
+        if not isinstance(vector, np.ndarray):
+            vector = np.array(vector, dtype=np.float32)
+
+        if vector.shape != (3,):
+            raise ValueError(f'vector must be shape (3,) but is : '
+                             f'{vector.shape}')
+
+        if vector.dtype != np.float32:
+            raise TypeError(f'vector must have dtype (float32) but is : '
+                            f'{vector.dtype}')
+
+        matrix   = self.world_matrix(pose=pose, shim=shim)
+        geometry = self.geometry.transform(matrix)
+
+        return geometry.to_radia(VECTOR_ZERO)
+
     @property
     def beam(self):
         return self._beam

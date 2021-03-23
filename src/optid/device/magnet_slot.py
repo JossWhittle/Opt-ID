@@ -25,7 +25,7 @@ import radia as rad
 # Opt-ID Imports
 from ..constants import VECTOR_ZERO
 from ..core.affine import transform_rescaled_vectors
-from ..core.bfield import radia_evaluate_bfield_on_lattice
+from ..core.bfield import RadiaCleanEnv, jnp_radia_evaluate_bfield_on_lattice
 from ..lattice import Lattice
 from ..bfield import Bfield
 from .pose import Pose
@@ -104,13 +104,12 @@ class MagnetSlot(Slot):
                super().world_matrix(pose=pose, shim=shim)
 
     @beartype
-    def bfield_from_vector(self,
-            lattice: Lattice,
+    def to_radia(self,
             vector: TVector,
             pose: Pose,
             shim: TVector = VECTOR_ZERO,
             flip: int = 0,
-            world_vector: bool = True) -> Bfield:
+            world_vector: bool = True) -> int:
 
         if not isinstance(vector, np.ndarray):
             vector = np.array(vector, dtype=np.float32)
@@ -129,9 +128,24 @@ class MagnetSlot(Slot):
         if not world_vector:
             vector = transform_rescaled_vectors(vector, matrix)
 
-        rad.UtiDelAll()
-        bfield = jax.device_put(radia_evaluate_bfield_on_lattice(geometry.to_radia(vector), lattice.world_lattice))
-        rad.UtiDelAll()
+        return geometry.to_radia(vector)
+
+    @beartype
+    def bfield_from_vector(self,
+            lattice: Lattice,
+            vector: TVector,
+            pose: Pose,
+            shim: TVector = VECTOR_ZERO,
+            flip: int = 0,
+            world_vector: bool = True) -> Bfield:
+
+        with RadiaCleanEnv():
+
+            radia_object = self.to_radia(vector=vector, pose=pose, shim=shim,
+                                         flip=flip, world_vector=world_vector)
+
+            bfield = jnp_radia_evaluate_bfield_on_lattice(radia_object, lattice.world_lattice)
+
         return Bfield(lattice=lattice, field=bfield)
 
     @beartype

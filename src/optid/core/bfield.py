@@ -14,6 +14,8 @@
 
 
 # External Imports
+from contextlib import contextmanager
+
 from beartype import beartype
 import jax
 import jax.numpy as jnp
@@ -24,12 +26,13 @@ import radia as rad
 from .lattice import jnp_orthonormal_interpolate
 from .affine import jnp_transform_points, jnp_transform_rescaled_vectors
 
+
 @beartype
 def radia_evaluate_bfield_on_lattice(
         radia_object: int,
         lattice: np.ndarray) -> np.ndarray:
     """
-    Wraps rad.Fld to take JAX tensors as inputs and return them as outputs.
+    Wraps rad.Fld to take numpy tensors as inputs and return them as outputs.
 
     :param radia_object:
         Handle to the radia object to simulate the field of.
@@ -51,6 +54,35 @@ def radia_evaluate_bfield_on_lattice(
 
     return np.array(rad.Fld(radia_object, 'b', lattice.reshape((-1, 3)).tolist()),
                     dtype=np.float32).reshape(lattice.shape)
+
+
+def jnp_radia_evaluate_bfield_on_lattice(
+        radia_object: int,
+        lattice: np.ndarray) -> jnp.ndarray:
+    """
+    Wraps rad.Fld to take numpy tensors as inputs and return JAX tensors as outputs.
+
+    :param radia_object:
+        Handle to the radia object to simulate the field of.
+
+    :param lattice:
+        Tensor representing 3-space world coordinates to evaluate the field at.
+
+    :return:
+        Tensor of 3-space field vectors at each location in the lattice.
+    """
+
+    return jax.device_put(radia_evaluate_bfield_on_lattice(radia_object=radia_object, lattice=lattice))
+
+
+@contextmanager
+def RadiaCleanEnv():
+    # TODO consider attempting to virtualize scopes and deleting individual objects as needed
+    rad.UtiDelAll()
+    try:
+        yield
+    finally:
+        rad.UtiDelAll()
 
 
 @jax.jit

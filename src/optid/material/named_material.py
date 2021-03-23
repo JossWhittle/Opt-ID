@@ -14,31 +14,46 @@
 
 
 # External Imports
-import numbers
 from beartype import beartype
+import numbers
 import typing as typ
 import numpy as np
+import radia as rad
+
 
 # Opt-ID Imports
-from ..geometry import Geometry
+from .material import Material
 
 
-TVector   = typ.Union[np.ndarray, typ.Sequence[numbers.Real]]
+TVector = typ.Union[np.ndarray, typ.Sequence[numbers.Real]]
 
 
-class Element:
+class NamedMaterial(Material):
 
-    @beartype
     def __init__(self,
             name: str,
-            geometry: Geometry):
+            remanent_magnetization: typ.Optional[numbers.Real] = None):
+        super().__init__()
 
         if len(name) == 0:
             raise ValueError(f'name must be a non-empty string')
 
         self._name = name
 
-        self._geometry = geometry
+        if (remanent_magnetization is not None) and (remanent_magnetization < 0):
+            raise ValueError(f'remanent_magnetization must be >= 0 but is : '
+                             f'{remanent_magnetization}')
+
+        self._remanent_magnetization = remanent_magnetization
+
+    @beartype
+    def build(self,
+            vector: TVector) -> typ.Optional[int]:
+
+        if self.remanent_magnetization is None:
+            return rad.MatStd(self.name)
+
+        return rad.MatStd(self.name, self.remanent_magnetization)
 
     @property
     @beartype
@@ -47,5 +62,5 @@ class Element:
 
     @property
     @beartype
-    def geometry(self) -> Geometry:
-        return self._geometry
+    def remanent_magnetization(self) -> typ.Optional[numbers.Real]:
+        return self._remanent_magnetization

@@ -22,6 +22,7 @@ import tetgen
 
 # Opt-ID Imports
 from ..geometry import Geometry
+from ..material import Material, DefaultMaterial
 
 
 TVertices = typ.Union[np.ndarray, typ.Sequence[typ.Sequence[numbers.Real]]]
@@ -34,6 +35,7 @@ class TetrahedralMesh(Geometry):
     def __init__(self,
             vertices: TVertices,
             faces: TFaces,
+            material: Material = DefaultMaterial(),
             **tetgen_kargs):
         """
         Construct a tetrahedralized mesh from an input triangular surface mesh.
@@ -105,5 +107,5 @@ class TetrahedralMesh(Geometry):
         polyhedra = [[[int(cell[vertex]) for vertex in face] for face in tetrahedron_faces]
                      for cell in tet.grid.cells.reshape(-1, 5)[:, 1:]]
 
-        super().__init__(vertices=vertices, polyhedra=polyhedra)
+        super().__init__(vertices=vertices, polyhedra=polyhedra, material=material)
 

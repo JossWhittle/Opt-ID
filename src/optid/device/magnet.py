@@ -46,10 +46,9 @@ class Magnet(Element):
             vector: TVector,
             candidates: TCandidatesParam,
             flip_matrices: TFlipMatrices = None,
-            material: typ.Optional[TMaterial] = None,
             rescale_vector: bool = True):
 
-        super().__init__(name=name, geometry=geometry, material=material)
+        super().__init__(name=name, geometry=geometry)
 
         if not isinstance(vector, np.ndarray):
             vector = np.array(vector, dtype=np.float32)

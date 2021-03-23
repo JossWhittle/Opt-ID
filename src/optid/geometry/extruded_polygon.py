@@ -22,6 +22,7 @@ from sect.triangulation import constrained_delaunay_triangles
 
 # Opt-ID Imports
 from ..geometry import TetrahedralMesh
+from ..material import Material, DefaultMaterial
 
 
 TPolygon = typ.Union[np.ndarray, typ.Sequence[typ.Sequence[numbers.Real]]]
@@ -34,6 +35,7 @@ class ExtrudedPolygon(TetrahedralMesh):
             polygon: TPolygon,
             thickness: numbers.Real,
             subdiv: numbers.Real = 0,
+            material: Material = DefaultMaterial(),
             **tetgen_kargs):
         """
         Construct an ExtrudedPolygon instance from a set of unique polygon vertices in 2-space and a thickness.
@@ -121,5 +123,5 @@ class ExtrudedPolygon(TetrahedralMesh):
         faces = np.array(faces, dtype=np.int32)
         vertices = np.array(vertices, dtype=np.float32)
 
-        super().__init__(vertices=vertices, faces=faces, **tetgen_kargs)
+        super().__init__(vertices=vertices, faces=faces, material=material, **tetgen_kargs)
 

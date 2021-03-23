@@ -24,6 +24,7 @@ import radia as rad
 # Opt-ID Imports
 from ..core.utils import np_readonly
 from ..core.affine import transform_points, is_scale_preserving
+from ..material import Material, DefaultMaterial
 
 
 TVertices  = typ.Union[np.ndarray, typ.Sequence[typ.Sequence[numbers.Real]]]
@@ -37,7 +38,8 @@ class Geometry:
     @beartype
     def __init__(self,
             vertices: TVertices,
-            polyhedra: TPolyhedra):
+            polyhedra: TPolyhedra,
+            material: Material = DefaultMaterial()):
         """
         Construct a Geometry instance from a set of unique vertices in 3-space and a list of polygons.
 
@@ -114,6 +116,8 @@ class Geometry:
 
         self._polyhedra = polyhedra
 
+        self._material = material
+
         self._bounds = np_readonly(np.min(vertices, axis=0)), \
                        np_readonly(np.max(vertices, axis=0))
 
@@ -185,7 +189,13 @@ class Geometry:
             # Create a radia object for this polyhedra
             obj += [rad.ObjPolyhdr(local_vertices, faces, vector.tolist())]
 
-        return rad.ObjCnt(obj) if len(obj) > 1 else obj[0]
+        obj = rad.ObjCnt(obj) if len(obj) > 1 else obj[0]
+
+        mat = self.material.to_radia(vector)
+        if mat is not None:
+            obj = rad.MatApl(obj, mat)
+
+        return obj
 
     @property
     @beartype
@@ -207,3 +217,8 @@ class Geometry:
         List of lists of lists of integer vertex IDs.
         """
         return self._polyhedra
+
+    @property
+    @beartype
+    def material(self) -> Material:
+        return self._material

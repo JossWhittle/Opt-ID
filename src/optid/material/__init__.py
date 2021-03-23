@@ -14,19 +14,5 @@
 
 
 # Opt-ID Imports
-from . import constants
-from . import core
-from . import material
-from . import geometry
-from . import lattice
-from . import device
-from . import utils
-
-import logging
-logging.getLogger('optid').addHandler(logging.NullHandler())
-
-
-VERSION = 'v3.0a'
-"""
-str : Opt-ID version string.
-"""
+from .material import Material, DefaultMaterial
+from .named_material import NamedMaterial
