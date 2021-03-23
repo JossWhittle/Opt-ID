@@ -26,11 +26,8 @@ from matplotlib.collections import PatchCollection
 
 # Opt-ID Imports
 from ..constants import VECTOR_X, VECTOR_Z, VECTOR_S, VECTOR_ZERO
-
 from ..core.affine import transform_points, transform_rescaled_vectors
-
-from ..device import Device, MagnetSlot
-
+from ..device import MagnetSlot #Device
 
 TLimit = typ.Optional[typ.Tuple[numbers.Real, numbers.Real, int]]
 
@@ -73,15 +70,23 @@ def plot_geometry(ax, vertices, polyhedra, color, alpha: numbers.Real, edgecolor
             facecolors=[color], edgecolors=[edgecolor], linewidth=0.5, alpha=alpha))
         ax.plot(*vertices[:, [0, 2, 1]].T, ' .', color='k', alpha=0)
     else:
+
+        s0, z0 = np.min(vertices, axis=0)[[2, 1]]
+        s1, z1 = np.max(vertices, axis=0)[[2, 1]]
+
         ax.add_collection(PatchCollection(
-            [Polygon([vertices[vertex, [2, 1]] for vertex in face]) for faces in polyhedra for face in faces],
-            facecolors=[color], edgecolors=[edgecolor], linewidth=0.5, alpha=alpha))
+                [Polygon([[s0, z0], [s1, z0], [s1, z1], [s0, z1]])],
+                facecolors=[color], edgecolors=[edgecolor], linewidth=0.5, alpha=alpha))
+
+        # ax.add_collection(PatchCollection(
+        #     [Polygon([vertices[vertex, [2, 1]] for vertex in face]) for faces in polyhedra for face in faces],
+        #     facecolors=[color], edgecolors=[edgecolor], linewidth=0.5, alpha=alpha))
         ax.plot(*vertices[:, [2, 1]].T, ' .', color='k', alpha=0)
 
 
 @beartype
 def plot_device(
-        device: Device,
+        device,
         *args,
         beams: typ.Optional[typ.Sequence[str]] = None,
         cmap=plt.get_cmap('tab10'),
@@ -109,7 +114,7 @@ def plot_device(
             else:
                 color = colors[color_key] = cmap(len(colors))
 
-                label = f'{slot.slot_type.qualified_name} = {slot.vector}' \
+                label = f'{slot.slot_type.qualified_name}' \
                     if isinstance(slot, MagnetSlot) else slot.slot_type.qualified_name
 
                 legend += [mpatches.Patch(color=color, label=label)]
@@ -124,7 +129,7 @@ def plot_device(
 
 @beartype
 def plot_device_direction_matrices(
-        device: Device,
+        device,
         *args,
         beams: typ.Optional[typ.Sequence[str]] = None,
         ax=None,
@@ -158,7 +163,7 @@ def plot_device_direction_matrices(
             bmin, bmax = slot.slot_type.bounds
             size = np.min(bmax - bmin) / 2.2
 
-            plot_vector(np.stack([origin, origin + (slot.vector * size)], axis=0), 'k', '-o')
+            plot_vector(np.stack([origin, origin + (transform_rescaled_vectors(slot.magnet.vector, matrix) * size)], axis=0), 'k', '-o')
             plot_vector(np.stack([origin, origin + (transform_rescaled_vectors(VECTOR_X, matrix) * size)], axis=0),
                         x_color, '-.')
             plot_vector(np.stack([origin, origin + (transform_rescaled_vectors(VECTOR_Z, matrix) * size)], axis=0),
